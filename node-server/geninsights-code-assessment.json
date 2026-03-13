@@ -1,0 +1,403 @@
+{
+  "assessment_timestamp": "2025-01-01T00:00:00Z",
+  "overall_health_score": 42,
+  "score_breakdown": {
+    "security": 20,
+    "code_quality": 45,
+    "maintainability": 40,
+    "error_handling": 30,
+    "modernization": 50,
+    "test_coverage": 0
+  },
+  "issues": [
+
+    {
+      "issue_id": "ISS-001",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 32,
+      "type": "Security",
+      "criticality": 5,
+      "message": "No WebSocket origin validation — request.accept(null, request.origin) accepts connections from ANY origin.",
+      "solution": "Maintain an allowlist of permitted origins and reject connections whose request.origin is not in it. Example:\nconst ALLOWED_ORIGINS = ['http://localhost:8080'];\nif (!ALLOWED_ORIGINS.includes(request.origin)) {\n  request.reject(403, 'Forbidden');\n  return;\n}\nconst connection = request.accept(null, request.origin);"
+    },
+    {
+      "issue_id": "ISS-002",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 1,
+      "type": "Security",
+      "criticality": 5,
+      "message": "Plain-text WebSocket (ws://) — all traffic including IBAN, BIC, and personal data is transmitted unencrypted.",
+      "solution": "Switch to wss:// with TLS. Use a reverse proxy (nginx/Caddy) to terminate TLS, or pass an HTTPS server to the WebSocket library."
+    },
+    {
+      "issue_id": "ISS-003",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 1,
+      "type": "Modernization",
+      "criticality": 4,
+      "message": "All declarations use ES5 'var' keyword. No 'use strict'. The 'websocket' npm package is an older pure-JS implementation; modern Node.js (v22) has the built-in WebSocket API or the well-maintained 'ws' package.",
+      "solution": "Replace 'var' with 'const'/'let'. Migrate from 'websocket' to 'ws' (npm install ws). Example modern server:\nimport { WebSocketServer } from 'ws';\nconst wss = new WebSocketServer({ port: 1337 });\nwss.on('connection', (ws, req) => { ... });"
+    },
+    {
+      "issue_id": "ISS-004",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 62,
+      "type": "Bug",
+      "criticality": 4,
+      "message": "Stale-index closure bug: the 'index' variable captured in the 'close' handler refers to the position at connection time. If other clients disconnect first, splice() shifts the array and removes the wrong client.",
+      "solution": "Use filter on the clients array instead of splice-by-index:\nconnection.on('close', () => {\n  clients = clients.filter(c => c !== connection);\n});"
+    },
+    {
+      "issue_id": "ISS-005",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 55,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "Server broadcasts messages back to the original sender. The Vue client's textarea watcher would re-receive its own text, potentially causing infinite update loops.",
+      "solution": "Skip the originating connection during broadcast:\nfor (const client of clients) {\n  if (client !== connection) client.sendUTF(json);\n}"
+    },
+    {
+      "issue_id": "ISS-006",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 46,
+      "type": "Missing Error Handling",
+      "criticality": 3,
+      "message": "No 'error' event handler on connections. Unhandled 'error' events crash the Node.js process.",
+      "solution": "connection.on('error', (err) => console.error('WebSocket error:', err));"
+    },
+    {
+      "issue_id": "ISS-007",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 48,
+      "type": "Security",
+      "criticality": 3,
+      "message": "No input validation or size limit on incoming messages — a malicious client can send arbitrarily large payloads.",
+      "solution": "Add a maxReceivedMessageSize option and validate message structure before broadcasting:\nconst wsServer = new webSocketServer({ httpServer: server, maxReceivedMessageSize: 64 * 1024 });"
+    },
+    {
+      "issue_id": "ISS-008",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 1,
+      "type": "Missing Error Handling",
+      "criticality": 2,
+      "message": "No 'error' event handler on the HTTP server. If the port is in use, the process crashes silently.",
+      "solution": "server.on('error', (err) => { console.error('Server error:', err); process.exit(1); });"
+    },
+
+    {
+      "issue_id": "ISS-009",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 103,
+      "type": "Security",
+      "criticality": 5,
+      "message": "Real-looking PII and financial data (5 full person records with IBANs, BICs, addresses, DOBs) hardcoded in production source code. This data is shipped to every browser, visible in the page source.",
+      "solution": "Replace the hardcoded search_space with an API call to a backend service. If mock data is needed for development, load it from a gitignored JSON fixture file via an environment-controlled import."
+    },
+    {
+      "issue_id": "ISS-010",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 132,
+      "type": "Missing Error Handling",
+      "criticality": 4,
+      "message": "No WebSocket error handler (socket.onerror), no reconnection logic, and no onclose handler to inform the user that the connection was lost.",
+      "solution": "Add event handlers:\nthis.socket.onerror = (err) => { this.status = 'error'; console.error(err); };\nthis.socket.onclose = () => { this.status = 'disconnected'; this.scheduleReconnect(); };"
+    },
+    {
+      "issue_id": "ISS-011",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 173,
+      "type": "Bug",
+      "criticality": 4,
+      "message": "The textarea watcher calls sendMessage() immediately on every change, including before the WebSocket connection is established. If socket.readyState !== WebSocket.OPEN, socket.send() throws.",
+      "solution": "Guard the send call:\nif (this.socket && this.socket.readyState === WebSocket.OPEN) {\n  this.socket.send(...);\n}"
+    },
+    {
+      "issue_id": "ISS-012",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 132,
+      "type": "Modernization",
+      "criticality": 4,
+      "message": "Hardcoded WebSocket URL 'ws://localhost:1337/' makes the application impossible to deploy to any other environment without source code changes.",
+      "solution": "Use an environment variable:\nconst WS_URL = process.env.VUE_APP_WS_URL || 'ws://localhost:1337/';\nthis.socket = new WebSocket(WS_URL);"
+    },
+    {
+      "issue_id": "ISS-013",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 1,
+      "type": "Modernization",
+      "criticality": 4,
+      "message": "Vue 2.x reached End of Life on December 31, 2023. No further security patches will be issued.",
+      "solution": "Migrate to Vue 3. The Composition API provides better TypeScript support and performance. Use the official Vue 2 → Vue 3 migration guide and the @vue/compat compatibility build."
+    },
+    {
+      "issue_id": "ISS-014",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 103,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "zahlungsempfaenger_selected is initialized as an empty string (\"\") but is later used as an object. When sendMessage reads this.zahlungsempfaenger_selected before a selection is made, JSON.stringify sends an empty string as the payment data.",
+      "solution": "Initialize to null and add a guard:\nzahlungsempfaenger_selected: null,\n// In sendMessage:\nif (!this.zahlungsempfaenger_selected) { alert('Please select a payment recipient'); return; }"
+    },
+    {
+      "issue_id": "ISS-015",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 96,
+      "type": "Code Quality",
+      "criticality": 2,
+      "message": "The 'result_selected' prop is declared but never used anywhere in the template or script. Dead code.",
+      "solution": "Remove the unused prop declaration."
+    },
+    {
+      "issue_id": "ISS-016",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 138,
+      "type": "Code Quality",
+      "criticality": 2,
+      "message": "disconnect() references this.logs = [] but 'logs' is not declared in data(). This will silently create a non-reactive property.",
+      "solution": "Add logs: [] to the data() return object, or remove the reference if it is not needed."
+    },
+    {
+      "issue_id": "ISS-017",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 33,
+      "type": "Code Quality",
+      "criticality": 1,
+      "message": "Deprecated HTML attribute cellpadding=4 on <table>. HTML attributes for presentation have been deprecated since HTML5.",
+      "solution": "Replace with CSS: table td, table th { padding: 4px; }"
+    },
+    {
+      "issue_id": "ISS-018",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 243,
+      "type": "Code Quality",
+      "criticality": 1,
+      "message": "CSS property 'align: left' on input is not a valid CSS property. Should be 'text-align: left'.",
+      "solution": "input { text-align: left; }"
+    },
+
+    {
+      "issue_id": "ISS-019",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 51,
+      "type": "Bug",
+      "criticality": 5,
+      "message": "initUI() is called directly from the main thread, not from the Event Dispatch Thread. Creating or manipulating Swing components outside the EDT is undefined behavior and can cause intermittent rendering corruption or deadlocks.",
+      "solution": "Wrap all UI creation in SwingUtilities.invokeLater:\nSwingUtilities.invokeLater(() -> initUI());"
+    },
+    {
+      "issue_id": "ISS-020",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 288,
+      "type": "Bug",
+      "criticality": 5,
+      "message": "onMessage() updates Swing components (textArea.setText, tf_name.setText, etc.) directly from the WebSocket callback thread. Swing is not thread-safe; all UI updates must be dispatched to the EDT.",
+      "solution": "Wrap UI updates:\nSwingUtilities.invokeLater(() -> {\n  textArea.setText(message.content);\n  // ...\n});"
+    },
+    {
+      "issue_id": "ISS-021",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 312,
+      "type": "Code Quality",
+      "criticality": 4,
+      "message": "Manual JSON parsing using low-level JsonParser streaming API with boolean flag state machines (e.g., 'boolean target = false; boolean name = false;...') is 140+ lines of fragile, error-prone code that duplicates standard Jackson/Gson functionality.",
+      "solution": "Replace with a proper JSON library. With Jackson:\nObjectMapper mapper = new ObjectMapper();\nMessageDto msg = mapper.readValue(json, MessageDto.class);\n// MessageDto is a plain record: record MessageDto(String target, String content) {}"
+    },
+    {
+      "issue_id": "ISS-022",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 312,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "The JsonParser created in extract() and toSearchResult() is never closed, leaking a StringReader resource on every incoming message.",
+      "solution": "Use try-with-resources:\ntry (JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json))) { ... }"
+    },
+    {
+      "issue_id": "ISS-023",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 219,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "panel.add(textArea) is called twice — once without constraints (line 221) and once with constraints (line 222). The first add is redundant and may cause unexpected layout behavior.",
+      "solution": "Remove the unconstrainted panel.add(textArea) call on line 221."
+    },
+    {
+      "issue_id": "ISS-024",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 50,
+      "type": "Code Quality",
+      "criticality": 3,
+      "message": "All UI components are static fields of the Main class. This anti-pattern makes the class un-testable, prevents multiple window instances, and couples display state to the application lifecycle.",
+      "solution": "Move UI fields into a dedicated view class (like PocView in the com.poc package) and inject the view into the WebSocket message handler."
+    },
+    {
+      "issue_id": "ISS-025",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 11,
+      "type": "Modernization",
+      "criticality": 3,
+      "message": "Dependencies use outdated javax.* namespace (javax.json, javax.websocket). Java EE APIs were migrated to jakarta.* in Jakarta EE 9. pom.xml also uses Tyrus 1.15 (2019) and javax.json-api 1.1.4.",
+      "solution": "Migrate to:\n- jakarta.json-api 2.1.x\n- org.glassfish.tyrus.bundles:tyrus-standalone-client 2.x\nUpdate import statements from javax.json/javax.websocket to jakarta.json/jakarta.websocket."
+    },
+    {
+      "issue_id": "ISS-026",
+      "file": "swing/src/main/java/com/Main.java",
+      "line": 15,
+      "type": "Bug",
+      "criticality": 4,
+      "message": "new PocView() is called from the main thread, not the EDT. Identical to ISS-019 — same Swing thread-safety violation.",
+      "solution": "Use SwingUtilities.invokeAndWait or invokeLater to construct PocView on the EDT."
+    },
+    {
+      "issue_id": "ISS-027",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 23,
+      "type": "Bug",
+      "criticality": 4,
+      "message": "The EventEmitter lambda updates Swing components from a non-EDT thread (whatever thread calls EventEmitter.emit). This is a thread-safety violation.",
+      "solution": "SwingUtilities.invokeLater(() -> {\n  view.textArea.setText(eventData);\n  // ... all other UI updates\n});"
+    },
+    {
+      "issue_id": "ISS-028",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 40,
+      "type": "Missing Error Handling",
+      "criticality": 3,
+      "message": "IOException from model.action() is caught and wrapped in RuntimeException. This causes an unhandled exception dialog in Swing. The user receives no feedback about what went wrong.",
+      "solution": "Show a dialog:\ncatch (IOException e) {\n  JOptionPane.showMessageDialog(view.frame, \"Connection error: \" + e.getMessage(), \"Error\", JOptionPane.ERROR_MESSAGE);\n}"
+    },
+    {
+      "issue_id": "ISS-029",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 44,
+      "type": "Missing Error Handling",
+      "criticality": 3,
+      "message": "InterruptedException is caught and re-thrown as RuntimeException without restoring the interrupt status. This silently swallows the interrupt signal.",
+      "solution": "catch (InterruptedException e) {\n  Thread.currentThread().interrupt();\n  JOptionPane.showMessageDialog(view.frame, \"Operation interrupted\", \"Warning\", JOptionPane.WARNING_MESSAGE);\n}"
+    },
+    {
+      "issue_id": "ISS-030",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 25,
+      "type": "Code Quality",
+      "criticality": 3,
+      "message": "PocPresenter directly accesses protected fields of PocView (view.textArea, view.firstName, etc.). This violates the MVP encapsulation contract — the presenter should only interact with the view through a defined interface.",
+      "solution": "Define an IPocView interface with methods like setTextArea(String), setFirstName(String), etc. Have PocView implement it. PocPresenter holds a reference to IPocView, not PocView."
+    },
+    {
+      "issue_id": "ISS-031",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 39,
+      "type": "Bug",
+      "criticality": 4,
+      "message": "model.get(val).getField().toString() throws NullPointerException when getField() returns null. All ValueModel instances are initialized with null in the constructor.",
+      "solution": "Add null check:\nString value = model.get(val).getField() != null ? model.get(val).getField().toString() : \"\";\ndata.put(val.toString(), value);"
+    },
+    {
+      "issue_id": "ISS-032",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 12,
+      "type": "Code Quality",
+      "criticality": 2,
+      "message": "The 'model' field is public. External classes directly access the EnumMap, bypassing any future validation logic.",
+      "solution": "Make model private. Provide a typed accessor:\npublic <T> T getValue(ModelProperties prop) {\n  return (T) model.get(prop).getField();\n}"
+    },
+    {
+      "issue_id": "ISS-033",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 29,
+      "type": "Missing Error Handling / Resource Leak",
+      "criticality": 3,
+      "message": "Scanner wrapping connection.getInputStream() is never closed — resource leak. Additionally, HttpURLConnection is deprecated in favor of java.net.http.HttpClient (introduced Java 11).",
+      "solution": "Use Java 11 HttpClient:\nHttpClient client = HttpClient.newHttpClient();\nHttpRequest request = HttpRequest.newBuilder()\n  .uri(URI.create(URL + PATH))\n  .header(\"Content-Type\", CONTENT_TYPE)\n  .POST(HttpRequest.BodyPublishers.ofString(jsonBody))\n  .build();\nHttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());"
+    },
+    {
+      "issue_id": "ISS-034",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 11,
+      "type": "Modernization",
+      "criticality": 2,
+      "message": "URL and PATH are hardcoded constants pointing to localhost:8080. There is no mechanism to configure this for different environments.",
+      "solution": "Load from a properties file or environment variable:\nString baseUrl = System.getProperty(\"app.backend.url\", \"http://localhost:8080\");"
+    },
+    {
+      "issue_id": "ISS-035",
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "line": 188,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "panel.add(textArea) called twice — same bug as ISS-023 in websocket/Main.java.",
+      "solution": "Remove the unconstrainted panel.add(textArea) on line 188."
+    },
+    {
+      "issue_id": "ISS-036",
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "line": 1,
+      "type": "Code Quality",
+      "criticality": 1,
+      "message": "ViewData is an empty class with no fields, methods, or documentation. It is never instantiated or referenced anywhere.",
+      "solution": "Delete ViewData.java. If a transfer object is needed in the future, create it when the requirement is clear."
+    },
+    {
+      "issue_id": "ISS-037",
+      "file": "swing/src/main/java/com/Main.java",
+      "line": 19,
+      "type": "Bug",
+      "criticality": 2,
+      "message": "latch.await() blocks the main thread indefinitely because nothing ever calls latch.countDown(). The application relies on this to stay alive, but it makes graceful shutdown impossible.",
+      "solution": "Register a shutdown hook instead:\nRuntime.getRuntime().addShutdownHook(new Thread(() -> { /* cleanup */ }));"
+    },
+    {
+      "issue_id": "ISS-038",
+      "file": "node-vue-client/package.json",
+      "line": 1,
+      "type": "Modernization",
+      "criticality": 3,
+      "message": "Dependency versions are severely outdated: vue@2.6.10 (EOL), @vue/cli-service@4.x, eslint@5.x, babel-eslint (deprecated in favor of @babel/eslint-parser). No test framework is present.",
+      "solution": "Upgrade to Vue 3 + Vite + Vitest:\n- vue@3.x, vite@5.x, @vitejs/plugin-vue@5.x\n- vitest for unit tests\n- @typescript-eslint/eslint-plugin for linting\n- Remove babel-eslint, replace with @babel/eslint-parser or switch to TypeScript"
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "TD-001",
+      "debt_type": "Design",
+      "impact": "HIGH",
+      "description": "Two parallel Swing entry points exist (websocket.Main and com.Main). They have overlapping functionality (same form layout duplicated) and there is no documented reason for the split.",
+      "suggested_fix": "Merge the two approaches. Integrate WebSocket reception into the MVP-structured com.poc package. The websocket.Main should be considered the legacy prototype and deleted."
+    },
+    {
+      "debt_id": "TD-002",
+      "debt_type": "Test",
+      "impact": "HIGH",
+      "description": "Zero test files in all three tiers. No unit tests, integration tests, or end-to-end tests.",
+      "suggested_fix": "Add JUnit 5 + Mockito for Java. Add Vitest + Vue Test Utils for the Vue component. Add Jest + ws mock for the Node.js server."
+    },
+    {
+      "debt_id": "TD-003",
+      "debt_type": "Design",
+      "impact": "HIGH",
+      "description": "The Vue client uses a hardcoded in-memory dataset as its 'backend'. There is no real API integration. The system cannot scale or persist data.",
+      "suggested_fix": "Define a REST or GraphQL API contract (the api.yml file in the repository root suggests this was planned). Implement a proper backend service and replace the search_space array with fetch() calls."
+    },
+    {
+      "debt_id": "TD-004",
+      "debt_type": "Code",
+      "impact": "MEDIUM",
+      "description": "Manual JSON streaming parser with boolean flag state machines in websocket/Main.java (toSearchResult, extract) — ~140 lines of error-prone code replaceable with 5 lines using Jackson.",
+      "suggested_fix": "Add Jackson databind dependency. Use ObjectMapper with record/DTO classes."
+    },
+    {
+      "debt_id": "TD-005",
+      "debt_type": "Documentation",
+      "impact": "MEDIUM",
+      "description": "No API documentation for the WebSocket message protocol. The JSON message schema (target, content, person fields) is implicit and scattered across three codebases.",
+      "suggested_fix": "Document the WebSocket protocol in the existing api.yml as AsyncAPI 2.x format, or add a PROTOCOL.md describing all message types and their schemas."
+    },
+    {
+      "debt_id": "TD-006",
+      "debt_type": "Design",
+      "impact": "MEDIUM",
+      "description": "No authentication or session management anywhere in the stack. Any client that can reach port 1337 can receive all broadcast messages, including personal and financial data.",
+      "suggested_fix": "Add JWT-based authentication. The WebSocket upgrade request should carry an Authorization header validated by the server before accepting the connection."
+    }
+  ]
+}
