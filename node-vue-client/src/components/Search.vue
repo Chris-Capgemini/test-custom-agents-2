@@ -89,7 +89,7 @@
 
 <script>
 export default {
-  name: 'Search',
+  name: 'PersonSearch',
   props: {
     result_selected: String,
     content_textarea: String
@@ -144,12 +144,12 @@ export default {
       this.search_result = [];
       for(let i = 0; i < this.search_space.length; i++) {
         let element = this.search_space[i];
-        if (this.formdata.last && element.name.toLowerCase().indexOf(this.formdata.last.toLowerCase()) >= 0
-          || this.formdata.first && element.first.toLowerCase().indexOf(this.formdata.first.toLowerCase()) >= 0
-          || this.formdata.zip && element.zip == this.formdata.zip
-          || this.formdata.ort && element.ort.toLowerCase().indexOf(this.formdata.ort.toLowerCase()) >= 0
-          || this.formdata.street && element.street.toLowerCase().indexOf(this.formdata.street.toLowerCase()) >= 0
-          || this.formdata.hausnr && element.hausnr.toLowerCase().indexOf(this.formdata.hausnr.toLowerCase()) >= 0
+        if ((this.formdata.last && element.name.toLowerCase().indexOf(this.formdata.last.toLowerCase()) >= 0)
+          || (this.formdata.first && element.first.toLowerCase().indexOf(this.formdata.first.toLowerCase()) >= 0)
+          || (this.formdata.zip && element.zip == this.formdata.zip)
+          || (this.formdata.ort && element.ort.toLowerCase().indexOf(this.formdata.ort.toLowerCase()) >= 0)
+          || (this.formdata.street && element.street.toLowerCase().indexOf(this.formdata.street.toLowerCase()) >= 0)
+          || (this.formdata.hausnr && element.hausnr.toLowerCase().indexOf(this.formdata.hausnr.toLowerCase()) >= 0)
         ) {
           this.search_result.push(element);
         }
@@ -171,7 +171,9 @@ export default {
   },
   watch: {
     internal_content_textarea: function(val) {
-      this.sendMessage(val, "textarea");
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.sendMessage(val, "textarea");
+      }
     }
   }
 }
