@@ -1,10 +1,13 @@
 package com.poc.model;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.io.StringWriter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Map;
-import java.util.Scanner;
 
 public class HttpBinService {
 
@@ -13,26 +16,27 @@ public class HttpBinService {
     public static final String CONTENT_TYPE = "application/json";
 
     public String post(Map<String, String> data) throws IOException, InterruptedException {
-        HttpURLConnection connection = (HttpURLConnection) new java.net.URL(URL + PATH).openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", CONTENT_TYPE);
-        connection.setDoOutput(true);
         var jsonGeneratorFactory = Json.createGeneratorFactory(null);
-        var generator = jsonGeneratorFactory.createGenerator(connection.getOutputStream());
+        var writer = new StringWriter();
+        var generator = jsonGeneratorFactory.createGenerator(writer);
         generator.writeStartObject();
         for (var entry : data.entrySet()) {
             generator.write(entry.getKey(), entry.getValue());
         }
         generator.writeEnd();
         generator.close();
-        var responseCode = connection.getResponseCode();
-        var responseBody = new Scanner(connection.getInputStream()).useDelimiter("\\A").next();
-        System.out.println("Response code: " + responseCode);
-        System.out.println("Response body: " + responseBody);
-        connection.disconnect();
+        String jsonBody = writer.toString();
 
+        var client = HttpClient.newHttpClient();
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(URL + PATH))
+                .header("Content-Type", CONTENT_TYPE)
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Response code: " + response.statusCode());
+        System.out.println("Response body: " + response.body());
 
-
-        return responseBody;
+        return response.body();
     }
 }
