@@ -43,7 +43,7 @@
           </tr>
         </thead>
         <tbody>
-        <tr v-for="(item, index) in search_result" :value="item" :key="index" 
+        <tr v-for="(item, index) in search_result" :key="index" 
         @click="selectResult(item)" :class="{'highlight': (item.knr == selected_result.knr)}">
           <td>{{item.knr}}</td>
           <td>{{item.name}}</td>
@@ -67,7 +67,7 @@
           </tr>
         </thead>
         <tbody>
-        <tr v-for="(item, index) in selected_result.zahlungsempfaenger" :value="item" :key="index" 
+        <tr v-for="(item, index) in selected_result.zahlungsempfaenger" :key="index" 
         @click="zahlungsempfaengerSelected(item)" :class="{'highlight': (item.iban == zahlungsempfaenger_selected.iban)}">
           <td>{{item.iban}}</td>
           <td>{{item.bic}}</td>
@@ -100,7 +100,9 @@ export default {
       formdata: {},
       search_result: [],
       selected_result: {},
-      zahlungsempfaenger_selected : "",
+      zahlungsempfaenger_selected: "",
+      socket: null,
+      status: "disconnected",
       search_space: [{first:'Hans', name:'Mayer', dob:'1981-01-08', zip:'95183', ort:'Trogen', street:'Isaaer Str.', hausnr:'23', knr:'79423984', zahlungsempfaenger:[
           {iban:'DE27100777770209299700', bic:'ERFBDE8E759', valid_from:'2020-01-04', valid_until:'', type:''},
           {iban:'DE11520513735120710131', bic:'DRESDEFE152', valid_from:'2019-03-12', valid_until:'', type:''}
@@ -138,7 +140,6 @@ export default {
     disconnect() {
       this.socket.close();
       this.status = "disconnected";
-      this.logs = [];
     },
     searchPerson() {
       this.search_result = [];
