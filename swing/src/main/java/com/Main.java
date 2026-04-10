@@ -15,7 +15,8 @@ public class Main {
 		var pocView = new PocView();
 		var eventEmitter = new EventEmitter();
 		var pocModel = new PocModel(eventEmitter);
-		var _ = new PocPresenter(pocView, pocModel, eventEmitter);
+		// PocPresenter is created for its side-effects (wires up event/UI bindings)
+		new PocPresenter(pocView, pocModel, eventEmitter);
 
 		latch.await();
 

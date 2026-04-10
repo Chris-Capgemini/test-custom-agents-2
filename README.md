@@ -7,9 +7,26 @@ Follow these steps to get your Java Swing project up and running:
 
 ## 🔧 Prerequisites
 
-- **Java SDK**: Version **>= 22.0.1**
+- **Java SDK**: Version **21 LTS** (or newer)
+- **Maven**: Version **3.8+**
 - **IDE**: IntelliJ IDEA (recommended)
 - **Docker**: Docker Desktop or Rancher Desktop
+
+---
+
+## ⚡ Modernisation Notes (Java 21)
+
+This project has been updated to **Java 21 LTS**:
+
+| Area | Before | After |
+|------|--------|-------|
+| Java version | 22 | **21 LTS** |
+| WebSocket API | `javax.websocket` (Tyrus 1.x) | `jakarta.websocket` (Tyrus 2.x) |
+| JSON Processing | `javax.json` | `jakarta.json` (Eclipse Parsson) |
+| HTTP client | `HttpURLConnection` (deprecated) | `java.net.http.HttpClient` (Java 11+) |
+| Data classes | Mutable inner classes | **Records** (`Message`, `SearchResult`) |
+| Switch | Legacy `switch` statement | **Enhanced switch** expression |
+| Maven build | No `sourceDirectory` configured | Explicit `sourceDirectory` + JUnit 5 |
 
 ---
 
@@ -19,7 +36,7 @@ Follow these steps to get your Java Swing project up and running:
 
 > **Path:** `File > Project Structure > Project`
 
-- Set the **Project SDK** to **Java >= 22.0.1**
+- Set the **Project SDK** to **Java 21 LTS**
 
 ---
 
