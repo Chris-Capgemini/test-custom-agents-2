@@ -1,6 +1,0 @@
-com/poc/api/support/ApiClient.class
-com/poc/api/steps/PostStepDefinitions.class
-com/poc/api/support/TestContext.class
-com/poc/api/support/TestDataBuilder.class
-com/poc/api/support/TestDataBuilder$Builder.class
-com/poc/api/runner/CucumberTestRunner.class
