@@ -57,7 +57,7 @@ websocket_swing/swing/src/main/java/com
 
 ---
 
-## 💡 2 Insights
+## 💡 Key Repository Insights
 
 1. This repository combines a Java Swing client (`swing/`) with additional Node-based components (`node-server/`, `node-vue-client/`) for end-to-end experimentation.
 2. API validation assets already exist in `analysis_output/api-test-generator/`, so generated documentation and analysis can be verified against an executable test scaffold.
@@ -67,4 +67,4 @@ websocket_swing/swing/src/main/java/com
 ## 🤖 Agent Command Clarification
 
 For documentation-oriented analysis, use the orchestrator agent command style (for example: “Generate architecture documentation”).
-If you entered `/agent code-analysis-orchestrator do start docu`, treat it as a request to start documentation generation through the orchestrator flow.
+If you enter `/agent code-analysis-orchestrator do start docu`, this starts documentation generation through the orchestrator flow.
