@@ -28,8 +28,8 @@ public class PostStepDefinitions {
     private final TestContext context;
     private ApiClient apiClient;
 
-    public PostStepDefinitions(TestContext context) {
-        this.context = context;
+    public PostStepDefinitions() {
+        this.context = new TestContext();
     }
 
     @Before
