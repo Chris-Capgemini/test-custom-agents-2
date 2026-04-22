@@ -15,7 +15,7 @@ public class Main {
 		var pocView = new PocView();
 		var eventEmitter = new EventEmitter();
 		var pocModel = new PocModel(eventEmitter);
-		var presenter = new PocPresenter(pocView, pocModel, eventEmitter);
+		new PocPresenter(pocView, pocModel, eventEmitter);
 
 		latch.await();
 
