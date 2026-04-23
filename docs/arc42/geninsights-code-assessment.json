@@ -1,0 +1,227 @@
+{
+  "assessment_timestamp": "2025-07-14T00:00:00Z",
+  "system_name": "ERPApp — Allegro Modernization PoC",
+  "overall_health_score": 52,
+  "health_grade": "C",
+  "assessment_notes": "This is a PoC with intentionally reduced quality for rapid demonstration. The score of 52/100 reflects real issues that must be addressed before production use. The MVP refactor (com.poc) is significantly better quality than the original prototype (websocket/Main.java).",
+  "issues": [
+    {
+      "issue_id": "ISS-001",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 31,
+      "type": "Security",
+      "criticality": 5,
+      "message": "No authentication or authorization on WebSocket server. Any process can connect to port 1337 and inject messages to all clients, including forging data transfers to Allegro.",
+      "solution": "Implement token-based authentication (e.g., JWT passed as URL query parameter on connection). Validate token in the on('request') handler before accepting the connection."
+    },
+    {
+      "issue_id": "ISS-002",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 47,
+      "type": "Security",
+      "criticality": 5,
+      "message": "No input validation on received messages. Raw JSON is forwarded without any schema validation, sanitization, or size limits. Malicious or malformed messages are relayed to all clients.",
+      "solution": "Validate message structure (JSON parse, schema check) before broadcasting. Implement message size limits. Consider using JSON Schema validation."
+    },
+    {
+      "issue_id": "ISS-003",
+      "file": "multiple files",
+      "line": 0,
+      "type": "Configuration",
+      "criticality": 4,
+      "message": "All service URLs and ports are hardcoded to localhost: ws://localhost:1337 (3 occurrences), http://localhost:8080 (2 occurrences). This prevents deployment to any non-localhost environment without source code changes.",
+      "solution": "Externalize configuration: use environment variables (Node.js: process.env.WS_PORT; Java: System.getProperty(); Vue.js: .env files with VUE_APP_ prefix). Never hardcode service addresses in application code."
+    },
+    {
+      "issue_id": "ISS-004",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 104,
+      "type": "Design",
+      "criticality": 4,
+      "message": "5 hardcoded mock customer records with real-looking IBAN/BIC values are embedded directly in the Vue.js component's data() function. Business data belongs in a service/store layer, not a presentation component.",
+      "solution": "Extract mock data to a separate service (e.g., CustomerService.js or a Vuex store). In production, replace with a real REST API call. Consider using Vue's Composition API with a composable for the data layer."
+    },
+    {
+      "issue_id": "ISS-005",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 312,
+      "type": "Code Quality",
+      "criticality": 4,
+      "message": "JSON parsing uses a manual boolean flag state machine with 10+ flags to extract 10 fields from a flat JSON object. The extract() method is 30 lines; toSearchResult() is 75 lines. This approach is verbose, brittle, and does not correctly handle nested objects (zahlungsempfaenger array is not properly parsed).",
+      "solution": "Replace with a proper JSON binding library: Jackson ObjectMapper (recommended) or Gson. Define POJO classes for Message and SearchResult and use single-line deserialization. This would reduce 100+ lines to ~10 lines."
+    },
+    {
+      "issue_id": "ISS-006",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 132,
+      "type": "Error Handling",
+      "criticality": 4,
+      "message": "The WebSocket.send() call in sendMessage() has no error handling. If the socket is closed or in an error state when the user clicks 'Nach ALLEGRO uebernehmen', an uncaught exception will be thrown in the browser. The socket.onmessage handler is commented out.",
+      "solution": "Check socket.readyState === WebSocket.OPEN before sending. Add socket.onerror and socket.onclose handlers to update UI state and attempt reconnection. Implement exponential backoff reconnection logic."
+    },
+    {
+      "issue_id": "ISS-007",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 30,
+      "type": "Design",
+      "criticality": 3,
+      "message": "All Swing UI components (JFrame, JTextField x10, JTextArea, JRadioButton x3, ButtonGroup, JsonParserFactory) are declared as static fields on the Main class. This prevents unit testing, violates OOP principles, restricts the application to a single window instance, and causes thread-safety issues with static mutable state.",
+      "solution": "Refactor to instance fields following the PocView pattern. Create a dedicated view class (like PocView in com.poc) with instance fields. Remove static qualifier from all component fields."
+    },
+    {
+      "issue_id": "ISS-008",
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "line": 1,
+      "type": "Code Quality",
+      "criticality": 2,
+      "message": "ViewData.java is an empty class with no fields, methods, or documentation. It represents either abandoned dead code or an unfinished design placeholder. Confuses readers about its intended purpose.",
+      "solution": "Either implement the class with its intended DTO/view-model content, or remove it entirely if no longer needed."
+    },
+    {
+      "issue_id": "ISS-009",
+      "file": "swing/src/main/java/com/Main.java",
+      "line": 14,
+      "type": "Design",
+      "criticality": 2,
+      "message": "CountDownLatch(1) is used to prevent the JVM from exiting after wiring the MVP components. This is semantically incorrect — CountDownLatch is designed for synchronization between multiple threads, not as an application lifecycle mechanism. The latch is never decremented in the MVP variant.",
+      "solution": "For a Swing application, rely on the Swing event dispatch thread keeping the JVM alive as long as a visible JFrame exists (setDefaultCloseOperation(EXIT_ON_CLOSE) handles shutdown). Remove the CountDownLatch."
+    },
+    {
+      "issue_id": "ISS-010",
+      "file": "multiple files",
+      "line": 0,
+      "type": "Code Quality",
+      "criticality": 2,
+      "message": "The GridBagLayout Swing UI code is duplicated between websocket/Main.java (initUI() ~170 lines) and com/poc/presentation/PocView.java (initUI() ~170 lines). The two implementations are nearly identical. Changes to the form layout must be applied twice.",
+      "solution": "Retire websocket/Main.java once com.poc is feature-complete with WebSocket reception. Merge the two implementations. Consider extracting shared layout helpers."
+    },
+    {
+      "issue_id": "ISS-011",
+      "file": "multiple files",
+      "line": 0,
+      "type": "Code Quality",
+      "criticality": 1,
+      "message": "All logging uses System.out.println() (Java) and console.log() (Node.js). No log levels, no structured output, no log framework. Debug-level output is mixed with operational output. Cannot control verbosity or redirect logs in production.",
+      "solution": "Java: Replace with SLF4J facade + Logback implementation. Use appropriate log levels (DEBUG for field updates, INFO for HTTP calls, ERROR for exceptions). Node.js: Replace console.log with Winston or Pino with structured JSON output."
+    },
+    {
+      "issue_id": "ISS-012",
+      "file": "entire repository",
+      "line": 0,
+      "type": "Testing",
+      "criticality": 1,
+      "message": "No unit tests, integration tests, or automated tests of any kind exist in the repository. There is no test/ or src/test/ directory. The searchPerson() logic, JSON parsing, HTTP service, MVP bindings, and EventEmitter are all untested.",
+      "solution": "Add unit tests: JUnit 5 + Mockito for Java (PocModel, HttpBinService, EventEmitter, JSON parsing); Jest for Vue.js (searchPerson() logic, message formatting). Achieve minimum 70% coverage on business logic."
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "TD-001",
+      "debt_type": "Code",
+      "description": "Hardcoded localhost URLs in all 5 components",
+      "impact": "HIGH",
+      "suggested_fix": "Externalize via environment variables",
+      "estimated_days": 1
+    },
+    {
+      "debt_id": "TD-002",
+      "debt_type": "Design",
+      "description": "Mock customer data embedded in Vue.js presentation component",
+      "impact": "HIGH",
+      "suggested_fix": "Extract to service layer; replace with real search API",
+      "estimated_days": 2
+    },
+    {
+      "debt_id": "TD-003",
+      "debt_type": "Code",
+      "description": "Manual streaming JSON parser with boolean flag state machine",
+      "impact": "MEDIUM",
+      "suggested_fix": "Replace with Jackson ObjectMapper",
+      "estimated_days": 0.5
+    },
+    {
+      "debt_id": "TD-004",
+      "debt_type": "Code",
+      "description": "Static Swing component fields in websocket/Main.java",
+      "impact": "MEDIUM",
+      "suggested_fix": "Refactor to instance fields following PocView pattern",
+      "estimated_days": 1
+    },
+    {
+      "debt_id": "TD-005",
+      "debt_type": "Code",
+      "description": "Empty ViewData.java stub class",
+      "impact": "LOW",
+      "suggested_fix": "Remove or implement with intended content",
+      "estimated_days": 0.5
+    },
+    {
+      "debt_id": "TD-006",
+      "debt_type": "Test",
+      "description": "No unit tests in the entire repository",
+      "impact": "HIGH",
+      "suggested_fix": "Add JUnit 5 + Mockito (Java) and Jest (Vue.js); target 70% coverage",
+      "estimated_days": 5
+    },
+    {
+      "debt_id": "TD-007",
+      "debt_type": "Code",
+      "description": "Duplicate Swing GridBagLayout UI code in two files",
+      "impact": "MEDIUM",
+      "suggested_fix": "Retire websocket/Main.java; merge implementations",
+      "estimated_days": 1
+    },
+    {
+      "debt_id": "TD-008",
+      "debt_type": "Code",
+      "description": "console.log/System.out.println as only logging mechanism",
+      "impact": "MEDIUM",
+      "suggested_fix": "SLF4J/Logback (Java); Winston/Pino (Node.js)",
+      "estimated_days": 1
+    },
+    {
+      "debt_id": "TD-009",
+      "debt_type": "Design",
+      "description": "CountDownLatch used as application lifecycle mechanism",
+      "impact": "LOW",
+      "suggested_fix": "Remove; rely on Swing EDT for lifecycle",
+      "estimated_days": 0.5
+    },
+    {
+      "debt_id": "TD-010",
+      "debt_type": "Design",
+      "description": "No CORS configuration on WebSocket server (accepts any origin)",
+      "impact": "HIGH",
+      "suggested_fix": "Add origin whitelist to on('request') handler",
+      "estimated_days": 0.5
+    },
+    {
+      "debt_id": "TD-011",
+      "debt_type": "Design",
+      "description": "Vue.js 2.x is end-of-life since December 2023",
+      "impact": "MEDIUM",
+      "suggested_fix": "Migrate to Vue 3 with Composition API",
+      "estimated_days": 3
+    },
+    {
+      "debt_id": "TD-012",
+      "debt_type": "Code",
+      "description": "Swing EDT violations — UI updates not on Event Dispatch Thread",
+      "impact": "MEDIUM",
+      "suggested_fix": "Wrap all Swing updates in SwingUtilities.invokeLater()",
+      "estimated_days": 1
+    }
+  ],
+  "metrics": {
+    "total_issues": 12,
+    "critical_issues": 2,
+    "high_issues": 4,
+    "medium_issues": 4,
+    "low_issues": 2,
+    "total_debt_days": 16.5,
+    "test_coverage": "0%",
+    "documented_files": 3,
+    "files_with_todos": 0,
+    "largest_function_lines": 170
+  }
+}
