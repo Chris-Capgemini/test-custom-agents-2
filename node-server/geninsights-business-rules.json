@@ -1,0 +1,111 @@
+{
+  "extraction_timestamp": "2025-01-01T00:00:00Z",
+  "total_rules_extracted": 8,
+  "rules": [
+    {
+      "rule_id": "BR-001",
+      "rule_name": "Person Search — OR Filter Logic",
+      "rule_type": "Decision",
+      "description": "A person matches a search query if ANY non-empty search field matches the corresponding person attribute. Matching is case-insensitive substring match for string fields; equality for ZIP code.",
+      "source_files": ["node-vue-client/src/components/Search.vue – searchPerson()"],
+      "priority": "High",
+      "concern": "Absence of all search fields returns no results (no guard for empty form), but one empty field incorrectly matches everything for that field because the OR is short-circuit: `this.formdata.last && element.name.toLowerCase().indexOf(...)`. When formdata.last is falsy, that sub-condition is false, so unintended matches do NOT occur — but the logic is fragile and hard to audit."
+    },
+    {
+      "rule_id": "BR-002",
+      "rule_name": "Payment Recipient Selection",
+      "rule_type": "Process",
+      "description": "A user must select a person result first, then optionally select one of that person's Zahlungsempfaenger (payment recipient) entries. Only the latest selected IBAN/BIC is sent to ALLEGRO.",
+      "source_files": ["node-vue-client/src/components/Search.vue – zahlungsempfaengerSelected(), sendMessage()"],
+      "priority": "High",
+      "concern": "No validation that a Zahlungsempfaenger is selected before clicking 'Nach ALLEGRO übernehmen'. If not selected, the raw string zahlungsempfaenger_selected = '' is sent."
+    },
+    {
+      "rule_id": "BR-003",
+      "rule_name": "Message Routing by Target Discriminator",
+      "rule_type": "Decision",
+      "description": "WebSocket messages carry a 'target' field with values 'textfield' or 'textarea'. The Swing client routes the message content accordingly: 'textfield' populates the person/payment form fields; 'textarea' sets the raw text area.",
+      "source_files": [
+        "node-vue-client/src/components/Search.vue – sendMessage()",
+        "swing/src/main/java/websocket/Main.java – onMessage()"
+      ],
+      "priority": "Critical",
+      "concern": "Unknown target values are silently ignored — no default case or error feedback."
+    },
+    {
+      "rule_id": "BR-004",
+      "rule_name": "Broadcast to All Clients",
+      "rule_type": "Process",
+      "description": "The WebSocket server re-broadcasts every received message to ALL connected clients, including the original sender.",
+      "source_files": ["node-server/src/WebsocketServer.js – connection.on('message')"],
+      "priority": "Medium",
+      "concern": "The sender receives its own message back — could cause unintended loops if the Vue client reacts to incoming messages."
+    },
+    {
+      "rule_id": "BR-005",
+      "rule_name": "Form-to-Model Synchronisation on Every Keystroke",
+      "rule_type": "Process",
+      "description": "Every keystroke in a text field immediately updates the corresponding ValueModel entry via DocumentListener (insertUpdate / removeUpdate).",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java – bind(JTextComponent, ModelProperties)"],
+      "priority": "Medium",
+      "concern": "changedUpdate is empty — style/attribute changes to the document are not captured."
+    },
+    {
+      "rule_id": "BR-006",
+      "rule_name": "Form Reset After Action",
+      "rule_type": "Process",
+      "description": "After the HTTP POST action completes (whether successful or failed), all text fields are cleared and the 'female' radio button is re-selected.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java – eventEmitter.subscribe lambda"],
+      "priority": "Medium",
+      "concern": "The reset is triggered by any non-empty response, including error responses — users lose data even on failure."
+    },
+    {
+      "rule_id": "BR-007",
+      "rule_name": "POST Failure Detection",
+      "rule_type": "Decision",
+      "description": "HttpBinService response is considered a failure only if responseBody is empty. An HTTP 4xx/5xx with a non-empty body is treated as success.",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java – action()"],
+      "priority": "High",
+      "concern": "HTTP status code is logged to console but NOT used for pass/fail logic. This is a correctness bug."
+    },
+    {
+      "rule_id": "BR-008",
+      "rule_name": "Textarea Relay on Every Edit",
+      "rule_type": "Process",
+      "description": "Every change to the Vue textarea immediately sends a WebSocket message with target='textarea' to all connected Swing clients.",
+      "source_files": ["node-vue-client/src/components/Search.vue – watch.internal_content_textarea"],
+      "priority": "Medium",
+      "concern": "Sends before socket is confirmed open. If sendMessage is called before connect() establishes the connection, an unhandled exception will be thrown."
+    }
+  ],
+  "workflows": [
+    {
+      "workflow_id": "WF-001",
+      "name": "Person Search and Transfer to ALLEGRO",
+      "steps": [
+        "1. User fills one or more search fields in Vue web client",
+        "2. User clicks 'Suchen' — searchPerson() filters local search_space",
+        "3. Results displayed in table; user clicks a row to select a person",
+        "4. Zahlungsempfaenger sub-table populates; user optionally selects a payment entry",
+        "5. User clicks 'Nach ALLEGRO übernehmen'",
+        "6. sendMessage() serializes selected person + payment data as JSON, sends to WebSocket server",
+        "7. Server broadcasts message to all clients",
+        "8. Swing client onMessage() receives JSON, routes to 'textfield' case",
+        "9. toSearchResult() parses JSON and populates all text fields"
+      ]
+    },
+    {
+      "workflow_id": "WF-002",
+      "name": "MVP Form Submission (com.poc package)",
+      "steps": [
+        "1. User fills form fields — each keystroke updates PocModel via DocumentListener",
+        "2. User clicks 'Anordnen' button",
+        "3. PocPresenter calls model.action()",
+        "4. PocModel collects all field values into a HashMap",
+        "5. HttpBinService POSTs JSON to localhost:8080/post",
+        "6. Response body emitted via EventEmitter",
+        "7. PocPresenter listener receives event, resets all form fields"
+      ]
+    }
+  ]
+}
