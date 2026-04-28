@@ -1,0 +1,752 @@
+{
+  "analysis_metadata": {
+    "timestamp": "2025-01-30T09:15:00Z",
+    "repository_name": "websocket_swing (Allegro PoC)",
+    "total_files_analyzed": 17,
+    "languages_detected": ["java", "javascript", "vue", "yaml"],
+    "primary_frameworks": ["Java Swing", "Vue.js 2", "Node.js WebSocket", "Tyrus WebSocket Client"],
+    "architecture_pattern": "Multi-component PoC: Node.js WebSocket relay server + Vue.js web client + Java Swing desktop client (MVP pattern)",
+    "skills_used": ["discover-files", "geninsights-logging", "json-output-schemas"]
+  },
+  "files": [
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java",
+      "language": "java",
+      "classification": "mixed",
+      "summary": "Legacy monolithic Java Swing WebSocket client that connects to the Node.js relay server, receives JSON messages, and populates form fields for person and payment data in an 'Allegro' desktop window.",
+      "description": "This is the original proof-of-concept WebSocket client. It builds a full Swing UI (GridBagLayout with fields for Vorname, Name, Geburtsdatum, Geschlecht, Strasse, PLZ, Ort, IBAN, BIC, Gültig ab, and a text area) within a single class. It connects to ws://localhost:1337/, receives two types of messages — 'textarea' (raw text) and 'textfield' (JSON person/payment data) — and dispatches to the appropriate UI component. JSON parsing is done via the javax.json streaming API (JsonParser) without object mapping. The main thread is held alive using CountDownLatch until the WebSocket closes.",
+      "key_responsibilities": [
+        "Initialize and display Swing desktop UI titled 'Allegro'",
+        "Establish WebSocket connection to ws://localhost:1337/",
+        "Receive broadcasted JSON messages from the relay server",
+        "Parse 'textarea' messages and populate the text area component",
+        "Parse 'textfield' messages (person + payment data) and populate individual text fields",
+        "Keep main thread alive using CountDownLatch until server disconnects"
+      ],
+      "methods": [
+        {
+          "name": "main",
+          "visibility": "public static",
+          "return_type": "void",
+          "parameters": ["String[] args"],
+          "purpose": "Application entry point: initializes the Swing UI and connects the WebSocket client endpoint",
+          "complexity": "low"
+        },
+        {
+          "name": "initUI",
+          "visibility": "private static",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Builds the GridBagLayout Swing form with all text fields, radio buttons, text area, and action button for the Allegro desktop window",
+          "complexity": "medium"
+        },
+        {
+          "name": "WebsocketClientEndpoint (constructor)",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["URI endpointURI"],
+          "purpose": "Connects to the WebSocket server using the JAX-RS WebSocketContainer and awaits the CountDownLatch",
+          "complexity": "low"
+        },
+        {
+          "name": "onOpen",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["Session userSession"],
+          "purpose": "WebSocket lifecycle callback — stores the session reference when connection is opened",
+          "complexity": "low"
+        },
+        {
+          "name": "onClose",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["Session userSession", "CloseReason reason"],
+          "purpose": "WebSocket lifecycle callback — clears session and counts down the latch to allow main thread to exit",
+          "complexity": "low"
+        },
+        {
+          "name": "onMessage",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["String json"],
+          "purpose": "Handles incoming WebSocket messages — dispatches to textarea or textfield population based on the 'target' field in the JSON envelope",
+          "complexity": "medium"
+        },
+        {
+          "name": "sendMessage",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["String message"],
+          "purpose": "Sends a text message asynchronously over the WebSocket connection",
+          "complexity": "low"
+        },
+        {
+          "name": "extract",
+          "visibility": "public static",
+          "return_type": "Message",
+          "parameters": ["String json"],
+          "purpose": "Parses the JSON envelope using the javax.json streaming parser to extract 'target' and 'content' fields into a Message record",
+          "complexity": "medium"
+        },
+        {
+          "name": "toSearchResult",
+          "visibility": "public static",
+          "return_type": "SearchResult",
+          "parameters": ["String json"],
+          "purpose": "Parses the full person/payment JSON payload using streaming JsonParser and maps fields (name, first, dob, zip, ort, street, hausnr, iban, bic, valid_from) to a SearchResult DTO",
+          "complexity": "high"
+        }
+      ],
+      "dependencies": [
+        "javax.swing (Swing UI)",
+        "javax.websocket (JAX-RS WebSocket annotations and container)",
+        "javax.json (JSON streaming parser)",
+        "org.glassfish.tyrus (WebSocket client runtime)",
+        "java.util.concurrent.CountDownLatch"
+      ],
+      "annotations": ["@javax.websocket.ClientEndpoint", "@OnOpen", "@OnClose", "@OnMessage"],
+      "lines_of_code": 457,
+      "inner_classes": [
+        {
+          "name": "WebsocketClientEndpoint",
+          "type": "static inner class",
+          "purpose": "JAX-RS WebSocket client endpoint — manages connection lifecycle and message handling"
+        },
+        {
+          "name": "Message",
+          "type": "static final inner class (record-like)",
+          "purpose": "Immutable DTO holding 'target' and 'content' strings extracted from the JSON message envelope"
+        },
+        {
+          "name": "SearchResult",
+          "type": "static final inner class (mutable DTO)",
+          "purpose": "Mutable data holder for person and payment fields populated from JSON parsing"
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "SearchResult DTO: name, first, dob, zip, ort, street, hausnr, ze_iban, ze_bic, ze_valid_from (all String). Message DTO: target (String), content (String).",
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Message envelope wraps SearchResult data in the 'content' field when target='textfield'"
+      },
+      "validation_rules": {
+        "input_validation_patterns": "None — all inputs accepted as received from WebSocket",
+        "business_validation_logic": "Message routing based on 'target' field value: 'textarea' routes to text area, 'textfield' routes to form fields",
+        "constraint_violation_handling": "None explicit — JSON parsing silently ignores unknown fields"
+      },
+      "external_integrations": {
+        "third_party_service_calls": "WebSocket connection to ws://localhost:1337/ (Node.js relay server)",
+        "api_consumption_patterns": "Receives JSON messages with envelope structure: {target: string, content: string|object}",
+        "error_handling_for_integrations": "Minimal — DeploymentException, IOException, InterruptedException caught and wrapped in RuntimeException"
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "Application entry point for the refactored MVP Swing client that wires together the View, Model, and Presenter components using constructor injection.",
+      "description": "This is the bootstrap class for the modernized Java Swing MVP architecture. It instantiates PocView, EventEmitter, PocModel (with the emitter), and PocPresenter (with view, model, emitter), then blocks the main thread indefinitely using a CountDownLatch. This demonstrates clean dependency injection wiring without a framework. The use of 'var _' for the presenter reference indicates the presenter is self-registering (subscribes to emitter in its constructor), so the reference itself is discarded.",
+      "key_responsibilities": [
+        "Bootstrap the MVP application by instantiating and wiring all components",
+        "Hold main thread alive indefinitely via CountDownLatch",
+        "Demonstrate dependency injection without a framework"
+      ],
+      "methods": [
+        {
+          "name": "main",
+          "visibility": "public static",
+          "return_type": "void",
+          "parameters": ["String[] args"],
+          "purpose": "Wires together PocView, EventEmitter, PocModel, and PocPresenter and awaits indefinitely",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": [
+        "com.poc.model.EventEmitter",
+        "com.poc.model.PocModel",
+        "com.poc.presentation.PocPresenter",
+        "com.poc.presentation.PocView",
+        "java.util.concurrent.CountDownLatch"
+      ],
+      "lines_of_code": 23
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "Java Swing UI definition for the 'Allegro' desktop form — declares and lays out all visual components including text fields, radio buttons, text area, and submit button.",
+      "description": "PocView is the View layer in the MVP pattern. It constructs a JFrame titled 'Allegro' with a GridBagLayout panel containing: Vorname (first name), Name (last name), Geburtsdatum (DOB) in row 0; a gender radio group (Weiblich/Männlich/Divers) in row 1; Strasse, PLZ, Ort in row 2; IBAN, BIC, Gültig ab in row 3; a large text area labeled 'RT' in row 4; and an 'Anordnen' (submit) button in row 5. German language UI labels indicate this is for a German-language insurance/benefits management system (ALLEGRO is a social insurance software). All UI components are declared as package-protected fields for direct access by the Presenter.",
+      "key_responsibilities": [
+        "Declare all Swing UI components as accessible fields",
+        "Lay out the form using GridBagLayout with proper spacing",
+        "Configure gender radio button group",
+        "Initialize and display the 800x650 frame",
+        "Provide passive view — no logic, only visual structure"
+      ],
+      "methods": [
+        {
+          "name": "PocView (constructor)",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Calls initUI() to build and display the Swing form",
+          "complexity": "low"
+        },
+        {
+          "name": "initUI",
+          "visibility": "private",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Creates all UI components, positions them in a GridBagLayout, configures default selections and visibility, then displays the frame",
+          "complexity": "medium"
+        }
+      ],
+      "dependencies": ["javax.swing", "java.awt"],
+      "lines_of_code": 203,
+      "ui_fields": [
+        "JFrame frame ('Allegro')",
+        "JTextArea textArea",
+        "JTextField name, firstName, dateOfBirth, zip, ort, street, iban, bic, validFrom",
+        "JRadioButton female (Weiblich - default), male (Männlich), diverse (Divers)",
+        "ButtonGroup gender",
+        "JButton button ('Anordnen')"
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "java",
+      "classification": "mixed",
+      "summary": "MVP Presenter that wires UI events to model updates and model events back to the view — implements bidirectional data binding between Swing components and PocModel.",
+      "description": "PocPresenter is the heart of the MVP architecture. In its constructor it: (1) subscribes to the EventEmitter to receive model results and updates the view with response data (clearing all fields after receiving an event); (2) attaches an ActionListener to the submit button that triggers model.action(); (3) calls initializeBindings() to attach DocumentListeners to all text fields and ChangeListeners to all radio buttons. The bind() methods use javax.swing DocumentListener to sync text changes to ValueModel<String> instances in the model map, and ChangeListener to sync radio button state to ValueModel<Boolean>. This implements reactive two-way binding without a framework.",
+      "key_responsibilities": [
+        "Subscribe to EventEmitter to receive server response data and populate view fields",
+        "Wire button action listener to trigger model.action()",
+        "Bind each Swing text component to its corresponding ModelProperties entry via DocumentListener",
+        "Bind each radio button to its corresponding ModelProperties entry via ChangeListener",
+        "Clear all form fields when an event is received (post-action reset)"
+      ],
+      "methods": [
+        {
+          "name": "PocPresenter (constructor)",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["PocView view", "PocModel model", "EventEmitter eventEmitter"],
+          "purpose": "Wires all event subscriptions and UI bindings in a single construction step",
+          "complexity": "medium"
+        },
+        {
+          "name": "bind (text component overload)",
+          "visibility": "private",
+          "return_type": "void",
+          "parameters": ["JTextComponent source", "ModelProperties prop"],
+          "purpose": "Attaches a DocumentListener to a text component that updates the corresponding ValueModel<String> in the model on any insert or remove text event",
+          "complexity": "medium"
+        },
+        {
+          "name": "bind (radio button overload)",
+          "visibility": "private",
+          "return_type": "void",
+          "parameters": ["JRadioButton source", "ModelProperties prop"],
+          "purpose": "Attaches a ChangeListener to a radio button that updates the corresponding ValueModel<Boolean> in the model when selection changes",
+          "complexity": "low"
+        },
+        {
+          "name": "initializeBindings",
+          "visibility": "private",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Calls bind() for every view component to establish the complete set of model-view bindings",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": [
+        "com.poc.ValueModel",
+        "com.poc.model.EventEmitter",
+        "com.poc.model.ModelProperties",
+        "com.poc.model.PocModel",
+        "javax.swing",
+        "javax.swing.event.DocumentListener",
+        "javax.swing.event.DocumentEvent"
+      ],
+      "lines_of_code": 113,
+      "business_rules": [
+        "On event received: populate textArea with response, then clear all form fields (firstName, name, dateOfBirth, zip, ort, street, iban, bic, validFrom)",
+        "On event received: reset gender selection to female=true, male=false, diverse=false",
+        "On button click: invoke model.action() which sends all field data to the HTTP endpoint"
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "java",
+      "classification": "business",
+      "summary": "Domain model for the Allegro PoC — maintains a typed map of all form field values and orchestrates the HTTP POST action to the backend service.",
+      "description": "PocModel holds the application state in an EnumMap keyed by ModelProperties. It initializes ValueModel wrappers for all 13 fields (TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT, STREET, IBAN, BIC, VALID_FROM, MALE, FEMALE, DIVERSE). The action() method collects all current field values, serializes them into a HashMap<String, String>, posts to the HttpBinService, and emits the response body via EventEmitter. If the response is empty, it emits a 'Failed operation' message. This is the model in MVP — it holds state and contains the business operation.",
+      "key_responsibilities": [
+        "Maintain current state of all 13 form fields as ValueModel instances in an EnumMap",
+        "Provide action() to serialize all fields and POST to the backend HTTP endpoint",
+        "Emit server response data (or failure message) via EventEmitter after action completes",
+        "Initialize default null values for all model properties"
+      ],
+      "methods": [
+        {
+          "name": "PocModel (constructor)",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["EventEmitter eventEmitter"],
+          "purpose": "Initializes all 13 ValueModel entries in the EnumMap and stores the EventEmitter reference",
+          "complexity": "low"
+        },
+        {
+          "name": "action",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Serializes all model field values to a String map, POSTs to HttpBinService, and emits the response or an error message",
+          "complexity": "medium"
+        }
+      ],
+      "dependencies": [
+        "com.poc.ValueModel",
+        "com.poc.model.HttpBinService",
+        "com.poc.model.EventEmitter",
+        "com.poc.model.ModelProperties"
+      ],
+      "lines_of_code": 49,
+      "business_rules": [
+        "All model fields are initialized with null values until bound by the presenter",
+        "action() converts all field values to strings using toString() before posting — may cause NullPointerException if fields are null",
+        "If HttpBinService returns empty response body, emit 'Failed operation' instead of response data",
+        "All 13 fields are always included in the POST payload regardless of whether they have values"
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "Simple publish-subscribe event dispatcher that maintains a list of EventListeners and broadcasts string event data to all subscribers.",
+      "description": "EventEmitter implements a basic observer/pub-sub pattern for decoupling the model from the presenter. It holds an ArrayList of EventListener instances and provides subscribe() to register listeners and emit() to broadcast a String event to all registered listeners. This enables the model to notify the presenter of results without a direct reference, following the classic MVP pattern for view updates.",
+      "key_responsibilities": [
+        "Maintain ordered list of event listeners",
+        "Allow new listeners to subscribe at any time",
+        "Broadcast string event data to all registered listeners in registration order"
+      ],
+      "methods": [
+        {
+          "name": "subscribe",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["EventListener listener"],
+          "purpose": "Adds a listener to the list of subscribers",
+          "complexity": "low"
+        },
+        {
+          "name": "emit",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["String eventData"],
+          "purpose": "Iterates over all listeners and calls onEvent(eventData) on each",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": ["com.poc.model.EventListener"],
+      "lines_of_code": 21
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+      "file_name": "EventListener.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "Functional interface defining the contract for event subscribers in the pub-sub mechanism.",
+      "description": "EventListener is a single-method interface (effectively a functional interface) used by the EventEmitter. Implementations receive string event data and process it accordingly. In the PoC, the PocPresenter uses a lambda to implement this interface for updating the Swing view after model actions complete.",
+      "key_responsibilities": [
+        "Define the callback contract for event subscribers",
+        "Enable lambda-based subscriber registration"
+      ],
+      "methods": [
+        {
+          "name": "onEvent",
+          "visibility": "public (abstract)",
+          "return_type": "void",
+          "parameters": ["String eventData"],
+          "purpose": "Called by EventEmitter when an event is published; implementors handle the event data",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": [],
+      "lines_of_code": 5
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "HTTP client service that POSTs form field data as JSON to the HTTPBin mock backend at localhost:8080/post.",
+      "description": "HttpBinService is the integration layer that sends the collected Allegro form data to an HTTP endpoint. It uses java.net.HttpURLConnection for a raw HTTP POST, builds a JSON payload using the javax.json streaming generator (JsonGenerator), and reads the response body with a Scanner. The target URL (http://localhost:8080) is HTTPBin running in a Docker container, which echoes back the JSON payload in its response — used for PoC validation that the data is correctly formed and transmitted.",
+      "key_responsibilities": [
+        "Build and send a JSON POST request to http://localhost:8080/post",
+        "Serialize a Map<String, String> into a JSON object body using streaming generator",
+        "Read and return the full response body as a String",
+        "Handle HTTP connection lifecycle (open, write, read, disconnect)"
+      ],
+      "methods": [
+        {
+          "name": "post",
+          "visibility": "public",
+          "return_type": "String",
+          "parameters": ["Map<String, String> data"],
+          "purpose": "Performs an HTTP POST to localhost:8080/post with the provided data serialized as JSON; returns the full response body",
+          "complexity": "medium"
+        }
+      ],
+      "dependencies": [
+        "javax.json.Json",
+        "javax.json.stream.JsonGenerator",
+        "java.net.HttpURLConnection"
+      ],
+      "lines_of_code": 38,
+      "external_integrations": {
+        "third_party_service_calls": "HTTP POST to http://localhost:8080/post (HTTPBin Docker container: kennethreitz/httpbin)",
+        "api_consumption_patterns": "Sends JSON object with string key-value pairs matching ModelProperties enum names",
+        "error_handling_for_integrations": "IOException and InterruptedException propagated to caller; no retry or timeout logic"
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "Enum defining the canonical set of form field keys used as typed keys in the PocModel's EnumMap.",
+      "description": "ModelProperties is a simple enum that serves as the keying scheme for the domain model. It defines 13 constants representing every editable field in the Allegro form: TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT, STREET, IBAN, BIC, VALID_FROM, FEMALE, MALE, DIVERSE. The same names are used as JSON keys in the HTTP POST payload (via toString()), ensuring consistency between UI, model storage, API communication, and OpenAPI schema definitions.",
+      "key_responsibilities": [
+        "Define the canonical field set for the Allegro person/payment form",
+        "Serve as type-safe keys in the PocModel EnumMap",
+        "Provide field names for JSON serialization to the HTTP backend"
+      ],
+      "lines_of_code": 18,
+      "dependencies": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "java",
+      "classification": "technical",
+      "summary": "Generic mutable value wrapper used to hold a single typed field value within the PocModel's EnumMap.",
+      "description": "ValueModel<T> is a simple generic class that wraps a single mutable value of any type T. It provides type-safe get/set operations and is used as the value type in PocModel's EnumMap<ModelProperties, ValueModel<?>>. String fields use ValueModel<String> and boolean radio fields use ValueModel<Boolean>. This pattern allows the model map to hold heterogeneous but type-checkable values.",
+      "key_responsibilities": [
+        "Wrap a single value of any type T with get/set access",
+        "Enable polymorphic storage of typed values in the model EnumMap",
+        "Support both String and Boolean field types"
+      ],
+      "methods": [
+        {
+          "name": "ValueModel (constructor)",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["T field"],
+          "purpose": "Initializes the wrapper with an initial value (typically null for all model fields)",
+          "complexity": "low"
+        },
+        {
+          "name": "getField",
+          "visibility": "public",
+          "return_type": "T",
+          "parameters": [],
+          "purpose": "Returns the current wrapped value",
+          "complexity": "low"
+        },
+        {
+          "name": "setField",
+          "visibility": "public",
+          "return_type": "void",
+          "parameters": ["T field"],
+          "purpose": "Updates the wrapped value",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": [],
+      "lines_of_code": 18
+    },
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "language": "javascript",
+      "classification": "technical",
+      "summary": "Node.js WebSocket relay server listening on port 1337 that accepts all connections and broadcasts every received UTF-8 message to all connected clients.",
+      "description": "WebsocketServer.js implements a pure broadcast relay using the 'websocket' npm package (WebSocket protocol RFC 6455). It spins up an HTTP server on port 1337 (required by the WebSocket spec since WebSocket upgrades HTTP connections), then creates a WebSocket server bound to it. On each connection it: accepts the connection (allowing all origins), stores the client in a global 'clients' array, listens for 'message' events to broadcast to all clients, and listens for 'close' events to remove the disconnected client. The message history array is declared but unused — a stub for future persistence. This server acts as the message bus connecting the Vue.js web client and the Java Swing desktop client.",
+      "key_responsibilities": [
+        "Accept all incoming WebSocket connections regardless of origin",
+        "Maintain a live list of connected clients",
+        "Broadcast every received UTF-8 message to all connected clients (including sender)",
+        "Remove clients from the list on disconnection",
+        "Serve as the central relay between the Vue.js search UI and the Java Swing Allegro form"
+      ],
+      "methods": [
+        {
+          "name": "server.listen callback",
+          "visibility": "module-level",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Logs server startup confirmation on port 1337",
+          "complexity": "low"
+        },
+        {
+          "name": "wsServer.on('request') handler",
+          "visibility": "module-level",
+          "return_type": "void",
+          "parameters": ["request"],
+          "purpose": "Handles new WebSocket connection requests: accepts all origins, registers client, sets up message and close handlers",
+          "complexity": "medium"
+        },
+        {
+          "name": "connection.on('message') handler",
+          "visibility": "closure",
+          "return_type": "void",
+          "parameters": ["message"],
+          "purpose": "Receives UTF-8 WebSocket messages and broadcasts them to all items in the clients array",
+          "complexity": "low"
+        },
+        {
+          "name": "connection.on('close') handler",
+          "visibility": "closure",
+          "return_type": "void",
+          "parameters": ["connection"],
+          "purpose": "Removes the disconnected client from the clients array using the pre-captured index",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": [
+        "websocket (npm ^1.0.35)",
+        "http (Node.js core)"
+      ],
+      "lines_of_code": 68,
+      "external_integrations": {
+        "third_party_service_calls": "None — acts as the server endpoint",
+        "api_consumption_patterns": "WebSocket RFC 6455 protocol, UTF-8 text messages only, JSON envelope format: {target: string, content: any}",
+        "error_handling_for_integrations": "None — no error handlers registered for WebSocket errors"
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/main.js",
+      "file_name": "main.js",
+      "language": "javascript",
+      "classification": "technical",
+      "summary": "Vue 2 application bootstrap that mounts the root App component to the DOM element with id 'app'.",
+      "description": "Standard Vue 2 entry point. It imports Vue and the App root component, disables the production tip, and creates a new Vue instance with a render function mounting the App component. This is the minimal bootstrap required by Vue CLI for a single-page application.",
+      "key_responsibilities": [
+        "Bootstrap Vue 2 application",
+        "Mount App component to #app DOM element"
+      ],
+      "dependencies": ["vue ^2.6.10"],
+      "lines_of_code": 8
+    },
+    {
+      "file_path": "node-vue-client/src/App.vue",
+      "file_name": "App.vue",
+      "language": "vue",
+      "classification": "technical",
+      "summary": "Root Vue component that provides the application shell with a branded header and renders the Search component.",
+      "description": "App.vue is the root Vue SFC (Single File Component). It renders a branded header bar with red background (#ff2b06), 40pt 'Search Mock' title, and a logo placeholder. It instantiates the Search component with the prop content_textarea='Search Mock'. The component includes global CSS styles for the app shell, header, and logo positioning. This component acts purely as the application layout wrapper.",
+      "key_responsibilities": [
+        "Render the application header with brand colors",
+        "Instantiate and render the Search component",
+        "Define global application CSS styles"
+      ],
+      "methods": [],
+      "dependencies": ["./components/Search.vue"],
+      "lines_of_code": 47
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "language": "vue",
+      "classification": "business",
+      "summary": "Main business component providing person search, result selection with payment data, and WebSocket-based data transfer to the Allegro desktop client.",
+      "description": "Search.vue is the core business component. It renders a multi-section form: (1) a person input form with fields for last name, customer number, IBAN, first name, company description, BIC, date of birth, RV-Nummer, nationality, PLZ, Postfach, BG-Nummer, Ort, Vorsatzwort, Leistung, Strasse, Titel, Träger-Nr, and Hausnummer; (2) a search results table showing Kdn.-nr, Name, Vorname, Geburtsdatum, PLZ, Strasse, Ort; (3) a Zahlungsempfänger (payment recipient) table showing IBAN, BIC, Gültig ab; (4) a 'Nach ALLEGRO übernehmen' (Transfer to ALLEGRO) button; (5) a text area for free-text. It connects to ws://localhost:1337/ on mount, implements local person search across an in-memory dataset of 5 German persons with addresses and IBAN/BIC payment data, and transmits selected data via WebSocket. The text area changes are watched and auto-sent as 'textarea' messages.",
+      "key_responsibilities": [
+        "Connect to WebSocket server on component mount",
+        "Provide multi-field person search with case-insensitive matching across name, first, zip, ort, street, hausnr",
+        "Display search results in a paginated table with row highlighting",
+        "Allow selection of a person result and their associated payment data (Zahlungsempfänger)",
+        "Transmit selected person + chosen payment data to Allegro via WebSocket ('textfield' target)",
+        "Watch text area changes and auto-transmit to Allegro via WebSocket ('textarea' target)"
+      ],
+      "methods": [
+        {
+          "name": "connect",
+          "visibility": "component method",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Opens a WebSocket connection to ws://localhost:1337/ and sets status to 'connected'",
+          "complexity": "low"
+        },
+        {
+          "name": "disconnect",
+          "visibility": "component method",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Closes the WebSocket connection, sets status to 'disconnected', and clears logs",
+          "complexity": "low"
+        },
+        {
+          "name": "searchPerson",
+          "visibility": "component method",
+          "return_type": "void",
+          "parameters": [],
+          "purpose": "Performs client-side search through search_space using case-insensitive OR-matching across name, first, zip, ort, street, hausnr fields; populates search_result array",
+          "complexity": "medium"
+        },
+        {
+          "name": "sendMessage",
+          "visibility": "component method",
+          "return_type": "void",
+          "parameters": ["e (data to send)", "target (string: 'textfield' or 'textarea')"],
+          "purpose": "Serializes data as JSON and sends over WebSocket with envelope {target, content}; for 'textfield' replaces zahlungsempfaenger array with selected single payment entry",
+          "complexity": "low"
+        },
+        {
+          "name": "selectResult",
+          "visibility": "component method",
+          "return_type": "void",
+          "parameters": ["item (search result row)"],
+          "purpose": "Sets selected_result to the clicked table row, triggering reactivity to show payment data in the Zahlungsempfänger table",
+          "complexity": "low"
+        },
+        {
+          "name": "zahlungsempfaengerSelected",
+          "visibility": "component method",
+          "return_type": "void",
+          "parameters": ["zahlungsempfaenger (payment entry)"],
+          "purpose": "Stores the selected payment entry (IBAN/BIC/valid_from) for inclusion in the WebSocket message",
+          "complexity": "low"
+        }
+      ],
+      "dependencies": [
+        "vue ^2.6.10",
+        "WebSocket (browser native API)"
+      ],
+      "lines_of_code": 258,
+      "business_rules": [
+        "Person search uses OR logic: any non-empty search field that matches triggers inclusion in results",
+        "Search is case-insensitive using toLowerCase() and indexOf() >= 0",
+        "Exact ZIP match is used (==) while name/street/city use substring match",
+        "When sending to ALLEGRO with target='textfield', the zahlungsempfaenger array is replaced with the single selected payment entry",
+        "Text area content changes are automatically sent to ALLEGRO via WebSocket watch handler",
+        "Only one person and one payment entry can be selected at a time (last-click wins)"
+      ],
+      "in_memory_data": {
+        "description": "5 hardcoded German persons with addresses and payment data (IBAN/BIC/valid_from)",
+        "persons": [
+          "Hans Mayer, DOB 1981-01-08, 95183 Trogen — 2 payment accounts",
+          "Linda Reitmayr, DOB 1979-05-12, 92148 Hof — 1 payment account",
+          "Karl May, DOB 1964-11-02, 10124 Berlin — 3 payment accounts",
+          "Jens Mueller, DOB 1999-04-21, 14489 Potsdam — 2 payment accounts",
+          "Steffi Ruckmueller, DOB 1961-11-05, 14432 Templin — 2 payment accounts"
+        ]
+      }
+    },
+    {
+      "file_path": "api.yml",
+      "file_name": "api.yml",
+      "language": "yaml",
+      "classification": "technical",
+      "summary": "OpenAPI 3.0 specification for the Allegro PoC POST endpoint, defining the request/response schema for the HTTPBin echo service integration.",
+      "description": "api.yml documents the REST API contract for the Allegro modernization proof of concept. It defines a single POST /post endpoint at http://localhost:8080 (HTTPBin Docker container) that accepts and echoes back an Allegro person/payment form object. The PostObject schema mirrors the ModelProperties enum: FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA (all strings). The PostResponseObject reflects the HTTPBin echo format (args, data, files, form, headers, json, origin, url).",
+      "key_responsibilities": [
+        "Document the POST /post API endpoint contract",
+        "Define PostObject schema matching ModelProperties enum values",
+        "Define PostResponseObject schema for HTTPBin echo response structure",
+        "Specify server URL (http://localhost:8080)"
+      ],
+      "lines_of_code": 97
+    },
+    {
+      "file_path": "pom.xml",
+      "file_name": "pom.xml",
+      "language": "xml",
+      "classification": "technical",
+      "summary": "Maven build configuration for the Java Swing WebSocket client, declaring GlassFish Tyrus WebSocket dependencies and targeting Java 22.",
+      "description": "The Maven POM configures the websocket_swing project with Java 22 source/target compilation. It declares 5 dependencies: websocket-api (0.2), tyrus-standalone-client (1.15), tyrus-websocket-core (1.2.1), tyrus-spi (1.15), and javax.json-api (1.1.4) with glassfish javax.json (1.0.4) as the runtime. This provides both the WebSocket client API (JSR-356) and the JSON streaming API (JSR-374) used by the application.",
+      "key_responsibilities": [
+        "Declare Maven project coordinates (groupId: websocket_swing)",
+        "Configure Java 22 compilation target",
+        "Declare GlassFish Tyrus WebSocket client dependencies",
+        "Declare javax.json API and implementation dependencies"
+      ],
+      "dependencies": [
+        "org.glassfish.websocket:websocket-api:0.2",
+        "org.glassfish.tyrus.bundles:tyrus-standalone-client:1.15",
+        "org.glassfish.tyrus:tyrus-websocket-core:1.2.1",
+        "org.glassfish.tyrus:tyrus-spi:1.15",
+        "javax.json:javax.json-api:1.1.4",
+        "org.glassfish:javax.json:1.0.4"
+      ],
+      "lines_of_code": 66
+    },
+    {
+      "file_path": "node-server/package.json",
+      "file_name": "package.json",
+      "language": "json",
+      "classification": "technical",
+      "summary": "Node.js package manifest for the WebSocket server declaring the 'websocket' package as its only dependency.",
+      "description": "Minimal package.json for the node-server project with a single production dependency: 'websocket' ^1.0.35 (the WebSocket protocol implementation for Node.js). No scripts, version, or name defined — intentionally minimal for a PoC server.",
+      "key_responsibilities": [
+        "Declare websocket npm dependency"
+      ],
+      "dependencies": ["websocket ^1.0.35"],
+      "lines_of_code": 5
+    },
+    {
+      "file_path": "node-vue-client/package.json",
+      "file_name": "package.json",
+      "language": "json",
+      "classification": "technical",
+      "summary": "Vue CLI project manifest for the node-vue-client with Vue 2 dependencies and development tooling configuration.",
+      "description": "Standard Vue CLI-generated package.json. Declares vue ^2.6.10 and core-js ^3.1.2 as production dependencies. Development dependencies include @vue/cli-service, @vue/cli-plugin-babel, @vue/cli-plugin-eslint, babel-eslint, eslint, eslint-plugin-vue, and vue-template-compiler. Includes ESLint configuration (plugin:vue/essential + eslint:recommended), PostCSS autoprefixer, and browserslist targeting >1% + last 2 versions.",
+      "key_responsibilities": [
+        "Declare Vue 2 production dependency",
+        "Configure Vue CLI development tooling",
+        "Define ESLint configuration for Vue SFCs",
+        "Configure browserslist for CSS autoprefixing"
+      ],
+      "dependencies": [
+        "vue ^2.6.10",
+        "core-js ^3.1.2",
+        "@vue/cli-service ^4.0.0",
+        "@vue/cli-plugin-babel ^4.0.0",
+        "@vue/cli-plugin-eslint ^4.0.0",
+        "eslint ^5.16.0",
+        "eslint-plugin-vue ^5.0.0"
+      ],
+      "lines_of_code": 46
+    }
+  ],
+  "summary": {
+    "business_files": 2,
+    "technical_files": 10,
+    "mixed_files": 5,
+    "languages_detected": ["java", "javascript", "vue", "yaml", "xml", "json"],
+    "primary_frameworks": [
+      "Java Swing (AWT/Swing)",
+      "Vue.js 2",
+      "Node.js (WebSocket relay)",
+      "GlassFish Tyrus (WebSocket client)",
+      "Maven (build)"
+    ],
+    "architecture_pattern": "Multi-client WebSocket broadcast relay PoC: Vue.js search UI → Node.js relay → Java Swing Allegro form",
+    "domain": "German social insurance / benefits management system (ALLEGRO modernization PoC)",
+    "notable_patterns": [
+      "Model-View-Presenter (MVP) in Java Swing client (com/poc package)",
+      "Observer/Event Emitter pattern for MVP view updates",
+      "WebSocket broadcast relay for cross-platform UI integration",
+      "In-memory person dataset simulating a real search backend",
+      "JSON envelope routing with target field (textarea/textfield) for message dispatch",
+      "Two implementations of the same concept: legacy monolithic (websocket/Main.java) vs. refactored MVP (com/poc)"
+    ]
+  }
+}
