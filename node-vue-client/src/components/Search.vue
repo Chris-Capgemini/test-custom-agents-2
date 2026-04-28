@@ -96,6 +96,7 @@ export default {
   },
   data: function() {
     return {
+      status: "",
       internal_content_textarea: this.content_textarea,
       formdata: {},
       search_result: [],
@@ -132,13 +133,17 @@ export default {
       this.socket = new WebSocket("ws://localhost:1337/");
       this.socket.onopen = () => {
         this.status = "connected";   
-        //this.socket.onmessage = ({data}) => {};
+      };
+      this.socket.onclose = () => {
+        this.status = "disconnected";
+      };
+      this.socket.onerror = () => {
+        this.status = "error";
       };
     },
     disconnect() {
       this.socket.close();
       this.status = "disconnected";
-      this.logs = [];
     },
     searchPerson() {
       this.search_result = [];
@@ -240,7 +245,7 @@ div#person button {
   right: 4px;
 }
 div#person input {
-  align: left;
+  text-align: left;
   right: 0px;
 }
 
