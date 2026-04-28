@@ -1,4 +1,10 @@
 {
+  "name": "node-websocket-server",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node src/WebsocketServer.js",
+    "test": "node --test"
+  },
   "dependencies": {
     "websocket": "^1.0.35"
   }
