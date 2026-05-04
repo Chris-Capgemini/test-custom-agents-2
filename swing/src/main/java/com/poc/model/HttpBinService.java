@@ -1,8 +1,9 @@
 package com.poc.model;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -13,7 +14,7 @@ public class HttpBinService {
     public static final String CONTENT_TYPE = "application/json";
 
     public String post(Map<String, String> data) throws IOException, InterruptedException {
-        HttpURLConnection connection = (HttpURLConnection) new java.net.URL(URL + PATH).openConnection();
+        HttpURLConnection connection = (HttpURLConnection) URI.create(URL + PATH).toURL().openConnection();
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", CONTENT_TYPE);
         connection.setDoOutput(true);
