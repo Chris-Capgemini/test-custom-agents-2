@@ -306,13 +306,19 @@ public class Main {
 		/**
 		 * Extracts a {@link Message} from a JSON string containing {@code target} and
 		 * {@code content} fields. When the target is {@code "textarea"} the
-		 * {@code content} field value is used; for all other targets the raw JSON
-		 * string is forwarded as-is (it will be re-parsed by {@link #toSearchResult}).
+		 * {@code content} field value is returned; for all other targets the full JSON
+		 * object is serialised back to a string so that {@link Main#toSearchResult}
+		 * can re-use the existing contract without a second network read.
+		 * <p>
+		 * The top-level JSON is read only once here.
 		 */
 		public static Message extract(String json) {
 			try (var reader = Json.createReader(new StringReader(json))) {
 				var obj = reader.readObject();
 				var target = obj.getString("target", "");
+				// For "textarea" the payload is the string value of the "content" key.
+				// For "textfield" the payload is the whole raw JSON message so that
+				// toSearchResult() can extract the individual fields from it.
 				var content = "textarea".equals(target) ? obj.getString("content", "") : json;
 				return new Message(target, content);
 			}

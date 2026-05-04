@@ -14,7 +14,7 @@ public class HttpBinService {
     public static final String PATH = "/post";
     public static final String CONTENT_TYPE = "application/json";
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     public String post(Map<String, String> data) throws IOException, InterruptedException {
         var jsonBody = toJson(data);
@@ -25,7 +25,7 @@ public class HttpBinService {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 
-        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println("Response code: " + response.statusCode());
         System.out.println("Response body: " + response.body());
         return response.body();
