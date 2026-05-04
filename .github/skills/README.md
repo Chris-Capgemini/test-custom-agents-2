@@ -24,10 +24,3 @@ These skills were extracted from the reusable migration cookbooks in `CopilotRev
 
 - `swing-to-angular-table-dialog-migrator`
 - `swing-to-angular-validation-migrator`
-
-## Intentionally omitted
-
-- `ADF-to-angular/dguv_styling_generator`
-- `ADF-to-angular/navigation_menu_generator`
-
-These two cookbook families are intentionally excluded because they are too client-specific and not strong reusable baselines.
