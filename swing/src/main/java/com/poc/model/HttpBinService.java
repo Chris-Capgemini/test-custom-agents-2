@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Map;
 
 public class HttpBinService {
@@ -14,9 +15,10 @@ public class HttpBinService {
     public static final String PATH = "/post";
     public static final String CONTENT_TYPE = "application/json";
 
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final HttpClient client = HttpClient.newBuilder()
-            .connectTimeout(java.time.Duration.ofSeconds(10))
+            .connectTimeout(CONNECT_TIMEOUT)
             .build();
 
     public String post(Map<String, String> data) throws IOException, InterruptedException {
