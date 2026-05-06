@@ -4,7 +4,11 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
@@ -22,436 +26,292 @@ import javax.websocket.WebSocketContainer;
 
 public class Main {
 
-	// We used CountDownLatch to make sure that main thread does not exit after
-	// executing the code. The main thread waits till the time latch decrements the
-	// counter in onClose() method.
-	private static CountDownLatch latch;
+    /**
+     * A WebSocket message with a target UI element name and payload content.
+     * Using a record gives us an immutable value object with auto-generated
+     * accessors, equals, hashCode, and toString.
+     */
+    record Message(String target, String content) {}
 
-	private static JFrame frame = new JFrame("Allegro");
-	private static JTextArea textArea = new JTextArea();
-	private static JTextField tf_name = new JTextField();
-	private static JTextField tf_first = new JTextField();
-	private static JTextField tf_dob = new JTextField();
-	private static JTextField tf_zip = new JTextField();
-	private static JTextField tf_ort = new JTextField();
-	private static JTextField tf_street = new JTextField();
-	private static JTextField tf_hausnr = new JTextField();
-	private static JTextField tf_ze_iban = new JTextField();
-	private static JTextField tf_ze_bic = new JTextField();
-	private static JTextField tf_ze_valid_from = new JTextField();
+    /**
+     * Data transfer object for a search result received over WebSocket.
+     * All fields are stored as camelCase to follow Java naming conventions.
+     */
+    record SearchResult(
+            String name,
+            String first,
+            String dob,
+            String zip,
+            String ort,
+            String street,
+            String hausnr,
+            String zeIban,
+            String zeBic,
+            String zeValidFrom
+    ) {}
 
-	private static JRadioButton rb_female = new JRadioButton("Weiblich");
-	private static JRadioButton rb_male = new JRadioButton("Männlich");
-	private static JRadioButton rb_diverse = new JRadioButton("Divers");
-	private static ButtonGroup bg_gender = new ButtonGroup();
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
-	private static JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
+    // CountDownLatch keeps the main thread alive until the WebSocket is closed
+    private static CountDownLatch latch;
 
-	public static void main(String[] args) throws IOException, DeploymentException {
-		initUI();
+    // UI components
+    private static final JFrame    frame           = new JFrame("Allegro");
+    private static final JTextArea textArea        = new JTextArea();
+    private static final JTextField tf_name        = new JTextField();
+    private static final JTextField tf_first       = new JTextField();
+    private static final JTextField tf_dob         = new JTextField();
+    private static final JTextField tf_zip         = new JTextField();
+    private static final JTextField tf_ort         = new JTextField();
+    private static final JTextField tf_street      = new JTextField();
+    private static final JTextField tf_hausnr      = new JTextField();
+    private static final JTextField tf_ze_iban     = new JTextField();
+    private static final JTextField tf_ze_bic      = new JTextField();
+    private static final JTextField tf_ze_valid_from = new JTextField();
 
-		latch = new CountDownLatch(1);
+    private static final JRadioButton rb_female  = new JRadioButton("Weiblich");
+    private static final JRadioButton rb_male    = new JRadioButton("Männlich");
+    private static final JRadioButton rb_diverse = new JRadioButton("Divers");
+    private static final ButtonGroup  bg_gender  = new ButtonGroup();
 
-		String uri = "ws://localhost:1337/";
-		System.out.println("Connecting to " + uri);
+    private static final JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
 
-		// open websocket
-		final WebsocketClientEndpoint clientEndPoint = new WebsocketClientEndpoint(URI.create(uri));
-		// clientEndPoint.sendMessage("{''}");
-	}
+    public static void main(String[] args) throws IOException, DeploymentException {
+        initUI();
 
-	private static void initUI() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
+        latch = new CountDownLatch(1);
 
-		GridBagConstraints c = new GridBagConstraints();
-		c.ipady = 4;
-		c.insets = new Insets(4, 4, 4, 4);
-		c.anchor = GridBagConstraints.FIRST_LINE_END;
-		
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("Vorname"), c);
+        String uri = "ws://localhost:1337/";
+        System.out.println("Connecting to " + uri);
 
-		c.gridx = 1;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_first, c);
-		
-		c.gridx = 2;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("Name"), c);
+        // Open WebSocket – the constructor blocks until the connection closes
+        new WebsocketClientEndpoint(URI.create(uri));
+    }
 
-		c.gridx = 3;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_name, c);
+    private static void initUI() {
+        JPanel panel = new JPanel(new GridBagLayout());
 
-		c.gridx = 4;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("Geburtsdatum"), c);
+        var c = new GridBagConstraints();
+        c.ipady = 4;
+        c.insets = new Insets(4, 4, 4, 4);
+        c.anchor = GridBagConstraints.FIRST_LINE_END;
 
-		c.gridx = 5;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_dob, c);
+        c.gridx = 0; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Vorname"), c);
 
-		bg_gender.add(rb_female);
-		bg_gender.add(rb_male);
-		bg_gender.add(rb_diverse);
-		rb_female.setSelected(true);
+        c.gridx = 1; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_first, c);
 
-		c.gridx = 0;
-		c.gridy = 1;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.CENTER;
-		panel.add(new JLabel("Geschlecht"), c);
+        c.gridx = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Name"), c);
 
-		JPanel genderPanel = new JPanel();
-		genderPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		genderPanel.add(rb_female);
-		genderPanel.add(rb_male);
-		genderPanel.add(rb_diverse);
+        c.gridx = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_name, c);
 
-		c.gridx = 1;
-		c.gridy = 1;
-		c.weightx = 1;
-		c.gridwidth = 5;
-		c.anchor = GridBagConstraints.WEST;
-		panel.add(genderPanel, c);
+        c.gridx = 4; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Geburtsdatum"), c);
 
-		// Reset grid layout
-		c.gridwidth = 1;
-		c.anchor = GridBagConstraints.FIRST_LINE_END;
+        c.gridx = 5; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_dob, c);
 
-		c.gridx = 0;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("Strasse"), c);
+        bg_gender.add(rb_female);
+        bg_gender.add(rb_male);
+        bg_gender.add(rb_diverse);
+        rb_female.setSelected(true);
 
-		c.gridx = 1;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_street, c);
-		
-		c.gridx = 2;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("PLZ"), c);
+        c.gridx = 0; c.gridy = 1; c.weightx = 0; c.fill = GridBagConstraints.CENTER;
+        panel.add(new JLabel("Geschlecht"), c);
 
-		c.gridx = 3;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_zip, c);
-		
-		c.gridx = 4;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("Ort"), c);
+        var genderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        genderPanel.add(rb_female);
+        genderPanel.add(rb_male);
+        genderPanel.add(rb_diverse);
 
-		c.gridx = 5;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_ort, c);
-		
-		c.gridx = 0;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("IBAN"), c);
+        c.gridx = 1; c.weightx = 1; c.gridwidth = 5; c.anchor = GridBagConstraints.WEST;
+        panel.add(genderPanel, c);
 
-		c.gridx = 1;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_ze_iban, c);
-		
-		c.gridx = 2;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("BIC"), c);
+        // Reset grid layout
+        c.gridwidth = 1;
+        c.anchor = GridBagConstraints.FIRST_LINE_END;
 
-		c.gridx = 3;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_ze_bic, c);
-		
-		c.gridx = 4;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("Gültig ab"), c);
+        c.gridx = 0; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Strasse"), c);
 
-		c.gridx = 5;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tf_ze_valid_from, c);
-		
-		c.gridx = 0;
-		c.gridy = 4;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		panel.add(new JLabel("RT"), c);
+        c.gridx = 1; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_street, c);
 
-		c.gridx = 1;
-		c.gridy = 4;
-		c.gridwidth = 6;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		textArea.setPreferredSize(new Dimension(200, 400));
-		textArea.setBorder(BorderFactory.createEtchedBorder());
-		panel.add(textArea);
-		panel.add(textArea, c);
+        c.gridx = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("PLZ"), c);
 
-		c.gridx = 1;
-		c.gridy = 5;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
-		JButton button = new JButton("Anordnen");
-		button.addActionListener(e -> {
-			System.out.println("Button clicked!");
-		});
-		panel.add(button, c);
+        c.gridx = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_zip, c);
 
-		frame.getContentPane().add(panel);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(800, 650);
-		frame.setVisible(true);
-	}
+        c.gridx = 4; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Ort"), c);
 
-	@javax.websocket.ClientEndpoint
-	public static class WebsocketClientEndpoint {
+        c.gridx = 5; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_ort, c);
 
-		Session userSession = null;
+        c.gridx = 0; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("IBAN"), c);
 
-		public WebsocketClientEndpoint(URI endpointURI) {
-			try {
-				WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-				container.connectToServer(this, endpointURI);
-				latch.await();
-			} catch (DeploymentException | IOException | InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-		}
+        c.gridx = 1; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_ze_iban, c);
 
-		/**
-		 * Callback hook for Connection open events.
-		 *
-		 * @param userSession the userSession which is opened.
-		 */
-		@OnOpen
-		public void onOpen(Session userSession) {
-			System.out.println("opening websocket");
-			this.userSession = userSession;
-		}
+        c.gridx = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("BIC"), c);
 
-		/**
-		 * Callback hook for Connection close events.
-		 *
-		 * @param userSession the userSession which is getting closed.
-		 * @param reason      the reason for connection close
-		 */
-		@OnClose
-		public void onClose(Session userSession, CloseReason reason) {
-			System.out.println("closing websocket");
-			this.userSession = null;
-			latch.countDown();
-		}
+        c.gridx = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_ze_bic, c);
 
-		/**
-		 * Callback hook for Message Events. This method will be invoked when a client
-		 * send a message.
-		 *
-		 * @param message The text message
-		 */
-		@OnMessage
-		public void onMessage(String json) {
-			Message message = extract(json);
-			switch (message.target) {
-			case "textarea":
-				textArea.setText(message.content);
-				return;
-			case "textfield":
-				SearchResult searchResult = toSearchResult(message.content);
-				tf_name.setText(searchResult.name);
-				tf_first.setText(searchResult.first);
-				tf_dob.setText(searchResult.dob);
-				tf_zip.setText(searchResult.zip);
-				tf_ort.setText(searchResult.ort);
-				tf_street.setText(searchResult.street);
-				tf_hausnr.setText(searchResult.hausnr);
-				tf_ze_iban.setText(searchResult.ze_iban);
-				tf_ze_bic.setText(searchResult.ze_bic);
-				tf_ze_valid_from.setText(searchResult.ze_valid_from);
-				return;
-			}
-		}
+        c.gridx = 4; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Gültig ab"), c);
 
-		public void sendMessage(String message) {
-			this.userSession.getAsyncRemote().sendText(message);
-		}
+        c.gridx = 5; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(tf_ze_valid_from, c);
 
-		public static Message extract(String json) {
-			JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-			boolean target = false;
-			String strTarget = "";
-			boolean content = false;
-			String strContent = "";
-			while (jsonParser.hasNext()) {
-				Event e = jsonParser.next();
-				if (Event.KEY_NAME.equals(e) && "target".equals(jsonParser.getString())) {
-					target = true;
-				}
-				if (target && Event.VALUE_STRING.equals(e)) {
-					strTarget = jsonParser.getString();
-					target = false;
-				}
+        c.gridx = 0; c.gridy = 4; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("RT"), c);
 
-				if (Event.KEY_NAME.equals(e) && "content".equals(jsonParser.getString())) {
-					content = true;
-				}
-				if (content && Event.VALUE_STRING.equals(e)) {
-					if ("textarea".equals(strTarget)) {
-						strContent = jsonParser.getString();
-					} else {
-						strContent = json;
-					}
-					content = false;
-				}
-			}
-			return new Message(strTarget, strContent);
-		}
-	}
+        c.gridx = 1; c.gridy = 4; c.gridwidth = 6; c.weightx = 1;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        textArea.setPreferredSize(new Dimension(200, 400));
+        textArea.setBorder(BorderFactory.createEtchedBorder());
+        panel.add(textArea, c); // single add with GridBagConstraints
 
-	private static final class Message {
-		public final String target;
-		public final String content;
+        c.gridx = 1; c.gridy = 5; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+        var button = new JButton("Anordnen");
+        button.addActionListener(event -> System.out.println("Button clicked!"));
+        panel.add(button, c);
 
-		public Message(String target, String message) {
-			super();
-			this.target = target;
-			this.content = message;
-		}
-	}
+        frame.getContentPane().add(panel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 650);
+        frame.setVisible(true);
+    }
 
-	public static SearchResult toSearchResult(String json) {
-		SearchResult searchResult = new SearchResult();
-		
-		JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-		boolean name = false;
-		boolean first = false;
-		boolean dob = false;
-		boolean zip = false;
-		boolean ort = false;
-		boolean street = false;
-		boolean hausnr = false;
-		boolean ze_iban = false;
-		boolean ze_bic = false;
-		boolean ze_Valid_from = false;
-		while (jsonParser.hasNext()) {
-			Event e = jsonParser.next();
-			if (Event.KEY_NAME.equals(e) && "name".equals(jsonParser.getString())) {
-				name = true;
-			}
-			if (name && Event.VALUE_STRING.equals(e)) {
-				searchResult.name = jsonParser.getString();
-				name = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "first".equals(jsonParser.getString())) {
-				first = true;
-			}
-			if (first && Event.VALUE_STRING.equals(e)) {
-				searchResult.first = jsonParser.getString();
-				first = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "dob".equals(jsonParser.getString())) {
-				dob = true;
-			}
-			if (dob && Event.VALUE_STRING.equals(e)) {
-				searchResult.dob = jsonParser.getString();
-				dob = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "zip".equals(jsonParser.getString())) {
-				zip = true;
-			}
-			if (zip && Event.VALUE_STRING.equals(e)) {
-				searchResult.zip = jsonParser.getString();
-				zip = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "ort".equals(jsonParser.getString())) {
-				ort = true;
-			}
-			if (ort && Event.VALUE_STRING.equals(e)) {
-				searchResult.ort = jsonParser.getString();
-				ort = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "street".equals(jsonParser.getString())) {
-				street = true;
-			}
-			if (street && Event.VALUE_STRING.equals(e)) {
-				searchResult.street = jsonParser.getString();
-				street = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "hausnr".equals(jsonParser.getString())) {
-				hausnr = true;
-			}
-			if (hausnr && Event.VALUE_STRING.equals(e)) {
-				searchResult.hausnr = jsonParser.getString();
-				hausnr = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "iban".equals(jsonParser.getString())) {
-				ze_iban = true;
-			}
-			if (ze_iban && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_iban = jsonParser.getString();
-				ze_iban = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "bic".equals(jsonParser.getString())) {
-				ze_bic = true;
-			}
-			if (ze_bic && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_bic = jsonParser.getString();
-				ze_bic = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "valid_from".equals(jsonParser.getString())) {
-				ze_Valid_from = true;
-			}
-			if (ze_Valid_from && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_valid_from = jsonParser.getString();
-				ze_Valid_from = false;
-			}
-		}
-		return searchResult;
-	}
-	
-	private static final class SearchResult {
-		public String name;
-		public String first;
-		public String dob;
-		public String zip;
-		public String ort;
-		public String street;
-		public String hausnr;
-		public String ze_iban;
-		public String ze_bic;
-		public String ze_valid_from;
-	}
+    // -------------------------------------------------------------------------
+    // WebSocket endpoint (inner class)
+    // -------------------------------------------------------------------------
+
+    @javax.websocket.ClientEndpoint
+    public static class WebsocketClientEndpoint {
+
+        Session userSession = null;
+
+        public WebsocketClientEndpoint(URI endpointURI) {
+            try {
+                WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+                container.connectToServer(this, endpointURI);
+                latch.await();
+            } catch (DeploymentException | IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @OnOpen
+        public void onOpen(Session userSession) {
+            System.out.println("opening websocket");
+            this.userSession = userSession;
+        }
+
+        @OnClose
+        public void onClose(Session userSession, CloseReason reason) {
+            System.out.println("closing websocket");
+            this.userSession = null;
+            latch.countDown();
+        }
+
+        /**
+         * Dispatches an incoming JSON message to the appropriate UI component.
+         * Uses a modern switch statement with arrow labels (Java 14+).
+         */
+        @OnMessage
+        public void onMessage(String json) {
+            var message = extract(json);
+            switch (message.target()) {
+                case "textarea" -> textArea.setText(message.content());
+                case "textfield" -> {
+                    var sr = toSearchResult(message.content());
+                    tf_name.setText(sr.name());
+                    tf_first.setText(sr.first());
+                    tf_dob.setText(sr.dob());
+                    tf_zip.setText(sr.zip());
+                    tf_ort.setText(sr.ort());
+                    tf_street.setText(sr.street());
+                    tf_hausnr.setText(sr.hausnr());
+                    tf_ze_iban.setText(sr.zeIban());
+                    tf_ze_bic.setText(sr.zeBic());
+                    tf_ze_valid_from.setText(sr.zeValidFrom());
+                }
+                default -> LOGGER.log(Level.WARNING, "Unknown WebSocket message target: ''{0}''", message.target());
+            }
+        }
+
+        public void sendMessage(String message) {
+            this.userSession.getAsyncRemote().sendText(message);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // JSON helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Extracts a {@link Message} from a JSON string of the form
+     * {@code {"target":"…","content":"…"}}.
+     * When target is "textfield" the full JSON string is used as the content
+     * (it will be re-parsed by {@link #toSearchResult}).
+     */
+    static Message extract(String json) {
+        var values = parseKeyValuePairs(json);
+        String target  = values.getOrDefault("target",  "");
+        // For "textarea" the JSON content field holds the text;
+        // for "textfield" the whole JSON is forwarded to toSearchResult.
+        String content = "textarea".equals(target)
+                ? values.getOrDefault("content", "")
+                : json;
+        return new Message(target, content);
+    }
+
+    /**
+     * Parses a flat JSON object from {@code json} and maps it to a
+     * {@link SearchResult} record.
+     */
+    static SearchResult toSearchResult(String json) {
+        var values = parseKeyValuePairs(json);
+        return new SearchResult(
+                values.getOrDefault("name",       ""),
+                values.getOrDefault("first",      ""),
+                values.getOrDefault("dob",        ""),
+                values.getOrDefault("zip",        ""),
+                values.getOrDefault("ort",        ""),
+                values.getOrDefault("street",     ""),
+                values.getOrDefault("hausnr",     ""),
+                values.getOrDefault("iban",       ""),
+                values.getOrDefault("bic",        ""),
+                values.getOrDefault("valid_from", "")
+        );
+    }
+
+    /**
+     * Parses a flat JSON object into a {@code Map<String,String>} using the
+     * streaming JSON-P parser.  Only top-level string values are collected.
+     */
+    private static Map<String, String> parseKeyValuePairs(String json) {
+        Map<String, String> result = new HashMap<>();
+        try (JsonParser parser = jsonParserFactory.createParser(new StringReader(json))) {
+            String currentKey = null;
+            while (parser.hasNext()) {
+                Event e = parser.next();
+                if (e == Event.KEY_NAME) {
+                    currentKey = parser.getString();
+                } else if (e == Event.VALUE_STRING && currentKey != null) {
+                    result.put(currentKey, parser.getString());
+                    currentKey = null;
+                }
+            }
+        }
+        return result;
+    }
 }
