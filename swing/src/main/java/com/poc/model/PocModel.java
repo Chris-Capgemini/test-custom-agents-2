@@ -18,7 +18,7 @@ public class PocModel {
         model.put(ModelProperties.TEXT_AREA,    new ValueModel<>(null));
         model.put(ModelProperties.FIRST_NAME,   new ValueModel<>(null));
         model.put(ModelProperties.LAST_NAME,    new ValueModel<>(null));
-        model.put(ModelProperties.DATE_OF_BIRTH,new ValueModel<>(null));
+        model.put(ModelProperties.DATE_OF_BIRTH, new ValueModel<>(null));
         model.put(ModelProperties.ZIP,          new ValueModel<>(null));
         model.put(ModelProperties.ORT,          new ValueModel<>(null));
         model.put(ModelProperties.STREET,       new ValueModel<>(null));

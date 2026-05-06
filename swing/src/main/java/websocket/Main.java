@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import javax.json.Json;
@@ -70,22 +71,40 @@ public class Main {
 		c.insets = new Insets(4, 4, 4, 4);
 		c.anchor = GridBagConstraints.FIRST_LINE_END;
 		
-		c.gridx = 0; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Vorname"), c);
 
-		c.gridx = 1; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 0;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_first, c);
 		
-		c.gridx = 2; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 2;
+		c.gridy = 0;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Name"), c);
 
-		c.gridx = 3; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 3;
+		c.gridy = 0;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_name, c);
 
-		c.gridx = 4; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 4;
+		c.gridy = 0;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Geburtsdatum"), c);
 
-		c.gridx = 5; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 5;
+		c.gridy = 0;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_dob, c);
 
 		bg_gender.add(rb_female);
@@ -93,7 +112,10 @@ public class Main {
 		bg_gender.add(rb_diverse);
 		rb_female.setSelected(true);
 
-		c.gridx = 0; c.gridy = 1; c.weightx = 0; c.fill = GridBagConstraints.CENTER;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.CENTER;
 		panel.add(new JLabel("Geschlecht"), c);
 
 		JPanel genderPanel = new JPanel();
@@ -102,56 +124,108 @@ public class Main {
 		genderPanel.add(rb_male);
 		genderPanel.add(rb_diverse);
 
-		c.gridx = 1; c.gridy = 1; c.weightx = 1; c.gridwidth = 5; c.anchor = GridBagConstraints.WEST;
+		c.gridx = 1;
+		c.gridy = 1;
+		c.weightx = 1;
+		c.gridwidth = 5;
+		c.anchor = GridBagConstraints.WEST;
 		panel.add(genderPanel, c);
 
-		c.gridwidth = 1; c.anchor = GridBagConstraints.FIRST_LINE_END;
+		// Reset grid layout
+		c.gridwidth = 1;
+		c.anchor = GridBagConstraints.FIRST_LINE_END;
 
-		c.gridx = 0; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 0;
+		c.gridy = 2;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Strasse"), c);
 
-		c.gridx = 1; c.gridy = 2; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 2;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_street, c);
 		
-		c.gridx = 2; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 2;
+		c.gridy = 2;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("PLZ"), c);
 
-		c.gridx = 3; c.gridy = 2; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 3;
+		c.gridy = 2;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_zip, c);
 		
-		c.gridx = 4; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 4;
+		c.gridy = 2;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Ort"), c);
 
-		c.gridx = 5; c.gridy = 2; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 5;
+		c.gridy = 2;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ort, c);
 		
-		c.gridx = 0; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 0;
+		c.gridy = 3;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("IBAN"), c);
 
-		c.gridx = 1; c.gridy = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 3;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ze_iban, c);
 		
-		c.gridx = 2; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 2;
+		c.gridy = 3;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("BIC"), c);
 
-		c.gridx = 3; c.gridy = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 3;
+		c.gridy = 3;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ze_bic, c);
 		
-		c.gridx = 4; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 4;
+		c.gridy = 3;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Gültig ab"), c);
 
-		c.gridx = 5; c.gridy = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 5;
+		c.gridy = 3;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ze_valid_from, c);
 		
-		c.gridx = 0; c.gridy = 4; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 0;
+		c.gridy = 4;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("RT"), c);
 
-		c.gridx = 1; c.gridy = 4; c.gridwidth = 6; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1;
+		c.gridy = 4;
+		c.gridwidth = 6;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		textArea.setPreferredSize(new Dimension(200, 400));
 		textArea.setBorder(BorderFactory.createEtchedBorder());
 		panel.add(textArea, c);
 
-		c.gridx = 1; c.gridy = 5; c.weightx = 0; c.fill = GridBagConstraints.NONE;
+		c.gridx = 1;
+		c.gridy = 5;
+		c.weightx = 0;
+		c.fill = GridBagConstraints.NONE;
 		JButton button = new JButton("Anordnen");
 		button.addActionListener(_ -> System.out.println("Button clicked!"));
 		panel.add(button, c);
@@ -248,7 +322,7 @@ public class Main {
 	}
 
 	/** Parses a flat JSON object and returns a map of all string-valued fields. */
-	private static HashMap<String, String> parseJsonStringFields(String json) {
+	private static Map<String, String> parseJsonStringFields(String json) {
 		var values = new HashMap<String, String>();
 		var jsonParser = jsonParserFactory.createParser(new StringReader(json));
 		String currentKey = null;
