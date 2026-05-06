@@ -1,0 +1,70 @@
+{
+  "generation_timestamp": "2026-02-06T10:15:00Z",
+  "diagrams": {
+    "class_diagrams": [
+      {
+        "name": "Java MVP Architecture — Full Detail",
+        "scope": "com.* package hierarchy",
+        "classes_included": ["Main (com)", "ValueModel", "ModelProperties", "EventListener", "EventEmitter", "HttpBinService", "ViewData", "PocModel", "PocView", "PocPresenter"],
+        "relationships": ["EventEmitter aggregates EventListener (1..*)", "PocModel composes ValueModel (13 entries via EnumMap)", "PocModel uses HttpBinService", "PocModel emits via EventEmitter", "PocPresenter binds PocView to PocModel", "PocPresenter subscribes lambda to EventEmitter", "Main instantiates all MVP components"]
+      },
+      {
+        "name": "Legacy WebSocket Module",
+        "scope": "websocket.Main and inner classes",
+        "classes_included": ["Main (websocket)", "WebsocketClientEndpoint", "Message", "SearchResult"],
+        "relationships": ["Main composes WebsocketClientEndpoint (inner)", "Main composes Message (inner)", "Main composes SearchResult (inner)", "WebsocketClientEndpoint depends on Message (extract())", "WebsocketClientEndpoint depends on SearchResult (toSearchResult())", "WebsocketClientEndpoint populates Main static UI fields"]
+      },
+      {
+        "name": "Node.js Server & Vue.js Frontend Components",
+        "scope": "node-server and node-vue-client",
+        "classes_included": ["WebsocketServer", "AppVue", "SearchVue", "Person", "Zahlungsempfaenger", "WebSocketMessage"],
+        "relationships": ["AppVue embeds SearchVue", "SearchVue composes Person (search_space 5 entries)", "Person composes Zahlungsempfaenger (1..3 per person)", "SearchVue sends WebSocketMessage to WebsocketServer"]
+      }
+    ],
+    "sequence_diagrams": [
+      {
+        "name": "Main Business Flow: Search → Select → Transfer → Submit",
+        "workflow": "Full end-to-end: user searches in Vue.js, selects person+payment, clicks Nach ALLEGRO, Node.js relays to Java Swing, Swing form populated, user clicks Anordnen, HTTP POST to HTTPBin",
+        "participants": ["User (Browser)", "Search.vue", "Node.js Relay :1337", "WebsocketClientEndpoint", "Swing UI Fields", "PocPresenter (MVP)", "PocModel (MVP)", "HTTPBin :8080"]
+      },
+      {
+        "name": "MVP Internal Flow: Form Binding & HTTP Submission",
+        "workflow": "Bootstrap wiring of MVP components, DocumentListener/ChangeListener bindings for 13 fields, button action → model.action() → HTTP POST → EventEmitter → view reset",
+        "participants": ["Main.java", "PocView", "EventEmitter", "PocModel", "PocPresenter", "HttpBinService"]
+      },
+      {
+        "name": "WebSocket Message Routing (Node.js Relay)",
+        "workflow": "Connection setup, textarea real-time sync (Flow A), person data transfer textfield routing (Flow B), connection teardown",
+        "participants": ["Search.vue (Browser WS)", "WebsocketServer.js :1337", "WebsocketClientEndpoint (JSR-356)"]
+      }
+    ],
+    "use_case_diagrams": [
+      {
+        "name": "System Use Cases — All Actors",
+        "actors": ["End User (Browser)", "Allegro Operator (Desktop)", "System (automated)"],
+        "use_cases": ["Search customer by name/ZIP/city/street", "View search results table", "Select person from results", "View payment recipients (Zahlungsempfänger)", "Select payment recipient", "Transfer to ALLEGRO (Nach ALLEGRO übernehmen)", "Send freeform text to Swing textarea", "Relay WebSocket messages to all connected clients", "Receive customer data via WebSocket", "Auto-populate Swing form fields", "Display raw text in RT textarea", "Edit form fields (live model binding)", "Submit form data (Anordnen → HTTP POST)", "View submission response in RT textarea", "Auto-reset form after successful submit", "Echo POST request as JSON response"]
+      }
+    ]
+  },
+  "class_summary": {
+    "total_classes": 16,
+    "interfaces": 1,
+    "abstract_classes": 0,
+    "enums": 1,
+    "inner_classes": 3,
+    "vue_components": 2,
+    "nodejs_modules": 1
+  },
+  "relationship_summary": {
+    "inheritance": 0,
+    "implementation": 1,
+    "association": 6,
+    "composition": 5,
+    "aggregation": 1,
+    "dependency": 7
+  },
+  "output_files": [
+    "analysis_output/uml_diagrams.md",
+    "analysis_output/uml_analysis.json"
+  ]
+}
