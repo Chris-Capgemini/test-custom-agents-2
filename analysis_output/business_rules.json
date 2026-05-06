@@ -1,0 +1,244 @@
+{
+  "extraction_timestamp": "2025-01-01T00:00:00Z",
+  "total_rules_extracted": 18,
+  "rules": [
+    {
+      "rule_id": "BR-001",
+      "rule_name": "All Form Fields Initialised to Null",
+      "rule_type": "Process",
+      "description": "On application startup, every ModelProperties entry (13 fields) is initialised with a null value inside PocModel. The presenter then syncs initial field states from the view on binding initialisation.",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "priority": "Medium",
+      "condition": "Application startup",
+      "action": "Initialise all 13 ValueModel entries to null"
+    },
+    {
+      "rule_id": "BR-002",
+      "rule_name": "Real-Time Model Synchronisation on Keystroke",
+      "rule_type": "Process",
+      "description": "Every time the user types into or deletes from any text field, the corresponding model ValueModel is immediately updated with the complete current text content via DocumentListener.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "priority": "High",
+      "condition": "User types in any text field (insertUpdate or removeUpdate)",
+      "action": "Update the bound ValueModel<String> with current document text"
+    },
+    {
+      "rule_id": "BR-003",
+      "rule_name": "Radio Button Gender Synchronisation",
+      "rule_type": "Process",
+      "description": "When a gender radio button (Weiblich/Männlich/Divers) changes state, the corresponding Boolean ValueModel in the model is updated immediately via ChangeListener.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "priority": "Medium",
+      "condition": "Gender radio button selection changes",
+      "action": "Update the bound ValueModel<Boolean> with the isSelected() value"
+    },
+    {
+      "rule_id": "BR-004",
+      "rule_name": "Default Gender is Female",
+      "rule_type": "Decision",
+      "description": "The female (Weiblich) radio button is pre-selected by default when the form first renders. After a successful form submission, the gender is reset back to Female.",
+      "source_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+      ],
+      "priority": "Low",
+      "condition": "Application start OR successful form submission",
+      "action": "Set female.selected=true, male.selected=false, diverse.selected=false"
+    },
+    {
+      "rule_id": "BR-005",
+      "rule_name": "Form Submission Serialises All Fields",
+      "rule_type": "Process",
+      "description": "When the 'Anordnen' button is clicked, ALL 13 ModelProperties are collected into a flat HashMap<String,String> and submitted together as a JSON object in the HTTP POST body. No field is omitted, even if null.",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "priority": "Critical",
+      "condition": "User clicks the 'Anordnen' button",
+      "action": "Serialise all 13 fields to JSON and POST to http://localhost:8080/post"
+    },
+    {
+      "rule_id": "BR-006",
+      "rule_name": "Non-Empty HTTP Response Triggers Success Event",
+      "rule_type": "Decision",
+      "description": "After HTTP POST, if the response body is not empty, the full response body string is emitted as an event. This is the success path.",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "priority": "High",
+      "condition": "HTTP response body is non-empty",
+      "action": "eventEmitter.emit(responseBody)"
+    },
+    {
+      "rule_id": "BR-007",
+      "rule_name": "Empty HTTP Response Triggers Failure Event",
+      "rule_type": "Decision",
+      "description": "If the HTTP response body is empty (blank), a 'Failed operation' string is emitted instead of the response body.",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "priority": "High",
+      "condition": "HTTP response body is empty",
+      "action": "eventEmitter.emit('Failed operation')"
+    },
+    {
+      "rule_id": "BR-008",
+      "rule_name": "Success Event Resets Form",
+      "rule_type": "Process",
+      "description": "When the EventEmitter fires (after any HTTP submission), the view is fully reset: all text fields are cleared, gender is reset to Female, and the server response is displayed in the text area.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "priority": "High",
+      "condition": "EventEmitter fires with any event data",
+      "action": "Clear all text fields, reset gender to female, display response in textArea"
+    },
+    {
+      "rule_id": "BR-009",
+      "rule_name": "Application Does Not Exit on Form Close",
+      "rule_type": "Process",
+      "description": "The main thread is blocked by CountDownLatch(1) which is never decremented in the MVP application. The JFrame uses EXIT_ON_CLOSE so the window close still terminates the JVM directly.",
+      "source_files": [
+        "swing/src/main/java/com/Main.java",
+        "swing/src/main/java/com/poc/presentation/PocView.java"
+      ],
+      "priority": "Low",
+      "condition": "JFrame window is closed",
+      "action": "JVM terminates via EXIT_ON_CLOSE"
+    },
+    {
+      "rule_id": "BR-010",
+      "rule_name": "HTTP POST Target is Fixed Localhost Endpoint",
+      "rule_type": "Process",
+      "description": "The HTTP service target is hardcoded to http://localhost:8080/post and cannot be configured at runtime. This endpoint is expected to be the HTTPBin Docker container.",
+      "source_files": ["swing/src/main/java/com/poc/model/HttpBinService.java"],
+      "priority": "Medium",
+      "condition": "Any form submission",
+      "action": "POST JSON to http://localhost:8080/post with Content-Type: application/json"
+    },
+    {
+      "rule_id": "BR-011",
+      "rule_name": "WebSocket Target Routing (textarea)",
+      "rule_type": "Decision",
+      "description": "In the WebSocket client, if an incoming JSON message has target='textarea', only the textArea component is updated with the message's 'content' value.",
+      "source_files": ["swing/src/main/java/websocket/Main.java"],
+      "priority": "High",
+      "condition": "WebSocket message received AND message.target == 'textarea'",
+      "action": "textArea.setText(message.content)"
+    },
+    {
+      "rule_id": "BR-012",
+      "rule_name": "WebSocket Target Routing (textfield)",
+      "rule_type": "Decision",
+      "description": "In the WebSocket client, if an incoming JSON message has target='textfield', the full JSON payload is parsed into a SearchResult and all form fields (name, first, dob, zip, ort, street, hausnr, iban, bic, valid_from) are populated.",
+      "source_files": ["swing/src/main/java/websocket/Main.java"],
+      "priority": "High",
+      "condition": "WebSocket message received AND message.target == 'textfield'",
+      "action": "Parse JSON into SearchResult and populate all form text fields"
+    },
+    {
+      "rule_id": "BR-013",
+      "rule_name": "WebSocket Close Releases Application",
+      "rule_type": "Process",
+      "description": "When the WebSocket connection is closed, the CountDownLatch is decremented to 0, unblocking the main thread and allowing the application to terminate.",
+      "source_files": ["swing/src/main/java/websocket/Main.java"],
+      "priority": "Medium",
+      "condition": "WebSocket onClose event fires",
+      "action": "latch.countDown() — releases main thread"
+    },
+    {
+      "rule_id": "BR-014",
+      "rule_name": "Form Fields Are Mandatory Grouping",
+      "rule_type": "Validation",
+      "description": "The OpenAPI spec (api.yml) defines all 13 fields (FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA) as optional strings. No validation is enforced at the UI or model layer.",
+      "source_files": ["api.yml", "swing/src/main/java/com/poc/model/ModelProperties.java"],
+      "priority": "Medium",
+      "condition": "Form submission",
+      "action": "All fields submitted regardless of value (no validation)"
+    },
+    {
+      "rule_id": "BR-015",
+      "rule_name": "WebSocket Server Broadcasts to All Clients",
+      "rule_type": "Process",
+      "description": "The Node.js WebSocket server (WebsocketServer.js) relays every message it receives to ALL connected clients without filtering or routing logic.",
+      "source_files": ["node-server/src/WebsocketServer.js"],
+      "priority": "Medium",
+      "condition": "Any client sends a message to the WebSocket server",
+      "action": "Broadcast message to all connected clients including sender"
+    },
+    {
+      "rule_id": "BR-016",
+      "rule_name": "Boolean Gender Values Stored as String in Submission",
+      "rule_type": "Process",
+      "description": "In PocModel.action(), Boolean ValueModel values (MALE, FEMALE, DIVERSE) are serialised using .toString(), converting true/false to string literals 'true'/'false' in the POST payload.",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "priority": "Low",
+      "condition": "Form submission",
+      "action": "Boolean values are serialised as string 'true' or 'false' in JSON body"
+    },
+    {
+      "rule_id": "BR-017",
+      "rule_name": "Checked Exceptions Converted to RuntimeException",
+      "rule_type": "Process",
+      "description": "PocPresenter wraps IOException and InterruptedException from model.action() in RuntimeException. This means checked exceptions from HTTP communication become unchecked and will crash the EDT if triggered.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "priority": "High",
+      "condition": "HTTP POST fails or thread is interrupted during submission",
+      "action": "Throw RuntimeException — no user-visible error handling"
+    },
+    {
+      "rule_id": "BR-018",
+      "rule_name": "Person Data Schema (SearchResult)",
+      "rule_type": "Validation",
+      "description": "The WebSocket client expects incoming person data JSON to contain these keys: name, first, dob, zip, ort, street, hausnr, iban, bic, valid_from. Missing keys result in null values in SearchResult fields.",
+      "source_files": ["swing/src/main/java/websocket/Main.java"],
+      "priority": "Medium",
+      "condition": "WebSocket message with target='textfield' received",
+      "action": "Parse JSON fields; missing keys leave SearchResult fields as null"
+    }
+  ],
+  "workflows": [
+    {
+      "workflow_id": "WF-001",
+      "name": "MVP Form Submission Workflow",
+      "description": "End-to-end flow from user data entry to server response display in the MVP (PocPresenter/PocModel/PocView) application.",
+      "steps": [
+        { "step": 1, "actor": "User", "action": "Types data into any form field" },
+        { "step": 2, "actor": "PocPresenter (DocumentListener)", "action": "Updates corresponding ValueModel in PocModel" },
+        { "step": 3, "actor": "User", "action": "Clicks 'Anordnen' button" },
+        { "step": 4, "actor": "PocPresenter (ActionListener)", "action": "Calls model.action()" },
+        { "step": 5, "actor": "PocModel", "action": "Logs all field values to stdout" },
+        { "step": 6, "actor": "PocModel", "action": "Serialises all fields to HashMap<String,String>" },
+        { "step": 7, "actor": "HttpBinService", "action": "POSTs JSON to http://localhost:8080/post" },
+        { "step": 8, "actor": "HTTPBin Server", "action": "Returns echoed JSON response" },
+        { "step": 9, "actor": "PocModel", "action": "Checks response body; emits event (success or 'Failed operation')" },
+        { "step": 10, "actor": "EventEmitter", "action": "Calls all registered EventListener.onEvent()" },
+        { "step": 11, "actor": "PocPresenter (EventListener lambda)", "action": "Sets textArea to response, clears all fields, resets gender to Female" },
+        { "step": 12, "actor": "PocView", "action": "Reflects updated state to the user" }
+      ]
+    },
+    {
+      "workflow_id": "WF-002",
+      "name": "WebSocket Data Receive Workflow",
+      "description": "Flow for receiving and rendering server-pushed data in the WebSocket Swing client.",
+      "steps": [
+        { "step": 1, "actor": "Node.js WebSocket Server", "action": "Broadcasts JSON message to all connected clients" },
+        { "step": 2, "actor": "WebsocketClientEndpoint.onMessage()", "action": "Receives raw JSON string" },
+        { "step": 3, "actor": "WebsocketClientEndpoint.extract()", "action": "Parses 'target' and 'content' fields from JSON" },
+        { "step": 4, "actor": "onMessage decision", "action": "Checks message.target value" },
+        { "step": 5a, "actor": "Branch: target='textarea'", "action": "Sets textArea.setText(message.content)" },
+        { "step": 5b, "actor": "Branch: target='textfield'", "action": "Calls toSearchResult(message.content)" },
+        { "step": 6, "actor": "toSearchResult()", "action": "Parses JSON into SearchResult POJO" },
+        { "step": 7, "actor": "onMessage", "action": "Populates all 10 text fields from SearchResult" }
+      ]
+    },
+    {
+      "workflow_id": "WF-003",
+      "name": "Application Bootstrap Workflow",
+      "description": "Startup sequence for the MVP Swing application.",
+      "steps": [
+        { "step": 1, "actor": "JVM", "action": "Invokes com.Main.main()" },
+        { "step": 2, "actor": "Main", "action": "Creates CountDownLatch(1)" },
+        { "step": 3, "actor": "Main", "action": "Instantiates PocView (renders Swing window)" },
+        { "step": 4, "actor": "Main", "action": "Instantiates EventEmitter" },
+        { "step": 5, "actor": "Main", "action": "Instantiates PocModel(eventEmitter) — initialises 13 null ValueModels" },
+        { "step": 6, "actor": "Main", "action": "Instantiates PocPresenter(pocView, pocModel, eventEmitter)" },
+        { "step": 7, "actor": "PocPresenter", "action": "Subscribes to EventEmitter, wires button listener, calls initializeBindings()" },
+        { "step": 8, "actor": "Main", "action": "latch.await() — parks main thread" },
+        { "step": 9, "actor": "EDT", "action": "Handles all subsequent UI events" }
+      ]
+    }
+  ]
+}

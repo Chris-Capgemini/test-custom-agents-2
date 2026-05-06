@@ -1,0 +1,210 @@
+{
+  "assessment_timestamp": "2025-01-01T00:00:00Z",
+  "overall_health_score": 62,
+  "health_grade": "C+",
+  "assessment_summary": "The Allegro PoC is a clean demonstration of the MVP pattern in Java Swing, well-structured for its stated purpose. However, as a proof-of-concept, it carries several critical issues that would need to be resolved before production use: hardcoded URLs, complete absence of input validation, direct public field access on the View, exception swallowing, and significant code duplication between the two Swing applications.",
+  "issues": [
+    {
+      "issue_id": "ISS-001",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 11,
+      "type": "Configuration",
+      "criticality": 5,
+      "message": "URL is hardcoded to 'http://localhost:8080'. Cannot be configured without source code change.",
+      "solution": "Externalise URL and PATH to application.properties or environment variables. Inject via constructor or dependency injection framework."
+    },
+    {
+      "issue_id": "ISS-002",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 55,
+      "type": "Configuration",
+      "criticality": 5,
+      "message": "WebSocket URI 'ws://localhost:1337/' is hardcoded and cannot be configured without recompilation.",
+      "solution": "Read WebSocket URI from a config file, command-line argument, or environment variable."
+    },
+    {
+      "issue_id": "ISS-003",
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "line": 9,
+      "type": "Encapsulation",
+      "criticality": 4,
+      "message": "All Swing component fields (textArea, name, firstName, etc.) are declared 'protected', exposing them directly to PocPresenter. This breaks View encapsulation.",
+      "solution": "Declare fields private and expose them via public getter methods or a dedicated ViewData / ViewModel object."
+    },
+    {
+      "issue_id": "ISS-004",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 12,
+      "type": "Encapsulation",
+      "criticality": 4,
+      "message": "The 'model' EnumMap field is declared public, allowing any class to directly mutate model state without going through the designated API.",
+      "solution": "Declare 'model' private. Provide specific getter/setter methods or a typed accessor for each property."
+    },
+    {
+      "issue_id": "ISS-005",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 43,
+      "type": "Error Handling",
+      "criticality": 4,
+      "message": "IOException and InterruptedException from model.action() are caught and re-thrown as RuntimeException with no user notification. This will crash the Swing Event Dispatch Thread silently.",
+      "solution": "Catch exceptions, show a JOptionPane error dialog to the user, and log the stack trace. For InterruptedException, also call Thread.currentThread().interrupt()."
+    },
+    {
+      "issue_id": "ISS-006",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 39,
+      "type": "Null Safety",
+      "criticality": 4,
+      "message": "model.get(val).getField() may return null for any uninitialised field. Calling .toString() on a null will throw NullPointerException at runtime.",
+      "solution": "Add null checks before calling toString(), or initialise fields with empty-string defaults rather than null. Use Optional<T> or provide a safe serialisation helper."
+    },
+    {
+      "issue_id": "ISS-007",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 29,
+      "type": "Resource Management",
+      "criticality": 3,
+      "message": "HttpURLConnection is not closed in a finally block or try-with-resources. If an exception occurs before disconnect(), the connection will leak.",
+      "solution": "Wrap the connection lifecycle in a try-finally block ensuring connection.disconnect() is always called, or migrate to java.net.http.HttpClient (Java 11+)."
+    },
+    {
+      "issue_id": "ISS-008",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 16,
+      "type": "Modernisation",
+      "criticality": 3,
+      "message": "Uses legacy java.net.HttpURLConnection API. Java 11+ includes the modern java.net.http.HttpClient with async support, better resource management, and cleaner API.",
+      "solution": "Replace HttpURLConnection with HttpClient.newHttpClient() / HttpRequest / HttpResponse for modern idiomatic Java."
+    },
+    {
+      "issue_id": "ISS-009",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 53,
+      "type": "Thread Safety",
+      "criticality": 3,
+      "message": "model.action() is called on the Swing EDT (Event Dispatch Thread) when the button is clicked. This blocks the UI thread during the synchronous HTTP call, freezing the window.",
+      "solution": "Execute model.action() on a background thread using SwingWorker or CompletableFuture. Update the UI in the done()/EDT callback."
+    },
+    {
+      "issue_id": "ISS-010",
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "line": 1,
+      "type": "Dead Code",
+      "criticality": 2,
+      "message": "ViewData class is completely empty. It is not referenced or used anywhere in the codebase.",
+      "solution": "Either implement the ViewData class as a DTO for passing form state, or delete it."
+    },
+    {
+      "issue_id": "ISS-011",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 312,
+      "type": "Code Quality",
+      "criticality": 2,
+      "message": "The JSON parsing in extract() and toSearchResult() uses boolean flag variables (e.g., boolean name = false; boolean first = false;) instead of a state machine or dedicated JSON library. This is fragile, verbose, and difficult to maintain.",
+      "solution": "Use a JSON object-mapping library (Jackson, Gson) or at minimum refactor to use JsonObject via javax.json.JsonReader for cleaner field access."
+    },
+    {
+      "issue_id": "ISS-012",
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "line": 188,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "textArea is added to the panel twice: once without constraints (line 188: panel.add(textArea)) and once with GridBagConstraints (line 189: panel.add(textArea, c)). In Swing, a component can only have one parent; the second add() removes it from the first position.",
+      "solution": "Remove the duplicate panel.add(textArea) call on line 188 with no constraints."
+    },
+    {
+      "issue_id": "ISS-013",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 221,
+      "type": "Bug",
+      "criticality": 3,
+      "message": "Same duplicate textArea add() bug as PocView.java — textArea is added to panel twice (lines 221-222).",
+      "solution": "Remove the duplicate panel.add(textArea) call without constraints."
+    },
+    {
+      "issue_id": "ISS-014",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 13,
+      "type": "Design",
+      "criticality": 2,
+      "message": "HttpBinService is instantiated directly inside PocModel with 'new HttpBinService()'. This creates tight coupling and makes PocModel untestable without the real HTTP service.",
+      "solution": "Inject HttpBinService through the constructor. Define an interface (e.g., ISubmissionService) to allow mocking in tests."
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "TD-001",
+      "debt_type": "Code",
+      "description": "Massive code duplication: the UI layout code in websocket/Main.initUI() is ~95% identical to com/poc/presentation/PocView.initUI(). Also, the WebSocket version has a separate static field for every UI component instead of encapsulated fields.",
+      "impact": "HIGH",
+      "affected_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "estimated_effort": "Medium (1-2 days)",
+      "suggested_fix": "Extract the shared UI layout into a reusable AllegroFormPanel class. The WebSocket Main should use PocView or the shared component."
+    },
+    {
+      "debt_id": "TD-002",
+      "debt_type": "Design",
+      "description": "The WebSocket client (websocket/Main.java) is a monolithic god-class containing UI layout, WebSocket lifecycle, JSON parsing, data model (SearchResult), and application logic all in one file. It does not follow the MVP pattern used by the other module.",
+      "impact": "HIGH",
+      "affected_files": ["swing/src/main/java/websocket/Main.java"],
+      "estimated_effort": "Large (3-5 days)",
+      "suggested_fix": "Refactor WebSocket client to follow the same MVP structure: extract a WebSocketView, WebSocketModel (managing session state), and WebSocketPresenter."
+    },
+    {
+      "debt_id": "TD-003",
+      "debt_type": "Test",
+      "description": "Zero test coverage across the entire project. No unit tests, integration tests, or UI tests exist.",
+      "impact": "HIGH",
+      "affected_files": ["All source files"],
+      "estimated_effort": "Large (1 week)",
+      "suggested_fix": "Add JUnit 5 unit tests for PocModel, HttpBinService, ValueModel, EventEmitter, and the JSON parsing logic in websocket/Main.java. Use Mockito to mock HttpBinService."
+    },
+    {
+      "debt_id": "TD-004",
+      "debt_type": "Documentation",
+      "description": "No Javadoc on any class or method except the @OnOpen/@OnClose/@OnMessage annotations in websocket/Main.java (which are package-level Javadoc, not custom). Internal logic has minimal comments.",
+      "impact": "MEDIUM",
+      "affected_files": ["All source files"],
+      "estimated_effort": "Small (1-2 days)",
+      "suggested_fix": "Add class-level and method-level Javadoc to all public classes and methods."
+    },
+    {
+      "debt_id": "TD-005",
+      "debt_type": "Design",
+      "description": "EventEmitter uses a simple synchronous ArrayList of listeners with no thread safety. Concurrent subscribe() and emit() calls (e.g., from background threads) would cause ConcurrentModificationException.",
+      "impact": "MEDIUM",
+      "affected_files": ["swing/src/main/java/com/poc/model/EventEmitter.java"],
+      "estimated_effort": "Small (< 1 day)",
+      "suggested_fix": "Use CopyOnWriteArrayList<EventListener> for thread-safe iteration, or use PropertyChangeSupport."
+    },
+    {
+      "debt_id": "TD-006",
+      "debt_type": "Code",
+      "description": "Debug console output (System.out.println) is scattered throughout PocPresenter, PocModel, and HttpBinService. These are not appropriate for production use.",
+      "impact": "LOW",
+      "affected_files": [
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/model/HttpBinService.java"
+      ],
+      "estimated_effort": "Small (< 1 day)",
+      "suggested_fix": "Replace System.out.println with a proper logging framework (SLF4J + Logback or java.util.logging)."
+    }
+  ],
+  "metrics": {
+    "total_files": 11,
+    "total_lines_of_code": 670,
+    "average_file_size_lines": 61,
+    "largest_file": "swing/src/main/java/websocket/Main.java (458 lines)",
+    "packages": 4,
+    "classes": 13,
+    "interfaces": 1,
+    "enums": 1,
+    "inner_classes": 3,
+    "test_files": 0,
+    "test_coverage_percent": 0
+  }
+}
