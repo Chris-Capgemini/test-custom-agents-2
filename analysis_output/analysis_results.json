@@ -1,0 +1,823 @@
+{
+  "analysis_timestamp": "2026-02-05T15:27:00Z",
+  "repository_name": "test-custom-agents-2",
+  "total_files_analyzed": 16,
+  "files": [
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Application entry point that wires together the MVP (Model-View-Presenter) components and keeps the main thread alive.",
+      "description": "This is the bootstrap class for the MVP-based Java Swing application. It instantiates PocView, EventEmitter, PocModel, and PocPresenter in the correct dependency order and then blocks the main thread indefinitely using a CountDownLatch. The class itself contains no business logic; its sole purpose is dependency injection and thread lifecycle management. It reflects the clean separation of concerns in the refactored MVP architecture.",
+      "business_rules": [],
+      "technical_libraries": ["java.util.concurrent.CountDownLatch"],
+      "business_capability": "Application Bootstrap",
+      "sub_capability": "MVP Wiring & Thread Management",
+      "method_breakdown": [
+        {
+          "method_name": "main",
+          "summary": "Bootstraps the entire application by constructing and wiring all MVP components, then blocks the main thread.",
+          "parameters": ["args: String[] - Command-line arguments (unused)"],
+          "returns": "void",
+          "dependencies": ["PocView", "EventEmitter", "PocModel", "PocPresenter", "CountDownLatch"],
+          "significance": "Single entry point for the application; controls the component lifecycle and thread survival."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Wires PocView → PocPresenter, EventEmitter → PocModel, EventEmitter → PocPresenter"
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java",
+      "language": "java",
+      "category": "Mixed",
+      "summary": "Legacy monolithic Swing client that combines UI construction, WebSocket lifecycle management, and JSON parsing into a single class.",
+      "description": "This is an earlier, non-MVP implementation of the Java Swing WebSocket client. It builds a German-language customer data entry form (Vorname, Name, Geburtsdatum, Geschlecht, Strasse, PLZ, Ort, IBAN, BIC, Gültig ab) and connects directly to a WebSocket server at ws://localhost:1337. It receives JSON messages that target either a text area or text field components, parsing the payload with javax.json streaming API. The inner WebsocketClientEndpoint class handles the full WebSocket lifecycle (onOpen, onClose, onMessage) and populates UI fields with search result data. This class represents an earlier PoC before the MVP refactor.",
+      "business_rules": [
+        "Incoming WebSocket messages are routed by a 'target' field: 'textarea' populates a raw text display; 'textfield' populates all form fields with parsed person data",
+        "Person data includes: name, first name, date of birth, ZIP code, city, street, house number, IBAN, BIC, and valid-from date",
+        "Gender options are Weiblich (female), Männlich (male), Divers (diverse) — female is pre-selected by default",
+        "An 'Anordnen' (arrange/submit) button is present but has no server-side action in this version"
+      ],
+      "technical_libraries": [
+        "javax.swing",
+        "javax.websocket (JSR-356)",
+        "javax.json (streaming API)",
+        "java.awt",
+        "org.glassfish.tyrus (WebSocket client runtime)"
+      ],
+      "business_capability": "Customer Data Management",
+      "sub_capability": "Person & Payment Data Entry via WebSocket",
+      "method_breakdown": [
+        {
+          "method_name": "main",
+          "summary": "Initialises the Swing UI and establishes a WebSocket connection to localhost:1337.",
+          "parameters": ["args: String[] - Command-line arguments (unused)"],
+          "returns": "void",
+          "dependencies": ["WebsocketClientEndpoint", "CountDownLatch"],
+          "significance": "Application entry point for the legacy module; sets up both UI and network layer."
+        },
+        {
+          "method_name": "initUI",
+          "summary": "Constructs the full GridBagLayout Swing form with labels, text fields, radio buttons, text area, and an action button.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["javax.swing", "java.awt"],
+          "significance": "Defines the entire UI layout for person/payment data entry."
+        },
+        {
+          "method_name": "WebsocketClientEndpoint.onOpen",
+          "summary": "Handles WebSocket connection open event; stores the session reference.",
+          "parameters": ["userSession: Session - The newly opened WebSocket session"],
+          "returns": "void",
+          "dependencies": ["javax.websocket.Session"],
+          "significance": "Establishes the active session for sending messages."
+        },
+        {
+          "method_name": "WebsocketClientEndpoint.onClose",
+          "summary": "Handles WebSocket connection close; clears session and releases the countdown latch to allow JVM exit.",
+          "parameters": ["userSession: Session", "reason: CloseReason"],
+          "returns": "void",
+          "dependencies": ["CountDownLatch"],
+          "significance": "Critical for clean JVM shutdown; releases the blocking latch."
+        },
+        {
+          "method_name": "WebsocketClientEndpoint.onMessage",
+          "summary": "Receives a JSON string, extracts 'target' and 'content', and routes to either the text area or all person/payment text fields.",
+          "parameters": ["json: String - Raw JSON message from server"],
+          "returns": "void",
+          "dependencies": ["extract()", "toSearchResult()", "javax.swing UI components"],
+          "significance": "Core message dispatch logic — the bridge between WebSocket data and UI rendering."
+        },
+        {
+          "method_name": "extract",
+          "summary": "Streaming JSON parser that extracts the 'target' and 'content' fields from an incoming WebSocket message.",
+          "parameters": ["json: String - Raw JSON string"],
+          "returns": "Message - Object with target and content fields",
+          "dependencies": ["javax.json.stream.JsonParser"],
+          "significance": "Decouples message routing from field-level parsing."
+        },
+        {
+          "method_name": "toSearchResult",
+          "summary": "Streaming JSON parser that maps all person and payment fields from a JSON string into a SearchResult object.",
+          "parameters": ["json: String - Raw JSON string containing person/payment data"],
+          "returns": "SearchResult - Populated result object",
+          "dependencies": ["javax.json.stream.JsonParser"],
+          "significance": "Translates server-sent data into the domain model for UI field population."
+        },
+        {
+          "method_name": "WebsocketClientEndpoint.sendMessage",
+          "summary": "Sends a text message asynchronously via the active WebSocket session.",
+          "parameters": ["message: String - The message to send"],
+          "returns": "void",
+          "dependencies": ["javax.websocket.Session.getAsyncRemote()"],
+          "significance": "Provides outbound messaging capability from the Swing client."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Inner class SearchResult holds: name, first, dob, zip, ort, street, hausnr, ze_iban, ze_bic, ze_valid_from (all String). Inner class Message holds: target (String), content (String).",
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Message.content is parsed into SearchResult when target='textfield'"
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": "Message routing is determined by 'target' field value: only 'textarea' and 'textfield' values are handled; unknown targets are silently ignored",
+        "constraint_violation_handling": "DeploymentException, IOException, and InterruptedException are wrapped in RuntimeException during WebSocket construction"
+      },
+      "external_integrations": {
+        "third_party_service_calls": "WebSocket connection to ws://localhost:1337/",
+        "api_consumption_patterns": "Subscribes to incoming JSON messages from the Node.js WebSocket relay server; message schema: { target: string, content: object|string }",
+        "error_handling_for_integrations": "Connection errors wrapped as RuntimeException; no reconnection logic implemented"
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Generic typed value container providing get/set access to a single field, used as the unit of binding in the MVP model.",
+      "description": "ValueModel<T> is a simple generic wrapper that holds a single typed value. It is used throughout PocModel to store individual form field values, providing a consistent interface for the presenter to read and write model state. It has no validation or change-notification logic; that is handled at the presenter level via DocumentListeners.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Data Binding Infrastructure",
+      "sub_capability": "Generic Value Holder",
+      "method_breakdown": [
+        {
+          "method_name": "ValueModel",
+          "summary": "Constructor that initialises the held value.",
+          "parameters": ["field: T - The initial value"],
+          "returns": "ValueModel<T>",
+          "dependencies": [],
+          "significance": "Allows null initialisation to represent empty form fields."
+        },
+        {
+          "method_name": "getField",
+          "summary": "Returns the currently held value.",
+          "parameters": [],
+          "returns": "T - The stored value",
+          "dependencies": [],
+          "significance": "Read access used by presenter and model action."
+        },
+        {
+          "method_name": "setField",
+          "summary": "Replaces the held value.",
+          "parameters": ["field: T - New value to store"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Write access triggered by UI events via DocumentListener."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Parameterised by T; in practice T is String for text fields and Boolean for radio buttons",
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Lightweight publish-subscribe event bus that broadcasts string events to all registered EventListener instances.",
+      "description": "EventEmitter implements a minimal observer pattern. Listeners register via subscribe() and all registered listeners are invoked synchronously with the same eventData string when emit() is called. In this application it is used to propagate the HTTP response body from PocModel back to PocPresenter for UI update. This decouples the model from direct view references.",
+      "business_rules": [],
+      "technical_libraries": ["java.util.ArrayList", "java.util.List"],
+      "business_capability": "Event-Driven Communication",
+      "sub_capability": "Model-to-Presenter Notification",
+      "method_breakdown": [
+        {
+          "method_name": "subscribe",
+          "summary": "Registers an EventListener to receive future events.",
+          "parameters": ["listener: EventListener - The listener to register"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Allows the presenter to hook into model completion events without tight coupling."
+        },
+        {
+          "method_name": "emit",
+          "summary": "Broadcasts an event string to all registered listeners synchronously.",
+          "parameters": ["eventData: String - The event payload (typically an HTTP response body)"],
+          "returns": "void",
+          "dependencies": ["EventListener"],
+          "significance": "Triggers UI updates after a successful or failed HTTP post action."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+      "file_name": "EventListener.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Functional interface defining the contract for receiving string event notifications from EventEmitter.",
+      "description": "EventListener is a single-method interface compatible with Java lambda expressions. Any component that needs to respond to model events implements this interface. In practice, PocPresenter supplies a lambda that updates the view when the model emits a response. The interface keeps the event contract minimal and language-agnostic in type.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Event-Driven Communication",
+      "sub_capability": "Observer Contract",
+      "method_breakdown": [
+        {
+          "method_name": "onEvent",
+          "summary": "Called by EventEmitter when an event is emitted; receives the event payload.",
+          "parameters": ["eventData: String - The event payload string"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "The single contract point for all model-to-presenter communication."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "HTTP integration service that POSTs form data as JSON to the HTTPBin echo endpoint and returns the raw response body.",
+      "description": "HttpBinService is responsible for serialising a map of key-value strings into a JSON object and sending it via HTTP POST to http://localhost:8080/post. The target is the HTTPBin Docker container which echoes the request back as JSON. The service uses the javax.json streaming generator for serialisation and a basic java.net.HttpURLConnection for the HTTP call. The raw response body is returned as a string for further processing by PocModel. This class acts as the data submission gateway in the PoC.",
+      "business_rules": [
+        "All form fields are submitted as a flat key-value JSON object (no nesting)",
+        "Content-Type is always application/json",
+        "The service targets a local HTTPBin echo server at http://localhost:8080/post for testing purposes"
+      ],
+      "technical_libraries": ["javax.json", "java.net.HttpURLConnection"],
+      "business_capability": "Data Submission",
+      "sub_capability": "HTTP POST Integration with HTTPBin",
+      "method_breakdown": [
+        {
+          "method_name": "post",
+          "summary": "Serialises a Map<String,String> as a JSON object, POSTs it to the configured URL, and returns the response body.",
+          "parameters": ["data: Map<String, String> - Key-value pairs representing form field names and values"],
+          "returns": "String - Raw HTTP response body from the server",
+          "dependencies": ["javax.json.Json", "java.net.HttpURLConnection", "java.util.Scanner"],
+          "significance": "The sole outbound HTTP call in the application; submits all captured form data to the backend."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Serialises ModelProperties enum keys with their ValueModel string values"
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": "IOException and InterruptedException are declared as checked exceptions; no retry or fallback logic"
+      },
+      "external_integrations": {
+        "third_party_service_calls": "HTTP POST to http://localhost:8080/post (HTTPBin Docker container)",
+        "api_consumption_patterns": "Sends flat JSON object; receives HTTPBin echo response with args, data, form, json, headers, origin, url fields",
+        "error_handling_for_integrations": "Relies on caller for exception handling; connection is always disconnected in normal flow but no finally block for error cases"
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "java",
+      "category": "Business",
+      "summary": "Enum defining the complete set of data fields captured by the application, mapping directly to the person and payment data domain.",
+      "description": "ModelProperties is the canonical list of domain fields managed by the application. Each constant corresponds to a form field in PocView and a ValueModel entry in PocModel. The constants also serve as JSON key names when posting data to the HTTP endpoint. The enum covers personal information (name, date of birth, gender) and financial/address data (IBAN, BIC, VALID_FROM, address fields), reflecting the business domain of customer and payment management.",
+      "business_rules": [
+        "Gender is represented as three independent boolean properties (FEMALE, MALE, DIVERSE) — mutually exclusive at the UI level but independent at the model level",
+        "All 13 properties are always initialised in the model (null-valued), ensuring consistent data structure on every form submission",
+        "Property names are used as-is as JSON keys in the HTTP payload, establishing an implicit API contract with the backend"
+      ],
+      "technical_libraries": [],
+      "business_capability": "Customer & Payment Data Management",
+      "sub_capability": "Domain Field Registry",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": "TEXT_AREA (freetext), FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT (city), STREET, IBAN, BIC, VALID_FROM (payment validity), FEMALE, MALE, DIVERSE (gender flags)",
+        "table_mappings": null,
+        "field_constraints": "13 constants; Boolean type for gender flags, String for all other fields",
+        "relationship_mappings": "Each constant maps 1:1 to a ValueModel<?> in PocModel and a UI component in PocView"
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": "Defines the exhaustive set of data fields — any field not in this enum cannot be bound or submitted",
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": "Enum.toString() values used as JSON keys in HttpBinService.post()",
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "java",
+      "category": "Business",
+      "summary": "Domain model that holds all form field state and orchestrates the data submission action, emitting an event on completion.",
+      "description": "PocModel is the M in the MVP pattern. It owns an EnumMap of ValueModel instances keyed by ModelProperties, covering all 13 domain fields. The action() method collects all field values, converts them to a String map, posts them via HttpBinService, and emits the HTTP response through EventEmitter. This class encapsulates the business operation of submitting customer/payment data. If the response is empty, it emits a 'Failed operation' event to notify the presenter of failure.",
+      "business_rules": [
+        "All 13 form fields are always included in the HTTP submission, even if null",
+        "An empty HTTP response is treated as a failed operation and triggers an error event",
+        "Non-empty responses are forwarded as-is via the event system for UI display",
+        "Field values are coerced to String via Object.toString() before submission — null values will cause NullPointerException in action()"
+      ],
+      "technical_libraries": ["java.util.EnumMap", "java.util.HashMap"],
+      "business_capability": "Customer & Payment Data Submission",
+      "sub_capability": "Form Data Persistence & HTTP Post",
+      "method_breakdown": [
+        {
+          "method_name": "PocModel",
+          "summary": "Constructor initialising all 13 ValueModel entries to null and storing the EventEmitter reference.",
+          "parameters": ["eventEmitter: EventEmitter - The event bus for result notification"],
+          "returns": "PocModel",
+          "dependencies": ["EventEmitter", "ValueModel", "ModelProperties"],
+          "significance": "Establishes the complete data structure; ensures all fields exist before any binding occurs."
+        },
+        {
+          "method_name": "action",
+          "summary": "Collects all current field values, POSTs them via HttpBinService, and emits the result or an error via EventEmitter.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["HttpBinService", "EventEmitter", "ModelProperties", "ValueModel"],
+          "significance": "The sole business operation — triggered by the presenter's button action listener; represents the 'submit form' use case."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "EnumMap<ModelProperties, ValueModel<?>> model — holds String values for text fields, Boolean for gender radio buttons",
+        "table_mappings": null,
+        "field_constraints": "All 13 ModelProperties are present; String fields initialised to null, Boolean fields initialised to null",
+        "relationship_mappings": "model map is public and directly accessed by PocPresenter for binding"
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": "Empty response body treated as failure; non-empty response treated as success",
+        "constraint_violation_handling": "IOException and InterruptedException declared as checked throws from action(); NullPointerException risk if any field remains null during action() due to Object.toString() call on null ValueModel fields"
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Delegates to HttpBinService for HTTP POST to localhost:8080/post",
+        "api_consumption_patterns": "Submits flat key-value JSON; receives and re-emits raw response string",
+        "error_handling_for_integrations": "Empty response string emits 'Failed operation' event; no HTTP error code handling"
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Empty placeholder class; no implementation present.",
+      "description": "ViewData is a currently empty class in the model package. It appears to have been scaffolded for future use, potentially to carry structured view-specific data between the model and presenter. No fields, methods, or logic are implemented. It does not affect application behaviour.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Placeholder / Future Use",
+      "sub_capability": "View Data Transfer Object (Unimplemented)",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "java",
+      "category": "Mixed",
+      "summary": "MVP Presenter that binds PocView UI components to PocModel data fields and orchestrates user interactions and event-driven UI updates.",
+      "description": "PocPresenter is the P in the MVP pattern. It wires every UI control in PocView to its corresponding ModelProperties slot in PocModel using two overloaded bind() methods — one for JTextComponent (via DocumentListener) and one for JRadioButton (via ChangeListener). On button click it delegates to model.action(). It subscribes to EventEmitter to receive model results; on event receipt it updates the text area and resets all fields to empty/default. This creates a clean round-trip: user edits → model updates → HTTP post → event → UI reset.",
+      "business_rules": [
+        "On successful action, the response body is displayed in the text area and all input fields are cleared",
+        "Female gender is the default selected option after a form reset",
+        "Every keystroke in a text field immediately updates the model (live binding, not on-submit)",
+        "Button click triggers the full form submission workflow"
+      ],
+      "technical_libraries": ["javax.swing.event.DocumentListener", "javax.swing.event.ChangeListener", "javax.swing"],
+      "business_capability": "Customer Data Entry & Form Submission",
+      "sub_capability": "MVP Presenter — UI-Model Synchronisation",
+      "method_breakdown": [
+        {
+          "method_name": "PocPresenter",
+          "summary": "Constructor that wires the event subscription (model → view updates), button action listener (view → model), and all field bindings.",
+          "parameters": [
+            "view: PocView - The Swing view component",
+            "model: PocModel - The domain model",
+            "eventEmitter: EventEmitter - The event bus"
+          ],
+          "returns": "PocPresenter",
+          "dependencies": ["PocView", "PocModel", "EventEmitter"],
+          "significance": "Establishes all data flow directions in the MVP triangle; central coordinator of the application."
+        },
+        {
+          "method_name": "bind (JTextComponent overload)",
+          "summary": "Attaches a DocumentListener to a text component that mirrors every insert/remove operation into the corresponding ValueModel.",
+          "parameters": [
+            "source: JTextComponent - The text field or text area to observe",
+            "prop: ModelProperties - The model property to update"
+          ],
+          "returns": "void",
+          "dependencies": ["DocumentListener", "ValueModel", "PocModel"],
+          "significance": "Implements real-time two-way binding between UI text inputs and model state."
+        },
+        {
+          "method_name": "bind (JRadioButton overload)",
+          "summary": "Attaches a ChangeListener to a radio button that mirrors its selected state into the corresponding Boolean ValueModel.",
+          "parameters": [
+            "source: JRadioButton - The gender radio button to observe",
+            "prop: ModelProperties - MALE, FEMALE, or DIVERSE"
+          ],
+          "returns": "void",
+          "dependencies": ["ChangeListener", "ValueModel"],
+          "significance": "Ensures gender selection state is always synchronised with the model."
+        },
+        {
+          "method_name": "initializeBindings",
+          "summary": "Calls bind() for each of the 13 ModelProperties, establishing the complete UI-to-model mapping.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["PocView", "ModelProperties"],
+          "significance": "Single method that activates all data bindings; must be called during construction."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "13 bindings: textArea↔TEXT_AREA, firstName↔FIRST_NAME, name↔LAST_NAME, dateOfBirth↔DATE_OF_BIRTH, zip↔ZIP, ort↔ORT, street↔STREET, iban↔IBAN, bic↔BIC, validFrom↔VALID_FROM, male↔MALE, female↔FEMALE, diverse↔DIVERSE"
+      },
+      "validation_rules": {
+        "input_validation_patterns": "None — all text input is accepted without validation",
+        "business_validation_logic": "Post-action UI reset enforces female-as-default gender state",
+        "constraint_violation_handling": "BadLocationException from DocumentListener wrapped as RuntimeException; IOException and InterruptedException from model.action() wrapped as RuntimeException"
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": "Receives raw HTTP response string from model via EventEmitter; displays in textArea",
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Swing View class that constructs and exposes all UI components for the customer data entry form.",
+      "description": "PocView creates a JFrame titled 'Allegro' with a 6-column GridBagLayout containing text fields for personal data (Vorname, Name, Geburtsdatum, Strasse, PLZ, Ort) and payment data (IBAN, BIC, Gültig ab), a gender radio button group (Weiblich/Männlich/Divers), a text area for response display (RT), and an 'Anordnen' submit button. All components are declared as protected fields, making them directly accessible to PocPresenter. The view follows a pure passive-view pattern — it contains no logic, only layout.",
+      "business_rules": [
+        "Female (Weiblich) is the default selected gender",
+        "The UI is titled 'Allegro' indicating this is the Allegro system client",
+        "Form layout uses German-language labels matching the business domain"
+      ],
+      "technical_libraries": ["javax.swing", "java.awt"],
+      "business_capability": "Customer Data Entry UI",
+      "sub_capability": "Passive View — Form Layout & Component Exposure",
+      "method_breakdown": [
+        {
+          "method_name": "PocView",
+          "summary": "Constructor that immediately calls initUI() to build and display the form window.",
+          "parameters": [],
+          "returns": "PocView",
+          "dependencies": ["javax.swing.JFrame"],
+          "significance": "UI is immediately visible after instantiation."
+        },
+        {
+          "method_name": "initUI",
+          "summary": "Constructs the complete GridBagLayout form with all labels, input components, and the action button, and makes the frame visible.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["javax.swing", "java.awt.GridBagLayout", "java.awt.GridBagConstraints"],
+          "significance": "Defines the full visual layout of the application; all component references are accessible to the presenter via protected fields."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "UI components: JFrame (frame), JTextArea (textArea), JTextField×9 (name, firstName, dateOfBirth, zip, ort, street, iban, bic, validFrom), JRadioButton×3 (female, male, diverse), ButtonGroup (gender), JButton (button)",
+        "table_mappings": null,
+        "field_constraints": "Window size fixed at 800×650px; textArea preferred size 200×400px",
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "language": "javascript",
+      "category": "Technical",
+      "summary": "Node.js WebSocket broadcast server that relays any received UTF-8 message to all currently connected clients.",
+      "description": "WebsocketServer.js implements a simple message relay hub using the 'websocket' npm package layered over Node's http module. It listens on port 1337 and accepts connections from any origin. When any connected client sends a UTF-8 message, the server broadcasts it verbatim to every other connected client. This makes it the central communication backbone between the Vue.js web client and the Java Swing desktop client. No message persistence, authentication, or filtering is implemented — it is a pure relay.",
+      "business_rules": [
+        "All clients receive every message — no targeting or filtering by client type",
+        "Only UTF-8 text messages are processed; binary messages are ignored",
+        "Cross-origin connections are accepted from any origin (null origin check)"
+      ],
+      "technical_libraries": ["websocket (npm ^1.0.35)", "http (Node.js built-in)"],
+      "business_capability": "Real-Time Communication Infrastructure",
+      "sub_capability": "WebSocket Broadcast Relay",
+      "method_breakdown": [
+        {
+          "method_name": "wsServer.on('request')",
+          "summary": "Accepts all incoming WebSocket connection requests, adds the connection to the client list, and wires message and close handlers.",
+          "parameters": ["request: WebSocketRequest - Incoming connection request"],
+          "returns": "void",
+          "dependencies": ["webSocketServer", "clients array"],
+          "significance": "Entry point for all new client connections; maintains the active client registry."
+        },
+        {
+          "method_name": "connection.on('message')",
+          "summary": "Receives a UTF-8 message from any client and broadcasts it to all connected clients including the sender.",
+          "parameters": ["message: IMessage - Incoming WebSocket message"],
+          "returns": "void",
+          "dependencies": ["clients array"],
+          "significance": "Core relay logic — enables cross-client communication between Vue web UI and Java Swing client."
+        },
+        {
+          "method_name": "connection.on('close')",
+          "summary": "Removes the disconnected client from the active clients array using splice.",
+          "parameters": ["connection: WebSocketConnection - The closing connection"],
+          "returns": "void",
+          "dependencies": ["clients array"],
+          "significance": "Prevents sending messages to dead connections; maintains a clean client registry."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "clients: Array<WebSocketConnection> — maintains list of active connections; messages: Array — declared but unused",
+        "table_mappings": null,
+        "field_constraints": "Port hardcoded to 1337",
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Only processes message.type === 'utf8'",
+        "business_validation_logic": null,
+        "constraint_violation_handling": "No error handling on sendUTF; failed broadcasts would throw uncaught exceptions"
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": "Expects JSON string messages with structure { target: string, content: object|string }; relays without parsing",
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/App.vue",
+      "file_name": "App.vue",
+      "language": "vue",
+      "category": "Technical",
+      "summary": "Root Vue.js application component that provides the application shell with a styled header and embeds the Search component.",
+      "description": "App.vue is the top-level SPA shell. It renders a red-branded header bar labelled 'Search Mock' with a logo placeholder and delegates all functionality to the Search component. It imports and registers Search as its only child component. The styling establishes the brand colour (#ff2b06 red) and Avenir/Helvetica typography stack. This component contains no business logic or state.",
+      "business_rules": [],
+      "technical_libraries": ["vue ^2.6.10"],
+      "business_capability": "Application Shell",
+      "sub_capability": "SPA Root Layout & Brand Header",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Embeds Search.vue with content_textarea='Search Mock' prop"
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/main.js",
+      "file_name": "main.js",
+      "language": "javascript",
+      "category": "Technical",
+      "summary": "Vue.js application bootstrap that creates the root Vue instance and mounts App.vue to the DOM.",
+      "description": "main.js is the Vue CLI-generated entry point. It imports Vue, disables the production tip, instantiates the root component using a render function, and mounts it to the #app DOM element. This file contains no business logic and is standard Vue 2 boilerplate.",
+      "business_rules": [],
+      "technical_libraries": ["vue ^2.6.10"],
+      "business_capability": "Application Bootstrap",
+      "sub_capability": "Vue SPA Entry Point",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "language": "vue",
+      "category": "Mixed",
+      "summary": "Central Vue component implementing person search, result selection, payment recipient selection, and WebSocket-based data transfer to the Allegro Swing client.",
+      "description": "Search.vue is the primary functional component of the Vue web client. It renders a multi-section form allowing users to search a hardcoded in-memory person dataset by name, first name, ZIP, city, street, and house number. Search results are displayed in a table with selectable rows; selecting a person reveals their Zahlungsempfänger (payment recipients: IBAN, BIC, Gültig ab). A 'Nach ALLEGRO übernehmen' button sends the selected person and payment data to the Java Swing client via WebSocket (ws://localhost:1337). A textarea also sends freeform text to the Swing client's text area in real time via a Vue watcher. The search_space is a hardcoded mock dataset of 5 German persons.",
+      "business_rules": [
+        "Search is OR-based: a person matches if ANY of the provided criteria (last name, first name, ZIP, city, street, house number) matches",
+        "Search uses case-insensitive substring matching for name, first name, city, street, and house number fields",
+        "ZIP is matched by exact equality",
+        "A person can have multiple Zahlungsempfänger (payment recipients); one must be selected before transfer",
+        "The 'Nach ALLEGRO übernehmen' button sends { target: 'textfield', content: person_with_selected_payment } to Swing client",
+        "Real-time textarea content is sent as { target: 'textarea', content: text_value } on every change",
+        "The Zahlungsempfänger sent is replaced with the single selected entry (not the full array)",
+        "Mock data contains 5 persons with 2–3 payment records each, all German addresses"
+      ],
+      "technical_libraries": ["vue ^2.6.10", "WebSocket (native browser API)"],
+      "business_capability": "Customer Search & Data Transfer",
+      "sub_capability": "Person Lookup, Payment Selection & Allegro Integration",
+      "method_breakdown": [
+        {
+          "method_name": "connect",
+          "summary": "Establishes a WebSocket connection to ws://localhost:1337/ when the component mounts.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["WebSocket (native)"],
+          "significance": "Creates the persistent connection to the relay server used for all data transfer to the Swing client."
+        },
+        {
+          "method_name": "disconnect",
+          "summary": "Closes the WebSocket connection and resets status and logs.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["WebSocket"],
+          "significance": "Clean teardown of the relay connection."
+        },
+        {
+          "method_name": "searchPerson",
+          "summary": "Filters the in-memory search_space dataset against the formdata inputs using OR logic and populates search_result.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["search_space (in-memory array)", "formdata (reactive)"],
+          "significance": "Core search business logic; simulates a database query against mock data."
+        },
+        {
+          "method_name": "sendMessage",
+          "summary": "Serialises a result object and target identifier as JSON and sends it over the active WebSocket connection.",
+          "parameters": [
+            "e: Object - The data object to send (person record or text string)",
+            "target: String - UI target in the Swing client ('textfield' or 'textarea')"
+          ],
+          "returns": "void",
+          "dependencies": ["WebSocket.send()", "JSON.stringify/parse"],
+          "significance": "The bridge method between Vue web client and Java Swing desktop client; sends { target, content } envelope."
+        },
+        {
+          "method_name": "selectResult",
+          "summary": "Sets the selected person from the search results table.",
+          "parameters": ["item: Object - The person record clicked in the results table"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Enables the Zahlungsempfänger section to display the selected person's payment options."
+        },
+        {
+          "method_name": "zahlungsempfaengerSelected",
+          "summary": "Sets the selected Zahlungsempfänger (payment recipient) from the secondary results table.",
+          "parameters": ["zahlungsempfaenger: Object - The payment record selected"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Required step before 'Nach ALLEGRO übernehmen'; determines which payment record is included in the transfer."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Person: { first, name, dob, zip, ort, street, hausnr, knr, zahlungsempfaenger[] }. Zahlungsempfaenger: { iban, bic, valid_from, valid_until, type }. FormData: { last, first, dob, zip, ort, street, hausnr, knr, iban, bic, betriebsbez, rvnr, postfach, bgnr, vorsatzwort, leistung, traegernr, title, nationality }",
+        "table_mappings": null,
+        "field_constraints": "5 hardcoded persons in search_space; disabled form fields: knr, iban, bic, betriebsbez, rvnr, bgnr, traegernr",
+        "relationship_mappings": "Person 1:N Zahlungsempfaenger; selected_result 0:1 zahlungsempfaenger_selected"
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Search only executes if at least one formdata field is non-empty (implicit — empty fields are falsy and skipped in OR check)",
+        "business_validation_logic": "OR-based multi-field search; ZIP exact match vs substring match for text fields; Zahlungsempfänger is replaced with single selected record before WebSocket send",
+        "constraint_violation_handling": "No explicit error handling for WebSocket send failures; no validation on form submission"
+      },
+      "external_integrations": {
+        "third_party_service_calls": "WebSocket to ws://localhost:1337/ (Node.js relay server)",
+        "api_consumption_patterns": "Sends JSON: { target: 'textfield'|'textarea', content: Person|string }. Person payload on textfield: { first, name, dob, zip, ort, street, hausnr, knr, zahlungsempfaenger: single_ZE_object }",
+        "error_handling_for_integrations": "WebSocket onopen sets status to 'connected'; no error handler or reconnection logic"
+      }
+    },
+    {
+      "file_path": "api.yml",
+      "file_name": "api.yml",
+      "language": "yaml",
+      "category": "Technical",
+      "summary": "OpenAPI 3.0 specification defining the /post REST endpoint and PostObject schema for the Allegro PoC HTTP integration.",
+      "description": "api.yml documents the single REST endpoint used by the PoC — a POST to /post on localhost:8080 (the HTTPBin container). The PostObject schema maps all domain fields from ModelProperties as string properties: FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA. The response echoes the request back via the PostResponseObject schema. This spec serves as the formal API contract between the Java Swing client and the backend, and could be used to generate client/server stubs.",
+      "business_rules": [
+        "All customer data fields are typed as string in the API — including boolean gender flags (FEMALE, MALE, DIVERSE)",
+        "The endpoint echoes the request — it is a testing/mock endpoint, not a real business backend"
+      ],
+      "technical_libraries": ["OpenAPI 3.0.1"],
+      "business_capability": "API Documentation & Contract",
+      "sub_capability": "Customer Data Submission Contract (HTTPBin PoC)",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": "PostObject: { FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA } — all string. PostResponseObject: { args, data, files, form, headers, json(PostObject), origin, url }",
+        "table_mappings": null,
+        "field_constraints": "All fields are optional strings; no required constraints defined",
+        "relationship_mappings": "PostResponseObject.json references PostObject schema"
+      },
+      "validation_rules": {
+        "input_validation_patterns": "No required fields, no format constraints defined in the spec",
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": "http://localhost:8080/post — HTTPBin Docker echo service",
+        "api_consumption_patterns": "POST with application/json body wrapping user: PostObject; response is 200 with echoed data",
+        "error_handling_for_integrations": "Only 200 response documented; no error responses specified"
+      }
+    }
+  ],
+  "summary": {
+    "business_files": 3,
+    "technical_files": 7,
+    "mixed_files": 6,
+    "languages_detected": ["Java", "JavaScript (Node.js)", "Vue.js", "YAML (OpenAPI)"],
+    "primary_frameworks": [
+      "Java Swing (javax.swing)",
+      "JSR-356 WebSocket (javax.websocket)",
+      "GlassFish Tyrus WebSocket Client",
+      "javax.json (JSON-P Streaming API)",
+      "Vue.js 2.x",
+      "websocket npm (Node.js WebSocket server)",
+      "OpenAPI 3.0.1"
+    ]
+  }
+}

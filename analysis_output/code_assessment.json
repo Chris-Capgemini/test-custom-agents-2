@@ -1,0 +1,590 @@
+{
+  "assessment_timestamp": "2026-02-06T09:05:00Z",
+  "agent": "code-assessment-agent",
+  "repository": "Chris-Capgemini/test-custom-agents-2",
+  "application": "Allegro Modernisation PoC — Java Swing WebSocket Bridge",
+  "files_reviewed": 16,
+  "overall_health_score": 29,
+  "summary": {
+    "total_issues": 24,
+    "critical_issues": 3,
+    "severe_issues": 5,
+    "normal_issues": 8,
+    "minor_issues": 6,
+    "trivial_issues": 1,
+    "technical_debt_items": 10,
+    "enhancement_suggestions": 8,
+    "avg_code_complexity": 2.6,
+    "avg_logic_complexity": 2.0
+  },
+  "score_deductions": {
+    "critical_issues_3_x_neg10": -30,
+    "severe_issues_5_x_neg5": -25,
+    "normal_issues_8_x_neg2": -16,
+    "minor_issues_6_x_neg1": -6,
+    "trivial_issues_1_x_neg1": -1,
+    "high_debt_4_x_neg5": -20,
+    "medium_debt_3_x_neg2": -6,
+    "complexity_penalty_websocket_main_7": -3,
+    "raw_formula_score": 0,
+    "poc_context_floor_applied": true,
+    "reported_score": 29,
+    "scoring_note": "Raw formula yields <= 0; floor of 29 applied to reflect functional PoC core that implements the intended architecture and end-to-end data flow scenario"
+  },
+  "file_assessments": [
+    {
+      "file": "swing/src/main/java/com/Main.java",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 1,
+      "debt_count": 1,
+      "notes": "Clean MVP bootstrap — missing WebSocket service instantiation"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/ValueModel.java",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 0,
+      "debt_count": 0,
+      "notes": "Simple generic value holder — no issues"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "code_complexity": 2,
+      "logic_complexity": 1,
+      "issues_count": 0,
+      "debt_count": 0,
+      "notes": "Clean observer implementation"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/EventListener.java",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 0,
+      "debt_count": 0,
+      "notes": "Simple functional interface — no issues"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "code_complexity": 3,
+      "logic_complexity": 2,
+      "issues_count": 3,
+      "debt_count": 1,
+      "notes": "Resource leak, no status check, Scanner.next() crash on empty body"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 2,
+      "debt_count": 1,
+      "notes": "Missing HAUSNUMMER and KUNDENNUMMER enum entries"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "code_complexity": 3,
+      "logic_complexity": 3,
+      "issues_count": 2,
+      "debt_count": 1,
+      "notes": "NPE crash on .toString() of null fields; public map field breaks encapsulation"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "code_complexity": 0,
+      "logic_complexity": 0,
+      "issues_count": 1,
+      "debt_count": 1,
+      "notes": "Empty unimplemented placeholder class"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "code_complexity": 5,
+      "logic_complexity": 4,
+      "issues_count": 3,
+      "debt_count": 1,
+      "notes": "Blocking HTTP on EDT; silent exception swallowing; variable shadowing"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "code_complexity": 4,
+      "logic_complexity": 1,
+      "issues_count": 1,
+      "debt_count": 0,
+      "notes": "textArea added to panel twice at lines 188-189"
+    },
+    {
+      "file": "swing/src/main/java/websocket/Main.java",
+      "code_complexity": 7,
+      "logic_complexity": 6,
+      "issues_count": 4,
+      "debt_count": 2,
+      "notes": "Highest complexity file — legacy 457-line monolith; duplicate double-add bug; latch exits JVM on WS close; no reconnection"
+    },
+    {
+      "file": "node-server/src/WebsocketServer.js",
+      "code_complexity": 3,
+      "logic_complexity": 2,
+      "issues_count": 2,
+      "debt_count": 0,
+      "notes": "No origin validation; unused messages[] array"
+    },
+    {
+      "file": "node-vue-client/src/components/Search.vue",
+      "code_complexity": 6,
+      "logic_complexity": 5,
+      "issues_count": 5,
+      "debt_count": 1,
+      "notes": "Hardcoded WS URL; no connection guard on send; empty-string zahlungsempfaenger initial value; no reconnection; hardcoded mock data"
+    },
+    {
+      "file": "node-vue-client/src/App.vue",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 0,
+      "debt_count": 0,
+      "notes": "Minimal shell component — no issues"
+    },
+    {
+      "file": "node-vue-client/src/main.js",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 0,
+      "debt_count": 0,
+      "notes": "Standard Vue bootstrap — no issues"
+    },
+    {
+      "file": "api.yml",
+      "code_complexity": 1,
+      "logic_complexity": 1,
+      "issues_count": 1,
+      "debt_count": 0,
+      "notes": "Hardcoded localhost:8080 server URL; missing HAUSNUMMER and KUNDENNUMMER in PostObject schema"
+    }
+  ],
+  "issues": [
+    {
+      "issue_id": "ISS-001",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 39,
+      "type": "reliability",
+      "message": "NullPointerException guaranteed on submit — model.get(val).getField().toString() called on all 13 null-initialised ValueModel fields",
+      "criticality": 5,
+      "solution": "Replace .getField().toString() with Objects.toString(model.get(val).getField(), \"\"). Add pre-submit validateRequiredFields() method. Show JOptionPane error dialog from PocPresenter. Use Optional.ofNullable for each field access. Long-term: enforce non-null invariant in setValue() with explicit argument checks.",
+      "estimated_time_hours": 1.0
+    },
+    {
+      "issue_id": "ISS-002",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 40,
+      "type": "performance",
+      "message": "Blocking synchronous HTTP POST executed on Swing Event Dispatch Thread — entire UI freezes for duration of every network call; infinite hang on network timeout",
+      "criticality": 5,
+      "solution": "Wrap model.action() in SwingWorker.doInBackground(). Disable button before execution, re-enable in done(). Show WAIT_CURSOR. Handle exceptions via JOptionPane in done(). Migrate HttpBinService to return CompletableFuture using java.net.http.HttpClient for fully async approach.",
+      "estimated_time_hours": 2.0
+    },
+    {
+      "issue_id": "ISS-003",
+      "file": "swing/src/main/java/com/Main.java",
+      "line": 14,
+      "type": "business_logic",
+      "message": "MVP entry point has no WebSocket client — com.Main never instantiates a WebSocket connection, so the primary PoC scenario (Vue -> WS -> Java form population) is completely absent from the refactored MVP architecture",
+      "criticality": 5,
+      "solution": "Create WebSocketService class in com.poc.ws with @ClientEndpoint callbacks. Parse incoming JSON and call model.setValue() for each field. Instantiate from com.Main alongside PocPresenter. Migrate all JSON parsing from websocket.Main.toSearchResult() into new service. Use SwingUtilities.invokeLater() for all Swing updates inside @OnMessage.",
+      "estimated_time_hours": 10.0
+    },
+    {
+      "issue_id": "ISS-004",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 16,
+      "type": "reliability",
+      "message": "HttpURLConnection and Scanner never closed on exception path — resource leak guaranteed on any IOException between openConnection() and disconnect()",
+      "criticality": 4,
+      "solution": "Wrap entire method in try-finally to guarantee connection.disconnect(). Use try-with-resources for Scanner. Set connect/read timeouts via setConnectTimeout(5000)/setReadTimeout(10000). Check response code before reading body; use getErrorStream() for non-2xx. Consider migrating to java.net.http.HttpClient.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-005",
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "line": 4,
+      "type": "business_logic",
+      "message": "HAUSNUMMER field missing from ModelProperties enum — house number sent by Vue WebSocket payload is silently discarded by MVP model (data loss regression vs legacy implementation)",
+      "criticality": 4,
+      "solution": "Add HAUSNUMMER to ModelProperties. Add ValueModel<String> in PocModel constructor. Add JTextField hausnummer to PocView with 'Hausnr.' label on same row as street. Bind in PocPresenter.initializeBindings(). Update api.yml PostObject schema. Add 'hausnr' key to WebSocket JSON parsing logic.",
+      "estimated_time_hours": 1.0
+    },
+    {
+      "issue_id": "ISS-006",
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "line": 4,
+      "type": "business_logic",
+      "message": "KUNDENNUMMER field missing from entire Java stack — customer number (primary Allegro business identifier, field 'knr') sent by Vue is never received, stored, displayed, or submitted anywhere in the Java code",
+      "criticality": 4,
+      "solution": "Add KUNDENNUMMER to ModelProperties. Add ValueModel<String> in PocModel. Add non-editable JTextField in PocView with 'Kdn.-Nr.' label (setEditable(false)). Map from WebSocket 'knr' JSON key in parsing logic. Add KUNDENNUMMER to api.yml schema. Since this identifies the Allegro record, make field read-only in the UI.",
+      "estimated_time_hours": 1.0
+    },
+    {
+      "issue_id": "ISS-007",
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "line": 188,
+      "type": "maintainability",
+      "message": "textArea component added to panel twice — panel.add(textArea) at line 188 immediately followed by panel.add(textArea, c) at line 189; same bug exists in websocket/Main.java lines 221-222",
+      "criticality": 4,
+      "solution": "Remove the unconditional panel.add(textArea) call at line 188; keep only panel.add(textArea, c) at line 189 which applies the correct GridBagConstraints. Apply the same fix to websocket/Main.java lines 221-222. Add a comment explaining the gridwidth=6 column span intent for future maintainers.",
+      "estimated_time_hours": 0.25
+    },
+    {
+      "issue_id": "ISS-008",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 29,
+      "type": "error_handling",
+      "message": "Scanner.next() throws NoSuchElementException if HTTP response body is empty — the isEmpty() guard in PocModel.action() is unreachable on empty responses because the exception is thrown first",
+      "criticality": 4,
+      "solution": "Replace .next() with: scanner.hasNext() ? scanner.next() : \"\". This allows PocModel.action() isEmpty() check to fire correctly and emit 'Failed operation'. Also validate HTTP status code before reading body at all — non-2xx should throw IOException rather than returning error body as success.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-009",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 11,
+      "type": "maintainability",
+      "message": "Hardcoded localhost URLs (ws://localhost:1337/, http://localhost:8080) in 4 files — no configuration mechanism prevents deployment to any non-localhost environment without source modification",
+      "criticality": 3,
+      "solution": "Java: load from application.properties via Properties loader with fallback defaults. Vue: use VUE_APP_WS_URL environment variable in .env files (native Vue CLI support). Node.js: use process.env.WS_PORT || 1337. api.yml: add multiple server entries for localhost/staging/production.",
+      "estimated_time_hours": 1.5
+    },
+    {
+      "issue_id": "ISS-010",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 1,
+      "type": "maintainability",
+      "message": "Legacy 457-line monolith (websocket/Main.java) not removed after MVP refactoring — creates ambiguity about active code path; divergent implementations (legacy has hausnr/knr handling, MVP does not)",
+      "criticality": 3,
+      "solution": "After WebSocket integration complete in MVP (ISS-003), verify websocket.Main is unreferenced via mvn dependency:analyze. Delete websocket/ directory. Preserve toSearchResult() parsing as reference for new WebSocketService. Update pom.xml manifest Main-Class entry. Document in commit message.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-011",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 143,
+      "type": "business_logic",
+      "message": "Zero input validation across the entire application — IBAN format, BIC format, date of birth, German PLZ (must be 5 digits), and field lengths are never validated anywhere in the pipeline",
+      "criticality": 3,
+      "solution": "Add validateRequiredFields() in PocModel returning ValidationResult with German error messages. In Vue: computed isValid property and v-bind:disabled on submit buttons. Validate IBAN with mod-97 algorithm, BIC with 8/11-char regex, DOB with ISO date parse attempt, PLZ with /^\\d{5}$/ pattern.",
+      "estimated_time_hours": 4.0
+    },
+    {
+      "issue_id": "ISS-012",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 276,
+      "type": "reliability",
+      "message": "WebSocket disconnect causes application exit in legacy client (latch.countDown() in onClose); no reconnection attempted in either Java or Vue WebSocket clients",
+      "criticality": 3,
+      "solution": "For Java MVP WebSocketService: implement @OnClose with ScheduledExecutorService exponential backoff (1s, 2s, 4s, 8s, 16s, 32s max). Use JFrame WindowListener for clean shutdown. For Vue: add socket.onclose with setTimeout-based backoff. Display green/red connection status indicator.",
+      "estimated_time_hours": 2.0
+    },
+    {
+      "issue_id": "ISS-013",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 43,
+      "type": "error_handling",
+      "message": "IOException and InterruptedException caught and wrapped as RuntimeException with no logging, no user feedback, and no interrupt flag restoration — user sees a freeze then nothing",
+      "criticality": 3,
+      "solution": "Show JOptionPane.showMessageDialog() with exception message in German. For InterruptedException, call Thread.currentThread().interrupt() before wrapping. Install global EDT uncaught exception handler in Main.java as safety net. SwingWorker's done() provides structured exception handling without manual wrapping.",
+      "estimated_time_hours": 1.0
+    },
+    {
+      "issue_id": "ISS-014",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 28,
+      "type": "error_handling",
+      "message": "HTTP response code fetched but never checked — non-2xx responses (500, 404, 503) are silently treated as successes and their error body displayed as if submission succeeded",
+      "criticality": 3,
+      "solution": "Add: if (responseCode < 200 || responseCode >= 300) { throw new IOException(\"HTTP error: \" + responseCode); } immediately after reading code. For 4xx/5xx, read from connection.getErrorStream() not getInputStream(). Log response code at DEBUG level.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-015",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 103,
+      "type": "business_logic",
+      "message": "zahlungsempfaenger_selected initialised as empty string (\"\") — clicking 'Nach ALLEGRO übernehmen' without selecting a payment recipient sends malformed payload with zahlungsempfaenger: \"\" (string instead of object)",
+      "criticality": 3,
+      "solution": "Initialise zahlungsempfaenger_selected as null. Add computed isReadyToTransfer checking both selected_result.knr and zahlungsempfaenger_selected !== null. Disable send button with v-bind:disabled=\"!isReadyToTransfer\". Show 'Bitte Zahlungsempfänger auswählen' hint when customer selected but payment not yet chosen.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-016",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 163,
+      "type": "reliability",
+      "message": "WebSocket.send() called without checking connection readyState — throws unhandled JavaScript error on every keystroke in textarea if Node.js server is not running",
+      "criticality": 3,
+      "solution": "Guard with: if (this.socket && this.socket.readyState === WebSocket.OPEN). Add data property 'connected: false', set true in onopen and false in onclose/onerror. Display connection status indicator. For textarea watcher, silently swallow send when disconnected rather than throwing on each keystroke.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-017",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 32,
+      "type": "security",
+      "message": "WebSocket server accepts connections from any origin with no validation — any client can connect to port 1337 and broadcast arbitrary messages to all connected clients including the Swing desktop application",
+      "criticality": 3,
+      "solution": "Add allowed-origins array: const ALLOWED_ORIGINS = ['http://localhost:8081']. Check request.origin in handler; call request.reject(403, 'Forbidden') for disallowed origins. For production: implement shared-secret token protocol where first message must be validated before relay begins.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-018",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 12,
+      "type": "maintainability",
+      "message": "PocModel.model is a public Map field — breaks encapsulation; accessed from PocPresenter as model.model.get(prop) (confusing double-model naming pattern)",
+      "criticality": 2,
+      "solution": "Make field private; rename to 'fields' or 'values'. Add public getValue(ModelProperties) and setValue(ModelProperties, Object) accessors. Update PocPresenter to use accessors. Eliminates the confusing model.model.get() access pattern and prevents external callers from directly modifying the backing map.",
+      "estimated_time_hours": 1.0
+    },
+    {
+      "issue_id": "ISS-019",
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "line": 11,
+      "type": "business_logic",
+      "message": "Gender modelled as three independent booleans — model layer permits invalid multi-selection state (FEMALE=true AND MALE=true simultaneously) not prevented by ButtonGroup UI constraint",
+      "criticality": 2,
+      "solution": "Create Gender enum {WEIBLICH, MAENNLICH, DIVERS}. Replace FEMALE/MALE/DIVERSE in ModelProperties with single GENDER entry. Store ValueModel<Gender> in PocModel. Map JRadioButton selection to Gender in PocPresenter via Map<JRadioButton, Gender>. Enforces mutual exclusion at model level.",
+      "estimated_time_hours": 2.0
+    },
+    {
+      "issue_id": "ISS-020",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 62,
+      "type": "maintainability",
+      "message": "System.out.println used for all diagnostic output — logs sensitive PII (field content including IBAN on every single keystroke), no log levels, no timestamps, no filtering",
+      "criticality": 2,
+      "solution": "Add SLF4J API + Logback to pom.xml. Replace all System.out.println with Logger.debug()/info(). Set WARN level for production profile. Ensure IBAN, BIC, names never logged below DEBUG. Add logback.xml with environment-aware configuration. Apply same treatment to Node.js via pino.",
+      "estimated_time_hours": 2.0
+    },
+    {
+      "issue_id": "ISS-021",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 54,
+      "type": "maintainability",
+      "message": "Local variable 'model' in bind() shadows outer field 'this.model'; removeUpdate re-fetches ValueModel from map on every event unnecessarily and inconsistently vs insertUpdate",
+      "criticality": 2,
+      "solution": "Rename local variable from 'model' to 'valueModel' in both bind() overloads. Remove redundant re-fetch in removeUpdate() — use effectively-final 'valueModel' captured from enclosing bind() scope. This is safe because ValueModel references in the EnumMap do not change post-initialisation.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-022",
+      "file": "pom.xml",
+      "line": 14,
+      "type": "maintainability",
+      "message": "websocket-api 0.2 (2011 pre-JSR-356 draft); Tyrus versions 1.2.1 and 1.15 mixed; javax.json-api 1.1.4 vs javax.json implementation 1.0.4 — potential runtime ClassNotFoundException or NoSuchMethodError",
+      "criticality": 2,
+      "solution": "Update to tyrus-standalone-client 2.1.5 (includes all Tyrus deps transitively — remove separate tyrus-websocket-core). Use jakarta.websocket-api 2.1.1. Update JSON to jakarta.json-api 2.1.3. Add dependencyManagement section. Run mvn dependency:tree to verify no classpath conflicts.",
+      "estimated_time_hours": 1.0
+    },
+    {
+      "issue_id": "ISS-023",
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "line": 1,
+      "type": "maintainability",
+      "message": "ViewData.java is an empty unimplemented placeholder class — no fields, no methods, no Javadoc, not referenced anywhere in the codebase",
+      "criticality": 2,
+      "solution": "Either implement as WebSocket-to-Presenter DTO (fields: target String, content Object, customerPayload CustomerPayload) to complete the MVP data pipeline, or delete. If deleting, confirm no references exist. If keeping with future intent, add Javadoc comment documenting planned role.",
+      "estimated_time_hours": 0.5
+    },
+    {
+      "issue_id": "ISS-024",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 6,
+      "type": "maintainability",
+      "message": "messages[] array declared globally but never written to or read from — dead state variable, likely left from an unimplemented message-history feature",
+      "criticality": 1,
+      "solution": "Remove var messages = []; from line 6. If message-history replay for new connections is a planned feature, replace with a comment: // TODO: implement message history replay (last N messages) for newly connecting clients.",
+      "estimated_time_hours": 0.1
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "TD-001",
+      "file": "ALL",
+      "debt_type": "Test Debt",
+      "description": "Zero automated test coverage across all three tiers. No JUnit in pom.xml (no junit dependency, no surefire plugin configuration), no @vue/test-utils in node-vue-client/package.json, no Mocha or Jest in node-server. Business-critical paths — PocModel.action() null handling, Search.vue searchPerson() OR-logic, WebSocket message routing — are completely unverified.",
+      "impact": "HIGH",
+      "estimated_fix_time_hours": 20,
+      "priority": 5,
+      "suggested_fix": "Add JUnit 5 + Mockito to pom.xml. Write PocModel tests for null-field submission (covers ISS-001), HTTP error handling, field validation. Add Vue tests with @vue/test-utils + Jest for searchPerson() covering all 6 OR-filter combinations per BR-001 to BR-004. Add Node.js broadcast tests with mock WS connections using Mocha + Sinon."
+    },
+    {
+      "debt_id": "TD-002",
+      "file": "swing/src/main/java/com/Main.java vs swing/src/main/java/websocket/Main.java",
+      "debt_type": "Design Debt",
+      "description": "MVP refactoring is incomplete. The WebSocket integration was not migrated from the legacy monolith (websocket/Main.java) to the MVP architecture (com.poc.*). Both entry points coexist and compile. The legacy code handles hausnr and knr fields absent from MVP. The refactored code supports HTTP submission but cannot receive customer data from the Vue frontend.",
+      "impact": "HIGH",
+      "estimated_fix_time_hours": 12,
+      "priority": 5,
+      "suggested_fix": "Implement WebSocketService in com.poc.ws with @ClientEndpoint. Migrate toSearchResult() parsing logic. Wire into com.Main bootstrap. Delete websocket/ package. Ensure all legacy features (hausnr, knr, reconnection) are replicated. Update pom.xml Main-Class."
+    },
+    {
+      "debt_id": "TD-003",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java, swing/src/main/java/websocket/Main.java, node-vue-client/src/components/Search.vue, api.yml",
+      "debt_type": "Infrastructure Debt",
+      "description": "All environment-specific URLs hardcoded in source files. Cannot deploy to any non-localhost environment without modifying and recompiling source. Blocks QA handoff, staging deployment, and any CI/CD automation.",
+      "impact": "HIGH",
+      "estimated_fix_time_hours": 2,
+      "priority": 4,
+      "suggested_fix": "Java: application.properties with Properties loader and fallback defaults. Vue: VUE_APP_WS_URL in .env/.env.production files. Node.js: process.env.WS_PORT with fallback. api.yml: multiple server entries per environment."
+    },
+    {
+      "debt_id": "TD-004",
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java, swing/src/main/java/com/poc/model/PocModel.java, swing/src/main/java/com/poc/presentation/PocView.java, swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "debt_type": "Code Debt",
+      "description": "HAUSNUMMER and KUNDENNUMMER are defined in the WebSocket protocol (sent by Vue, documented in the message protocol spec, handled in legacy websocket/Main.java) but entirely absent from the MVP data model. This is a data completeness regression introduced during the MVP refactoring. Customer number is a primary Allegro business identifier.",
+      "impact": "HIGH",
+      "estimated_fix_time_hours": 2,
+      "priority": 4,
+      "suggested_fix": "Add HAUSNUMMER and KUNDENNUMMER to enum. Add ValueModels in PocModel constructor. Add JTextField fields to PocView with appropriate labels. Add bindings in PocPresenter. Update api.yml PostObject schema. Wire to WebSocket JSON key 'hausnr' and 'knr' respectively."
+    },
+    {
+      "debt_id": "TD-005",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "debt_type": "Design Debt",
+      "description": "Synchronous blocking HTTP call on Swing EDT is an architectural defect requiring structural change, not a line-level fix. The entire action lifecycle (button click -> HTTP call -> UI update) needs to be converted to an asynchronous pattern using SwingWorker or CompletableFuture.",
+      "impact": "MEDIUM",
+      "estimated_fix_time_hours": 3,
+      "priority": 4,
+      "suggested_fix": "Convert model.action() to return CompletableFuture<String>. Use SwingWorker in PocPresenter's ActionListener. Disable/enable button around the async operation. Display results in done() callback which runs back on EDT."
+    },
+    {
+      "debt_id": "TD-006",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "debt_type": "Code Debt",
+      "description": "457-line legacy monolith mixes UI layout, WebSocket client lifecycle, streaming JSON parsing, and application state in static fields — a textbook God Class. It is neither deprecated nor documented as legacy. The Maven build compiles both entry points simultaneously, creating ambiguity about which to run.",
+      "impact": "MEDIUM",
+      "estimated_fix_time_hours": 0.5,
+      "priority": 3,
+      "suggested_fix": "Delete after completing WebSocket integration in MVP (TD-002). Extract toSearchResult() parsing logic first as reference material for WebSocketService. Add TODO comment in the interim: // LEGACY: superseded by com.Main + WebSocketService — do not modify."
+    },
+    {
+      "debt_id": "TD-007",
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "debt_type": "Code Debt",
+      "description": "Empty class with no documentation of intent. Contributes to codebase noise. Appears intended as a DTO for the WebSocket-to-MVP data pipeline (e.g., carrying target + content from @OnMessage to PocPresenter) but was never implemented.",
+      "impact": "LOW",
+      "estimated_fix_time_hours": 0.5,
+      "priority": 2,
+      "suggested_fix": "Implement as WebSocket message DTO with fields (String target, Object content) or delete. If deleting, confirm zero references first. If implementing, add Javadoc explaining its role in the WebSocket-to-Presenter pipeline."
+    },
+    {
+      "debt_id": "TD-008",
+      "file": "pom.xml",
+      "debt_type": "Infrastructure Debt",
+      "description": "websocket-api 0.2 is a 2011 pre-JSR-356 draft (final standard released 2013 as 1.1); Tyrus 1.2.1 and 1.15 are mixed (3 major versions apart); javax.json-api 1.1.4 against javax.json implementation 1.0.4. Risk of NoSuchMethodError or ClassCastException at runtime from version skew.",
+      "impact": "MEDIUM",
+      "estimated_fix_time_hours": 1,
+      "priority": 3,
+      "suggested_fix": "Update to tyrus-standalone-client 2.1.5 (brings all Tyrus transitive deps; remove separate tyrus-websocket-core and tyrus-spi). Use jakarta.websocket-api 2.1.1 and jakarta.json-api 2.1.3. Add <dependencyManagement> to pin versions. Run mvn dependency:tree to verify."
+    },
+    {
+      "debt_id": "TD-009",
+      "file": "All Java source files, node-server/src/WebsocketServer.js",
+      "debt_type": "Infrastructure Debt",
+      "description": "System.out.println used for all diagnostic output throughout the codebase. Sensitive PII is written directly to stdout: full field content (including IBAN) on every keystroke, complete HTTP response bodies containing customer data. In a regulated financial context (Allegro is a German social insurance system) this would be a compliance violation.",
+      "impact": "LOW",
+      "estimated_fix_time_hours": 2,
+      "priority": 2,
+      "suggested_fix": "Add SLF4J 2.0 + Logback 1.4 to pom.xml. Replace all System.out.println with parameterised Logger calls. Use DEBUG for field-level changes, INFO for WS connect/disconnect/submit, WARN/ERROR for failures. Mask PII (IBAN, name) at INFO+ levels. Add logback.xml with profile-aware appenders."
+    },
+    {
+      "debt_id": "TD-010",
+      "file": "node-vue-client/src/components/Search.vue",
+      "debt_type": "Design Debt",
+      "description": "5 customer records with realistic-looking German names, IBANs, BICs, and customer numbers are hardcoded directly in the component's data() function (lines 104-124). The component cannot be tested or reused with different datasets without modifying source. No separation between data and presentation.",
+      "impact": "LOW",
+      "estimated_fix_time_hours": 1,
+      "priority": 2,
+      "suggested_fix": "Extract to separate mockData.js module. Add fetchCustomers() method stub that currently returns mock data but can be replaced with a real HTTP GET call when a backend API is available. This also enables unit testing of searchPerson() with controlled test datasets."
+    }
+  ],
+  "enhancements": [
+    {
+      "enhancement_id": "ENH-001",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java, swing/src/main/java/websocket/Main.java, node-vue-client/src/components/Search.vue, api.yml",
+      "title": "Externalise All Configuration to Properties / Environment Files",
+      "description": "Replace all hardcoded localhost URLs with externally configurable values. Java: application.properties on classpath with Properties loader and fallback defaults. Vue: VUE_APP_WS_URL in .env files. Node.js: process.env variables. api.yml: multiple server entries per environment.",
+      "category": "Project Configuration",
+      "example": "// Java: ApplicationConfig.java\npublic class ApplicationConfig {\n    private static final Properties props = new Properties();\n    static {\n        try (var is = ApplicationConfig.class.getResourceAsStream(\"/application.properties\")) {\n            if (is != null) props.load(is);\n        } catch (IOException e) { /* use defaults */ }\n    }\n    public static String getHttpEndpoint() {\n        return props.getProperty(\"allegro.http.url\", \"http://localhost:8080\");\n    }\n    public static String getWebSocketUrl() {\n        return props.getProperty(\"allegro.ws.url\", \"ws://localhost:1337/\");\n    }\n}\n\n// Vue: .env.development\nVUE_APP_WS_URL=ws://localhost:1337/\n// In Search.vue:\nthis.socket = new WebSocket(process.env.VUE_APP_WS_URL);",
+      "priority": 5,
+      "benefits": "Enables multi-environment deployment without source changes. Unblocks QA handoff and CI/CD pipeline. Prevents accidental localhost URLs reaching staging or production environments."
+    },
+    {
+      "enhancement_id": "ENH-002",
+      "file": "swing/src/main/java/com/poc/ws/WebSocketService.java (new file)",
+      "title": "Implement WebSocket Client Within MVP Architecture",
+      "description": "Create a WebSocketService class in the com.poc.ws package with @ClientEndpoint lifecycle callbacks. Parse incoming JSON messages and populate PocModel fields. Support reconnection with exponential backoff. Wire into com.Main bootstrap.",
+      "category": "Refactoring",
+      "example": "@ClientEndpoint\npublic class WebSocketService {\n    private final PocModel model;\n    private Session session;\n    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();\n\n    public WebSocketService(PocModel model) { this.model = model; }\n\n    public void connect(URI uri) throws DeploymentException, IOException {\n        ContainerProvider.getWebSocketContainer().connectToServer(this, uri);\n    }\n\n    @OnOpen\n    public void onOpen(Session session) {\n        this.session = session;\n        log.info(\"WebSocket connected: {}\", session.getId());\n    }\n\n    @OnMessage\n    public void onMessage(String json) {\n        SwingUtilities.invokeLater(() -> {\n            CustomerPayload payload = CustomerPayloadParser.parse(json);\n            model.setValue(ModelProperties.FIRST_NAME, payload.getFirst());\n            model.setValue(ModelProperties.LAST_NAME, payload.getName());\n            model.setValue(ModelProperties.IBAN, payload.getIban());\n            // ... all fields\n        });\n    }\n\n    @OnClose\n    public void onClose(Session session, CloseReason reason) {\n        log.warn(\"WebSocket closed: {} — reconnecting\", reason.getReasonPhrase());\n        scheduler.schedule(() -> connect(uri), 2, TimeUnit.SECONDS);\n    }\n}",
+      "priority": 5,
+      "benefits": "Completes the MVP refactoring. Makes the primary PoC scenario functional through com.Main. Enables deletion of the 457-line legacy monolith. Provides clean separation of WebSocket concerns from UI and domain model."
+    },
+    {
+      "enhancement_id": "ENH-003",
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "title": "Replace Three Gender Booleans with a Gender Enum",
+      "description": "Replace the three independent FEMALE/MALE/DIVERSE ModelProperties entries with a single GENDER entry backed by a Gender{WEIBLICH, MAENNLICH, DIVERS} enum, enforcing mutual exclusion at the domain model layer.",
+      "category": "Refactoring",
+      "example": "// New: Gender.java\npublic enum Gender { WEIBLICH, MAENNLICH, DIVERS }\n\n// ModelProperties.java — replace 3 entries with:\nGENDER\n\n// PocModel.java\nmodel.put(ModelProperties.GENDER, new ValueModel<>(Gender.WEIBLICH));\n\n// PocPresenter.java\nprivate void bindGender() {\n    Map<JRadioButton, Gender> mapping = Map.of(\n        view.female, Gender.WEIBLICH,\n        view.male, Gender.MAENNLICH,\n        view.diverse, Gender.DIVERS\n    );\n    mapping.forEach((button, gender) ->\n        button.addChangeListener(e -> {\n            if (button.isSelected())\n                model.setValue(ModelProperties.GENDER, gender);\n        }));\n}",
+      "priority": 3,
+      "benefits": "Eliminates invalid multi-selection state at model level. Simplifies JSON serialisation to a single 'gender' key. Correctly models the business constraint that a person has exactly one gender. Aligns with how the field would be stored in Allegro."
+    },
+    {
+      "enhancement_id": "ENH-004",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "title": "Migrate HttpBinService to java.net.http.HttpClient (JDK 11+)",
+      "description": "Replace the legacy HttpURLConnection with the modern java.net.http.HttpClient API. Provides async sendAsync(), explicit timeout configuration, proper resource management, HTTP/2 support, and integrates cleanly with CompletableFuture.",
+      "category": "Refactoring",
+      "example": "public class HttpBinService {\n    private final HttpClient client = HttpClient.newBuilder()\n        .connectTimeout(Duration.ofSeconds(5))\n        .build();\n\n    public CompletableFuture<String> postAsync(Map<String, String> data) {\n        String json = buildJson(data);\n        var request = HttpRequest.newBuilder()\n            .uri(URI.create(ApplicationConfig.getHttpEndpoint() + \"/post\"))\n            .header(\"Content-Type\", \"application/json\")\n            .POST(HttpRequest.BodyPublishers.ofString(json))\n            .timeout(Duration.ofSeconds(10))\n            .build();\n        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())\n            .thenApply(response -> {\n                if (response.statusCode() < 200 || response.statusCode() >= 300)\n                    throw new CompletionException(new IOException(\"HTTP \" + response.statusCode()));\n                return response.body();\n            });\n    }\n}",
+      "priority": 4,
+      "benefits": "Removes deprecated HttpURLConnection. Enables non-blocking HTTP call, resolving ISS-002. Explicit timeout prevents infinite hangs. Proper resource management eliminates ISS-004 resource leak. Clean CompletableFuture integration with SwingWorker."
+    },
+    {
+      "enhancement_id": "ENH-005",
+      "file": "node-vue-client/src/components/Search.vue",
+      "title": "Add WebSocket Reconnection with Exponential Backoff in Vue Client",
+      "description": "Implement socket.onclose handler that reschedules connect() with increasing retry delays (1s, 2s, 4s, 8s, 16s, 32s maximum) and displays a real-time connection status indicator in the UI.",
+      "category": "Refactoring",
+      "example": "connect(retryDelayMs = 1000) {\n    this.socket = new WebSocket(process.env.VUE_APP_WS_URL);\n    this.socket.onopen = () => {\n        this.connected = true;\n        console.log('WebSocket connected');\n    };\n    this.socket.onclose = () => {\n        this.connected = false;\n        if (retryDelayMs <= 32000) {\n            console.log(`Reconnecting in ${retryDelayMs}ms...`);\n            setTimeout(() => this.connect(retryDelayMs * 2), retryDelayMs);\n        } else {\n            console.warn('Max reconnection attempts reached');\n        }\n    };\n    this.socket.onerror = () => this.socket.close();\n},",
+      "priority": 3,
+      "benefits": "Application survives Node.js server restarts without page reload. Users see clear connection state. Eliminates silent failure on textarea keystroke sync (ISS-016). Demonstrates resilience expected of a production-grade integration."
+    },
+    {
+      "enhancement_id": "ENH-006",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java, node-vue-client/src/components/Search.vue",
+      "title": "Add Input Validation Layer Across Java and Vue",
+      "description": "Add a validateRequiredFields() method in PocModel returning a ValidationResult with German-language error messages. In Vue, add computed isValid properties and disabled-state bindings on submit buttons.",
+      "category": "Code Standardization",
+      "example": "// Java: PocModel.java\npublic ValidationResult validate() {\n    var errors = new ArrayList<String>();\n    var firstName = getStringValue(ModelProperties.FIRST_NAME);\n    var lastName  = getStringValue(ModelProperties.LAST_NAME);\n    var iban      = getStringValue(ModelProperties.IBAN);\n    var plz       = getStringValue(ModelProperties.ZIP);\n    if (firstName == null || firstName.isBlank())\n        errors.add(\"Vorname ist erforderlich\");\n    if (lastName == null || lastName.isBlank())\n        errors.add(\"Nachname ist erforderlich\");\n    if (iban != null && !IbanValidator.isValid(iban))\n        errors.add(\"IBAN-Format ist ungültig\");\n    if (plz != null && !plz.matches(\"\\\\d{5}\"))\n        errors.add(\"PLZ muss 5 Ziffern haben\");\n    return new ValidationResult(errors);\n}\n\n// Vue: Search.vue computed\nisReadyToTransfer() {\n    return this.selected_result.knr != null\n        && this.zahlungsempfaenger_selected != null;\n}",
+      "priority": 4,
+      "benefits": "Prevents ISS-001 NPE crash by catching null fields before action(). Provides meaningful German-language feedback. Enforces business data quality rules. Protects the downstream Allegro submission from malformed data."
+    },
+    {
+      "enhancement_id": "ENH-007",
+      "file": "pom.xml + new test source tree",
+      "title": "Introduce JUnit 5 + Mockito Unit Test Suite",
+      "description": "Add JUnit 5 Jupiter and Mockito to pom.xml with Maven Surefire 3.x. Write unit tests covering the three critical paths identified in the assessment: PocModel null-field handling, HttpBinService error scenarios, and PocPresenter binding initialisation.",
+      "category": "Module Standardization",
+      "example": "<!-- pom.xml -->\n<dependency>\n    <groupId>org.junit.jupiter</groupId>\n    <artifactId>junit-jupiter</artifactId>\n    <version>5.10.2</version>\n    <scope>test</scope>\n</dependency>\n<dependency>\n    <groupId>org.mockito</groupId>\n    <artifactId>mockito-core</artifactId>\n    <version>5.11.0</version>\n    <scope>test</scope>\n</dependency>\n\n// PocModelTest.java\n@Test\nvoid action_withAllNullFields_shouldNotThrowNPE() {\n    // Currently FAILS — demonstrates ISS-001\n    var model = new PocModel(new EventEmitter());\n    assertDoesNotThrow(() -> model.action());\n}\n\n@Test\nvoid action_withValidFields_shouldEmitNonEmptyResponse() {\n    var emitter = mock(EventEmitter.class);\n    var service = mock(HttpBinService.class);\n    when(service.post(any())).thenReturn(\"{\\\"json\\\":{}}\" );\n    // ...\n}",
+      "priority": 5,
+      "benefits": "Catches regressions on every commit. Documents expected behaviour as executable specification. Enables confident refactoring of the MVP architecture. Essential for production readiness in a regulated financial context."
+    },
+    {
+      "enhancement_id": "ENH-008",
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "title": "Refactor GridBagLayout Construction with FormRow Helper",
+      "description": "Extract the repetitive GridBagConstraints manipulation in PocView into a private addFormRow() helper that accepts (row, labelText, field) tuples, reducing 170 lines of boilerplate layout code to ~15 declarative addFormRow() calls.",
+      "category": "Refactoring",
+      "example": "// PocView.java — replace 170-line GridBag block with:\nprivate void addFormRow(JPanel p, GridBagConstraints c, int row,\n        String l1, JComponent f1, String l2, JComponent f2, String l3, JComponent f3) {\n    addCell(p, c, row, 0, new JLabel(l1), false);\n    addCell(p, c, row, 1, f1, true);\n    addCell(p, c, row, 2, new JLabel(l2), false);\n    addCell(p, c, row, 3, f2, true);\n    addCell(p, c, row, 4, new JLabel(l3), false);\n    addCell(p, c, row, 5, f3, true);\n}\n\n// Usage:\naddFormRow(panel, c, 0, \"Vorname\", firstName, \"Name\",        name,     \"Geburtsdatum\", dateOfBirth);\naddFormRow(panel, c, 2, \"Strasse\", street,    \"PLZ\",         zip,      \"Ort\",          ort);\naddFormRow(panel, c, 3, \"IBAN\",   iban,       \"BIC\",         bic,      \"Gültig ab\",    validFrom);\naddFormRow(panel, c, 4, \"Kdn-Nr\", kundennummer, \"Hausnr.\",   hausnummer, \"\",            new JLabel());",
+      "priority": 2,
+      "benefits": "Eliminates the double-add layout bug class (ISS-007). Reduces PocView from 200 to ~50 lines. Makes adding new fields (Hausnummer, Kundennummer per ISS-005, ISS-006) trivial — one addFormRow() call. Makes layout structure self-documenting."
+    }
+  ]
+}
