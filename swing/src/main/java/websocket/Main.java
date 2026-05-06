@@ -7,6 +7,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
@@ -47,6 +49,8 @@ public class Main {
             String zeBic,
             String zeValidFrom
     ) {}
+
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     // CountDownLatch keeps the main thread alive until the WebSocket is closed
     private static CountDownLatch latch;
@@ -240,7 +244,7 @@ public class Main {
                     tf_ze_bic.setText(sr.zeBic());
                     tf_ze_valid_from.setText(sr.zeValidFrom());
                 }
-                default -> System.out.printf("Unknown target '%s' in message%n", message.target());
+                default -> LOGGER.log(Level.WARNING, "Unknown WebSocket message target: ''{0}''", message.target());
             }
         }
 
