@@ -4,6 +4,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
 import javax.json.Json;
@@ -27,25 +28,25 @@ public class Main {
 	// counter in onClose() method.
 	private static CountDownLatch latch;
 
-	private static JFrame frame = new JFrame("Allegro");
-	private static JTextArea textArea = new JTextArea();
-	private static JTextField tf_name = new JTextField();
-	private static JTextField tf_first = new JTextField();
-	private static JTextField tf_dob = new JTextField();
-	private static JTextField tf_zip = new JTextField();
-	private static JTextField tf_ort = new JTextField();
-	private static JTextField tf_street = new JTextField();
-	private static JTextField tf_hausnr = new JTextField();
-	private static JTextField tf_ze_iban = new JTextField();
-	private static JTextField tf_ze_bic = new JTextField();
-	private static JTextField tf_ze_valid_from = new JTextField();
+	private static final JFrame frame = new JFrame("Allegro");
+	private static final JTextArea textArea = new JTextArea();
+	private static final JTextField tf_name = new JTextField();
+	private static final JTextField tf_first = new JTextField();
+	private static final JTextField tf_dob = new JTextField();
+	private static final JTextField tf_zip = new JTextField();
+	private static final JTextField tf_ort = new JTextField();
+	private static final JTextField tf_street = new JTextField();
+	private static final JTextField tf_hausnr = new JTextField();
+	private static final JTextField tf_ze_iban = new JTextField();
+	private static final JTextField tf_ze_bic = new JTextField();
+	private static final JTextField tf_ze_valid_from = new JTextField();
 
-	private static JRadioButton rb_female = new JRadioButton("Weiblich");
-	private static JRadioButton rb_male = new JRadioButton("Männlich");
-	private static JRadioButton rb_diverse = new JRadioButton("Divers");
-	private static ButtonGroup bg_gender = new ButtonGroup();
+	private static final JRadioButton rb_female = new JRadioButton("Weiblich");
+	private static final JRadioButton rb_male = new JRadioButton("Männlich");
+	private static final JRadioButton rb_diverse = new JRadioButton("Divers");
+	private static final ButtonGroup bg_gender = new ButtonGroup();
 
-	private static JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
+	private static final JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
 
 	public static void main(String[] args) throws IOException, DeploymentException {
 		initUI();
@@ -69,40 +70,22 @@ public class Main {
 		c.insets = new Insets(4, 4, 4, 4);
 		c.anchor = GridBagConstraints.FIRST_LINE_END;
 		
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 0; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Vorname"), c);
 
-		c.gridx = 1;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_first, c);
 		
-		c.gridx = 2;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 2; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Name"), c);
 
-		c.gridx = 3;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 3; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_name, c);
 
-		c.gridx = 4;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 4; c.gridy = 0; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Geburtsdatum"), c);
 
-		c.gridx = 5;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 5; c.gridy = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_dob, c);
 
 		bg_gender.add(rb_female);
@@ -110,10 +93,7 @@ public class Main {
 		bg_gender.add(rb_diverse);
 		rb_female.setSelected(true);
 
-		c.gridx = 0;
-		c.gridy = 1;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.CENTER;
+		c.gridx = 0; c.gridy = 1; c.weightx = 0; c.fill = GridBagConstraints.CENTER;
 		panel.add(new JLabel("Geschlecht"), c);
 
 		JPanel genderPanel = new JPanel();
@@ -122,113 +102,58 @@ public class Main {
 		genderPanel.add(rb_male);
 		genderPanel.add(rb_diverse);
 
-		c.gridx = 1;
-		c.gridy = 1;
-		c.weightx = 1;
-		c.gridwidth = 5;
-		c.anchor = GridBagConstraints.WEST;
+		c.gridx = 1; c.gridy = 1; c.weightx = 1; c.gridwidth = 5; c.anchor = GridBagConstraints.WEST;
 		panel.add(genderPanel, c);
 
-		// Reset grid layout
-		c.gridwidth = 1;
-		c.anchor = GridBagConstraints.FIRST_LINE_END;
+		c.gridwidth = 1; c.anchor = GridBagConstraints.FIRST_LINE_END;
 
-		c.gridx = 0;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 0; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Strasse"), c);
 
-		c.gridx = 1;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1; c.gridy = 2; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_street, c);
 		
-		c.gridx = 2;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 2; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("PLZ"), c);
 
-		c.gridx = 3;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 3; c.gridy = 2; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_zip, c);
 		
-		c.gridx = 4;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 4; c.gridy = 2; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Ort"), c);
 
-		c.gridx = 5;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 5; c.gridy = 2; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ort, c);
 		
-		c.gridx = 0;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 0; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("IBAN"), c);
 
-		c.gridx = 1;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1; c.gridy = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ze_iban, c);
 		
-		c.gridx = 2;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 2; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("BIC"), c);
 
-		c.gridx = 3;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 3; c.gridy = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ze_bic, c);
 		
-		c.gridx = 4;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 4; c.gridy = 3; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("Gültig ab"), c);
 
-		c.gridx = 5;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 5; c.gridy = 3; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(tf_ze_valid_from, c);
 		
-		c.gridx = 0;
-		c.gridy = 4;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 0; c.gridy = 4; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		panel.add(new JLabel("RT"), c);
 
-		c.gridx = 1;
-		c.gridy = 4;
-		c.gridwidth = 6;
-		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 1; c.gridy = 4; c.gridwidth = 6; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 		textArea.setPreferredSize(new Dimension(200, 400));
 		textArea.setBorder(BorderFactory.createEtchedBorder());
-		panel.add(textArea);
 		panel.add(textArea, c);
 
-		c.gridx = 1;
-		c.gridy = 5;
-		c.weightx = 0;
-		c.fill = GridBagConstraints.NONE;
+		c.gridx = 1; c.gridy = 5; c.weightx = 0; c.fill = GridBagConstraints.NONE;
 		JButton button = new JButton("Anordnen");
-		button.addActionListener(e -> {
-			System.out.println("Button clicked!");
-		});
+		button.addActionListener(_ -> System.out.println("Button clicked!"));
 		panel.add(button, c);
 
 		frame.getContentPane().add(panel);
@@ -280,28 +205,27 @@ public class Main {
 		 * Callback hook for Message Events. This method will be invoked when a client
 		 * send a message.
 		 *
-		 * @param message The text message
+		 * @param json The text message in JSON format
 		 */
 		@OnMessage
 		public void onMessage(String json) {
-			Message message = extract(json);
-			switch (message.target) {
-			case "textarea":
-				textArea.setText(message.content);
-				return;
-			case "textfield":
-				SearchResult searchResult = toSearchResult(message.content);
-				tf_name.setText(searchResult.name);
-				tf_first.setText(searchResult.first);
-				tf_dob.setText(searchResult.dob);
-				tf_zip.setText(searchResult.zip);
-				tf_ort.setText(searchResult.ort);
-				tf_street.setText(searchResult.street);
-				tf_hausnr.setText(searchResult.hausnr);
-				tf_ze_iban.setText(searchResult.ze_iban);
-				tf_ze_bic.setText(searchResult.ze_bic);
-				tf_ze_valid_from.setText(searchResult.ze_valid_from);
-				return;
+			var message = extract(json);
+			switch (message.target()) {
+				case "textarea" -> textArea.setText(message.content());
+				case "textfield" -> {
+					var searchResult = toSearchResult(message.content());
+					tf_name.setText(searchResult.name());
+					tf_first.setText(searchResult.first());
+					tf_dob.setText(searchResult.dob());
+					tf_zip.setText(searchResult.zip());
+					tf_ort.setText(searchResult.ort());
+					tf_street.setText(searchResult.street());
+					tf_hausnr.setText(searchResult.hausnr());
+					tf_ze_iban.setText(searchResult.ze_iban());
+					tf_ze_bic.setText(searchResult.ze_bic());
+					tf_ze_valid_from.setText(searchResult.ze_valid_from());
+				}
+				default -> System.out.println("Unknown target: " + message.target());
 			}
 		}
 
@@ -309,149 +233,67 @@ public class Main {
 			this.userSession.getAsyncRemote().sendText(message);
 		}
 
+		/**
+		 * Extracts {@code target} and {@code content} fields from a JSON object.
+		 * When the target is "textarea" the content field value is used directly;
+		 * otherwise the full raw JSON string is returned as the content.
+		 */
 		public static Message extract(String json) {
-			JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-			boolean target = false;
-			String strTarget = "";
-			boolean content = false;
-			String strContent = "";
-			while (jsonParser.hasNext()) {
-				Event e = jsonParser.next();
-				if (Event.KEY_NAME.equals(e) && "target".equals(jsonParser.getString())) {
-					target = true;
-				}
-				if (target && Event.VALUE_STRING.equals(e)) {
-					strTarget = jsonParser.getString();
-					target = false;
-				}
+			var values = parseJsonStringFields(json);
+			var target  = values.getOrDefault("target", "");
+			var rawContent = values.getOrDefault("content", "");
+			var content = "textarea".equals(target) ? rawContent : json;
+			return new Message(target, content);
+		}
+	}
 
-				if (Event.KEY_NAME.equals(e) && "content".equals(jsonParser.getString())) {
-					content = true;
-				}
-				if (content && Event.VALUE_STRING.equals(e)) {
-					if ("textarea".equals(strTarget)) {
-						strContent = jsonParser.getString();
-					} else {
-						strContent = json;
-					}
-					content = false;
-				}
+	/** Parses a flat JSON object and returns a map of all string-valued fields. */
+	private static HashMap<String, String> parseJsonStringFields(String json) {
+		var values = new HashMap<String, String>();
+		var jsonParser = jsonParserFactory.createParser(new StringReader(json));
+		String currentKey = null;
+		while (jsonParser.hasNext()) {
+			var event = jsonParser.next();
+			if (Event.KEY_NAME.equals(event)) {
+				currentKey = jsonParser.getString();
+			} else if (Event.VALUE_STRING.equals(event) && currentKey != null) {
+				values.put(currentKey, jsonParser.getString());
+				currentKey = null;
 			}
-			return new Message(strTarget, strContent);
 		}
+		return values;
 	}
 
-	private static final class Message {
-		public final String target;
-		public final String content;
+	/** Immutable data-transfer object representing a routed WebSocket message. */
+	record Message(String target, String content) {}
 
-		public Message(String target, String message) {
-			super();
-			this.target = target;
-			this.content = message;
-		}
-	}
+	/** Immutable value object holding all search-result fields from the server. */
+	record SearchResult(
+			String name,
+			String first,
+			String dob,
+			String zip,
+			String ort,
+			String street,
+			String hausnr,
+			String ze_iban,
+			String ze_bic,
+			String ze_valid_from) {}
 
 	public static SearchResult toSearchResult(String json) {
-		SearchResult searchResult = new SearchResult();
-		
-		JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-		boolean name = false;
-		boolean first = false;
-		boolean dob = false;
-		boolean zip = false;
-		boolean ort = false;
-		boolean street = false;
-		boolean hausnr = false;
-		boolean ze_iban = false;
-		boolean ze_bic = false;
-		boolean ze_Valid_from = false;
-		while (jsonParser.hasNext()) {
-			Event e = jsonParser.next();
-			if (Event.KEY_NAME.equals(e) && "name".equals(jsonParser.getString())) {
-				name = true;
-			}
-			if (name && Event.VALUE_STRING.equals(e)) {
-				searchResult.name = jsonParser.getString();
-				name = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "first".equals(jsonParser.getString())) {
-				first = true;
-			}
-			if (first && Event.VALUE_STRING.equals(e)) {
-				searchResult.first = jsonParser.getString();
-				first = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "dob".equals(jsonParser.getString())) {
-				dob = true;
-			}
-			if (dob && Event.VALUE_STRING.equals(e)) {
-				searchResult.dob = jsonParser.getString();
-				dob = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "zip".equals(jsonParser.getString())) {
-				zip = true;
-			}
-			if (zip && Event.VALUE_STRING.equals(e)) {
-				searchResult.zip = jsonParser.getString();
-				zip = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "ort".equals(jsonParser.getString())) {
-				ort = true;
-			}
-			if (ort && Event.VALUE_STRING.equals(e)) {
-				searchResult.ort = jsonParser.getString();
-				ort = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "street".equals(jsonParser.getString())) {
-				street = true;
-			}
-			if (street && Event.VALUE_STRING.equals(e)) {
-				searchResult.street = jsonParser.getString();
-				street = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "hausnr".equals(jsonParser.getString())) {
-				hausnr = true;
-			}
-			if (hausnr && Event.VALUE_STRING.equals(e)) {
-				searchResult.hausnr = jsonParser.getString();
-				hausnr = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "iban".equals(jsonParser.getString())) {
-				ze_iban = true;
-			}
-			if (ze_iban && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_iban = jsonParser.getString();
-				ze_iban = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "bic".equals(jsonParser.getString())) {
-				ze_bic = true;
-			}
-			if (ze_bic && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_bic = jsonParser.getString();
-				ze_bic = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "valid_from".equals(jsonParser.getString())) {
-				ze_Valid_from = true;
-			}
-			if (ze_Valid_from && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_valid_from = jsonParser.getString();
-				ze_Valid_from = false;
-			}
-		}
-		return searchResult;
-	}
-	
-	private static final class SearchResult {
-		public String name;
-		public String first;
-		public String dob;
-		public String zip;
-		public String ort;
-		public String street;
-		public String hausnr;
-		public String ze_iban;
-		public String ze_bic;
-		public String ze_valid_from;
+		var v = parseJsonStringFields(json);
+		return new SearchResult(
+				v.getOrDefault("name",       ""),
+				v.getOrDefault("first",      ""),
+				v.getOrDefault("dob",        ""),
+				v.getOrDefault("zip",        ""),
+				v.getOrDefault("ort",        ""),
+				v.getOrDefault("street",     ""),
+				v.getOrDefault("hausnr",     ""),
+				v.getOrDefault("iban",       ""),
+				v.getOrDefault("bic",        ""),
+				v.getOrDefault("valid_from", "")
+		);
 	}
 }
+
