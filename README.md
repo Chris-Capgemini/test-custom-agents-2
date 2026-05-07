@@ -1,6 +1,8 @@
 
 # 🖥️ Java Swing Project Setup Guide
 
+> 📐 **Architecture Documentation** → See [`architecture-documentation.md`](architecture-documentation.md) for the full arc42 architecture document covering all system components.
+
 Follow these steps to get your Java Swing project up and running:
 
 ---
