@@ -1,4 +1,14 @@
 {
+  "name": "node-server",
+  "version": "1.0.0",
+  "description": "WebSocket relay server bridging the Vue frontend and Java Swing client",
+  "main": "src/WebsocketServer.js",
+  "scripts": {
+    "start": "node src/WebsocketServer.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "websocket": "^1.0.35"
   }

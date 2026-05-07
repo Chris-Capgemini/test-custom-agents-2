@@ -1,0 +1,27 @@
+# Java build artifacts
+target/
+*.class
+*.jar
+*.war
+
+# Maven
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node.js
+node_modules/
+
+# Vue/Vite build output
+node-vue-client/dist/
+
+# IDE files
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+*.launch
+
+# OS files
+.DS_Store
+Thumbs.db
