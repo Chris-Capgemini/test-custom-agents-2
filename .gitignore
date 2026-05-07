@@ -1,0 +1,8 @@
+# Maven build output
+target/
+
+# Node dependencies
+node_modules/
+
+# Generated lock files (keep existing tracked lock files)
+node-vue-client/package-lock.json

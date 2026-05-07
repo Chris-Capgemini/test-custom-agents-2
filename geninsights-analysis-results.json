@@ -1,0 +1,177 @@
+{
+  "analysis_timestamp": "2025-01-01T00:00:00Z",
+  "repository_name": "test-custom-agents-2",
+  "total_files_analyzed": 14,
+  "files": [
+    {
+      "file_path": "pom.xml",
+      "file_name": "pom.xml",
+      "language": "XML/Maven",
+      "category": "Technical",
+      "summary": "Maven build descriptor for the Java Swing WebSocket client. Targets Java 22. Contains 6 dependencies spanning Tyrus WebSocket client (1.x and 2.x mix), javax.json API/impl. Several dependencies are severely outdated (2013 era).",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "api.yml",
+      "file_name": "api.yml",
+      "language": "YAML/OpenAPI",
+      "category": "Technical",
+      "summary": "OpenAPI 3.0.1 specification for a single POST /post endpoint on localhost:8080. Defines PostObject schema with person fields (name, DOB, IBAN, BIC, etc.). Used as contract for the HTTPBin mock backend.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "node-server/package.json",
+      "file_name": "package.json",
+      "language": "JSON",
+      "category": "Technical",
+      "summary": "Minimal NPM manifest for the Node.js WebSocket server. Only declares the 'websocket' dependency. Missing: name, version, description, scripts (no start command), engines field.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "language": "JavaScript",
+      "category": "Mixed",
+      "summary": "Node.js WebSocket relay server. Creates an HTTP server on port 1337 and attaches a WebSocket server. Broadcasts every received message to all connected clients. Contains a bug in the close-event handler and uses a stale-index removal pattern.",
+      "business_rules": ["BR-003: All messages broadcast to all clients"],
+      "method_breakdown": [
+        { "name": "http.createServer callback", "purpose": "Empty HTTP request handler (does not respond)" },
+        { "name": "wsServer.on('request')", "purpose": "Accepts all WebSocket connections, registers message/close handlers" },
+        { "name": "connection.on('message')", "purpose": "Receives UTF-8 messages and broadcasts to all clients[]" },
+        { "name": "connection.on('close')", "purpose": "Logs disconnect and removes client from array (buggy: wrong param + stale index)" }
+      ]
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "language": "Vue SFC",
+      "category": "Business",
+      "summary": "Main business component. Provides a person search form, results table, payment recipient table, and a 'Transfer to ALLEGRO' button. Manages WebSocket connection lifecycle and sends JSON messages. Contains hardcoded test data (5 persons with IBANs/BICs).",
+      "business_rules": ["BR-001: Person search matching", "BR-002: Payment recipient selection", "BR-003: WebSocket message routing"],
+      "method_breakdown": [
+        { "name": "connect()", "purpose": "Opens WebSocket to ws://localhost:1337/ — no error handler" },
+        { "name": "disconnect()", "purpose": "Closes socket, clears status and logs" },
+        { "name": "searchPerson()", "purpose": "Filters search_space[] by multi-field criteria" },
+        { "name": "sendMessage(e, target)", "purpose": "Serialises and sends JSON via WebSocket" },
+        { "name": "selectResult(item)", "purpose": "Sets selected_result to clicked row" },
+        { "name": "zahlungsempfaengerSelected(zp)", "purpose": "Sets zahlungsempfaenger_selected" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java",
+      "language": "Java",
+      "category": "Mixed",
+      "summary": "Monolithic Java Swing application combining UI construction and WebSocket client in a single class. Uses javax.websocket (Tyrus) and javax.json streaming parser. Contains bugs: double panel.add(textArea), verbose manual JSON parsing, static mutable state.",
+      "business_rules": ["BR-003: Target-based message routing in onMessage()"],
+      "method_breakdown": [
+        { "name": "main()", "purpose": "Initialises UI and WebSocket connection" },
+        { "name": "initUI()", "purpose": "Constructs GridBagLayout Swing form with all text fields" },
+        { "name": "WebsocketClientEndpoint.onOpen()", "purpose": "Logs WebSocket open, stores session" },
+        { "name": "WebsocketClientEndpoint.onClose()", "purpose": "Logs close, decrements CountDownLatch" },
+        { "name": "WebsocketClientEndpoint.onMessage()", "purpose": "Routes message to textarea or textfield population" },
+        { "name": "extract(String json)", "purpose": "Manual streaming JSON parse to extract target+content" },
+        { "name": "toSearchResult(String json)", "purpose": "Manual streaming JSON parse to SearchResult DTO" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Generic typed wrapper (ValueModel<T>) holding a single field value with getter/setter. Used by PocModel to store all form field values in an EnumMap.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "getField()", "purpose": "Returns the wrapped value" },
+        { "name": "setField(T)", "purpose": "Sets the wrapped value" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "Enum defining all form field identifiers: TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT, STREET, IBAN, BIC, VALID_FROM, FEMALE, MALE, DIVERSE. Acts as the shared key set for the model map.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "MVP Model. Holds EnumMap of ValueModel instances for all form fields. Provides action() method that collects all field values and POSTs to HTTPBin. Emits result via EventEmitter. Risk: NPE if any field is null.",
+      "business_rules": ["BR-004: Form submission with all fields (no validation)"],
+      "method_breakdown": [
+        { "name": "action()", "purpose": "Collects all model field values into a Map and calls HttpBinService.post()" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "HTTP POST service using legacy HttpURLConnection. Posts JSON body to http://localhost:8080/post. Returns response body as String. Has resource leak (Scanner not closed) and hardcoded URL.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "post(Map<String,String> data)", "purpose": "Builds JSON from map, POSTs to HTTPBin, returns response body" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Simple observable event bus. Maintains a List of EventListener subscribers. emit() notifies all listeners synchronously.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "subscribe(EventListener)", "purpose": "Adds listener to the list" },
+        { "name": "emit(String eventData)", "purpose": "Notifies all subscribers with event data" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Empty placeholder class. No fields, methods, or documentation. Dead code — should be removed.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "MVP View. Owns all Swing widgets (JTextField for name/DOB/address/IBAN/BIC, JRadioButton for gender, JTextArea for results, JButton for submit). Constructs GridBagLayout form in initUI(). Contains double panel.add(textArea) bug.",
+      "business_rules": ["BR-005: Gender radio button defaults to female"],
+      "method_breakdown": [
+        { "name": "PocView()", "purpose": "Constructor calls initUI()" },
+        { "name": "initUI()", "purpose": "Creates and lays out all Swing components in GridBagLayout" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "MVP Presenter. Wires PocView widgets to PocModel via DocumentListener (text fields) and ChangeListener (radio buttons). Button action listener calls model.action(). Subscribes to EventEmitter to update the view on HTTP response.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "PocPresenter(PocView, PocModel, EventEmitter)", "purpose": "Sets up event subscription and button listener, calls initializeBindings()" },
+        { "name": "bind(JTextComponent, ModelProperties)", "purpose": "Attaches DocumentListener to sync text field to model" },
+        { "name": "bind(JRadioButton, ModelProperties)", "purpose": "Attaches ChangeListener to sync radio button state to model" },
+        { "name": "initializeBindings()", "purpose": "Calls bind() for all fields defined in ModelProperties" }
+      ]
+    }
+  ],
+  "summary": {
+    "business_files": 6,
+    "technical_files": 8,
+    "mixed_files": 3,
+    "languages_detected": ["Java", "JavaScript", "Vue SFC", "XML/Maven", "YAML/OpenAPI", "JSON"]
+  }
+}

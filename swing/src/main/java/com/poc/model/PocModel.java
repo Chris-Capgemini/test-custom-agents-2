@@ -36,7 +36,8 @@ public class PocModel {
         }
         var data = new HashMap<String, String>();
         for(var val : ModelProperties.values()) {
-            data.put(val.toString(), model.get(val).getField().toString());
+            Object field = model.get(val).getField();
+            data.put(val.toString(), field != null ? field.toString() : "");
         }
         var responseBody = httpBinService.post(data);
         if(!responseBody.isEmpty()) {

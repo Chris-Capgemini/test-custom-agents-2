@@ -1,68 +1,52 @@
-var webSocketServer = require('websocket').server;
-var http = require('http');
+const { WebSocketServer } = require('ws');
+const http = require('http');
 
 // Global variables
-var webSocketsServerPort = 1337;
-var messages = [];
-var clients = [];
+const webSocketsServerPort = 1337;
+const messages = [];
+const clients = [];
 
 // HTTP server
-var server = http.createServer(function (request, response) {
-});
+const server = http.createServer();
 server.listen(webSocketsServerPort, function () {
-	console.log((new Date()) + " Server is listening on port "
-		+ webSocketsServerPort);
+console.log((new Date()) + ' Server is listening on port ' + webSocketsServerPort);
 });
 
 // WebSocket server
-var wsServer = new webSocketServer({
-	// WebSocket server is tied to a HTTP server. WebSocket
-	// request is just an enhanced HTTP request:
-	// http://tools.ietf.org/html/rfc6455#page-6
-	httpServer: server
-});
+const wsServer = new WebSocketServer({ server });
 
 // This callback function is called every time someone
 // tries to connect to the WebSocket server
-wsServer.on('request', function (request) {
-	console.log((new Date()) + ' Connection from origin ' + request.origin
-		+ '.');
+wsServer.on('connection', function (ws, request) {
+const origin = request.headers['origin'] || 'unknown';
+console.log((new Date()) + ' Connection from origin ' + origin + '.');
 
-	// later we maybe allow cross-origin requests
-	var connection = request.accept(null, request.origin);
+clients.push(ws);
+console.log((new Date()) + ' Connection accepted.');
 
-	// we need to know client index to remove them on 'close' event
-	var index = clients.push(connection) - 1;
+// user sent some message
+ws.on('message', function (data) {
+const json = data.toString();
 
-	console.log((new Date()) + ' Connection accepted.');
+// log and broadcast the message
+console.log((new Date()) + ' Received Message ' + json);
 
-	// send something back
-	// connection.sendUTF(JSON.stringify({
-	//       foo : 'bar',
-	//       data : 'blablub'
-	// }));
+// broadcast message to all connected clients
+for (let i = 0; i < clients.length; i++) {
+if (clients[i].readyState === ws.OPEN) {
+clients[i].send(json);
+}
+}
+});
 
-	// user sent some message
-	connection.on('message',
-		function (message) {
-			if (message.type === 'utf8') {
-				var json = message.utf8Data;
-
-				// log and broadcast the message
-				console.log((new Date()) + ' Received Message '
-					+ json);
-				// broadcast message to all connected clients
-				for (var i = 0; i < clients.length; i++) {
-					clients[i].sendUTF(json);
-				}
-			}
-		});
-
-	// user disconnected
-	connection.on('close', function (connection) {
-		console.log((new Date()) + " Peer " + connection.remoteAddress
-			+ " disconnected.");
-		// remove user from the list of connected clients
-		clients.splice(index, 1);
-	});
+// user disconnected
+ws.on('close', function () {
+const remoteAddress = request.socket.remoteAddress;
+console.log((new Date()) + ' Peer ' + remoteAddress + ' disconnected.');
+// remove user from the list of connected clients
+const index = clients.indexOf(ws);
+if (index !== -1) {
+clients.splice(index, 1);
+}
+});
 });
