@@ -1,0 +1,263 @@
+{
+  "analysis_timestamp": "2025-07-14T00:00:00Z",
+  "repository_name": "websocket_swing / ERPApp Allegro Modernization PoC",
+  "total_files_analyzed": 19,
+  "files": [
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "language": "JavaScript (Node.js)",
+      "category": "Technical",
+      "summary": "Central WebSocket relay server. Creates an HTTP server on port 1337, binds a WebSocket server to it, and broadcasts every received UTF-8 message to all connected clients. Maintains an in-memory clients[] array and messages[] log. Handles connection lifecycle: on('request'), on('message'), on('close').",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "wsServer.on('request')", "purpose": "Accept WebSocket connection, push to clients array" },
+        { "name": "connection.on('message')", "purpose": "Broadcast UTF-8 message to all clients" },
+        { "name": "connection.on('close')", "purpose": "Remove client from clients array" }
+      ],
+      "dependencies": ["websocket npm ^1.0.35", "http (built-in Node.js)"],
+      "lines_of_code": 68
+    },
+    {
+      "file_path": "node-vue-client/src/main.js",
+      "file_name": "main.js",
+      "language": "JavaScript (Vue.js)",
+      "category": "Technical",
+      "summary": "Vue.js application entry point. Creates a new Vue instance, configures productionTip=false, and mounts the App component to the #app DOM element.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "new Vue()", "purpose": "Bootstrap Vue application and mount to #app" }
+      ],
+      "dependencies": ["vue ^2.6.10", "App.vue"],
+      "lines_of_code": 9
+    },
+    {
+      "file_path": "node-vue-client/src/App.vue",
+      "file_name": "App.vue",
+      "language": "Vue.js 2.x",
+      "category": "Technical",
+      "summary": "Root Vue component. Renders a branded header (red background, 'Search Mock' title, logo placeholder) and hosts the Search component. Minimal logic.",
+      "business_rules": [],
+      "method_breakdown": [],
+      "dependencies": ["Search.vue"],
+      "lines_of_code": 47
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "language": "Vue.js 2.x",
+      "category": "Business",
+      "summary": "Main business component. Provides a person search form with multi-field filtering against in-memory mock data. Displays search results in a table. Allows selection of a customer and their Zahlungsempfaenger (payment recipient / IBAN+BIC). Transfers selected data to the Allegro Swing client via WebSocket. Also syncs textarea content via WebSocket. Connects to ws://localhost:1337 on mount.",
+      "business_rules": [
+        "Multi-field partial search (name, first, zip, ort, street, hausnr)",
+        "Zahlungsempfaenger selection per customer",
+        "WebSocket data transfer to Allegro (target=textfield)",
+        "Textarea realtime sync (target=textarea via watch)"
+      ],
+      "method_breakdown": [
+        { "name": "connect()", "purpose": "Open WebSocket connection to ws://localhost:1337" },
+        { "name": "disconnect()", "purpose": "Close WebSocket and reset status" },
+        { "name": "searchPerson()", "purpose": "Filter search_space[] by multiple form fields using partial match" },
+        { "name": "sendMessage(e, target)", "purpose": "Send JSON {target, content} over WebSocket" },
+        { "name": "selectResult(item)", "purpose": "Set selected_result to clicked row" },
+        { "name": "zahlungsempfaengerSelected(ze)", "purpose": "Set selected payment recipient" }
+      ],
+      "dependencies": ["WebSocket (browser native)", "ws://localhost:1337"],
+      "lines_of_code": 258
+    },
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java (websocket package)",
+      "language": "Java 22",
+      "category": "Mixed",
+      "summary": "Original Allegro Swing prototype. Builds a GridBagLayout JFrame with form fields for person data (name, first, dob, gender, address, IBAN/BIC). Connects to ws://localhost:1337 using Tyrus JSR-356. Receives JSON messages and routes by 'target' field: 'textfield' populates all form fields; 'textarea' sets the text area. Uses manual javax.json streaming parser with boolean flag state machine. All Swing components are static fields (architectural anti-pattern).",
+      "business_rules": [
+        "Message routing by target field (textfield vs textarea)",
+        "Form field population from JSON person data",
+        "WebSocket reconnection via CountDownLatch"
+      ],
+      "method_breakdown": [
+        { "name": "main()", "purpose": "Initialize UI and connect to WebSocket server" },
+        { "name": "initUI()", "purpose": "Build Swing JFrame with all form components" },
+        { "name": "WebsocketClientEndpoint.onOpen()", "purpose": "Handle WebSocket open event" },
+        { "name": "WebsocketClientEndpoint.onClose()", "purpose": "Handle WebSocket close, decrement latch" },
+        { "name": "WebsocketClientEndpoint.onMessage()", "purpose": "Parse JSON and populate form fields" },
+        { "name": "extract(json)", "purpose": "Parse target+content from WebSocket message JSON" },
+        { "name": "toSearchResult(json)", "purpose": "Parse all person fields from content JSON" }
+      ],
+      "dependencies": ["javax.swing", "javax.websocket (Tyrus)", "javax.json (GlassFish)"],
+      "lines_of_code": 457
+    },
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java (com package)",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Entry point for the MVP Swing PoC client. Creates PocView, EventEmitter, PocModel, and PocPresenter; wires them together. Keeps JVM alive with CountDownLatch(1).await().",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "main()", "purpose": "Bootstrap MVP architecture: create and wire View, EventEmitter, Model, Presenter" }
+      ],
+      "dependencies": ["PocView", "EventEmitter", "PocModel", "PocPresenter"],
+      "lines_of_code": 23
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Generic wrapper class for a single typed field value. Provides getField() and setField(T). Used by PocModel as value holders in its EnumMap, enabling the Presenter to bind UI components to model properties in a type-safe, decoupled way.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "getField()", "purpose": "Return the wrapped value" },
+        { "name": "setField(T)", "purpose": "Set the wrapped value" }
+      ],
+      "dependencies": [],
+      "lines_of_code": 18
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Lightweight publish-subscribe event bus. Maintains a list of EventListener subscribers. emit(String) calls onEvent() on each registered listener. subscribe(EventListener) registers a new listener.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "subscribe(EventListener)", "purpose": "Add listener to list" },
+        { "name": "emit(String)", "purpose": "Notify all subscribers with event data string" }
+      ],
+      "dependencies": ["EventListener"],
+      "lines_of_code": 21
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+      "file_name": "EventListener.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Functional interface for event subscribers in the EventEmitter pattern. Single abstract method: onEvent(String eventData). Implemented as a lambda in PocPresenter.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "onEvent(String)", "purpose": "Handle an event notification with string payload" }
+      ],
+      "dependencies": [],
+      "lines_of_code": 5
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "HTTP client service for posting form data to the HTTPBin mock REST API. Uses java.net.HttpURLConnection to POST a Map<String,String> as JSON to http://localhost:8080/post. Returns response body as a String. No retry, no timeout, no error handling.",
+      "business_rules": [
+        "POST all form fields to REST API endpoint as JSON"
+      ],
+      "method_breakdown": [
+        { "name": "post(Map<String,String>)", "purpose": "HTTP POST JSON payload to localhost:8080/post, return response body" }
+      ],
+      "dependencies": ["java.net.HttpURLConnection", "javax.json (generator)"],
+      "lines_of_code": 38
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "Java 22",
+      "category": "Business",
+      "summary": "Enum defining all 13 ERP form field keys used in the MVP Swing client. Values map directly to the OpenAPI PostObject schema fields and are used as type-safe keys in the PocModel EnumMap.",
+      "business_rules": [
+        "Defines canonical set of ERP person/payment form fields"
+      ],
+      "method_breakdown": [],
+      "dependencies": [],
+      "lines_of_code": 18
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "Java 22",
+      "category": "Business",
+      "summary": "Model layer in the MVP Swing client. Initializes an EnumMap<ModelProperties, ValueModel<?>> with null ValueModel instances for all 13 fields. On action(), collects all field values into a HashMap, calls HttpBinService.post(), and emits the response via EventEmitter.",
+      "business_rules": [
+        "Collect all form fields and submit to REST API",
+        "Emit result to subscribers via EventEmitter"
+      ],
+      "method_breakdown": [
+        { "name": "PocModel(EventEmitter)", "purpose": "Initialize EnumMap with all 13 ModelProperties fields as null ValueModels" },
+        { "name": "action()", "purpose": "Collect form values, POST to HTTPBin, emit response or error message" }
+      ],
+      "dependencies": ["HttpBinService", "EventEmitter", "ValueModel", "ModelProperties"],
+      "lines_of_code": 49
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Empty stub class in the model package. No fields, no methods. Likely a placeholder for a future DTO or view-model transfer object. Currently dead code.",
+      "business_rules": [],
+      "method_breakdown": [],
+      "dependencies": [],
+      "lines_of_code": 5
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Presenter layer in the MVP Swing client. Subscribes to EventEmitter (updates View on API response). Wires button ActionListener to model.action(). Calls initializeBindings() to wire all 13 form components to their corresponding ModelProperties via DocumentListeners (text fields) and ChangeListeners (radio buttons).",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "PocPresenter(PocView, PocModel, EventEmitter)", "purpose": "Subscribe to events, wire button, initialize bindings" },
+        { "name": "bind(JTextComponent, ModelProperties)", "purpose": "Wire DocumentListener to update model field on text change" },
+        { "name": "bind(JRadioButton, ModelProperties)", "purpose": "Wire ChangeListener to update boolean model field on radio change" },
+        { "name": "initializeBindings()", "purpose": "Call bind() for all 13 ModelProperties" }
+      ],
+      "dependencies": ["PocView", "PocModel", "EventEmitter", "ValueModel", "ModelProperties"],
+      "lines_of_code": 113
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "View layer in the MVP Swing client. Pure Swing UI with no business logic. Builds a GridBagLayout JFrame with: firstName, name, dateOfBirth, gender (female/male/diverse radio), street, zip, ort, iban, bic, validFrom text fields; a textArea; and an 'Anordnen' button. All components exposed as protected fields for Presenter access.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "PocView()", "purpose": "Initialize UI by calling initUI()" },
+        { "name": "initUI()", "purpose": "Build and display the complete GridBagLayout JFrame" }
+      ],
+      "dependencies": ["javax.swing"],
+      "lines_of_code": 203
+    },
+    {
+      "file_path": "api.yml",
+      "file_name": "api.yml",
+      "language": "YAML (OpenAPI 3.0.1)",
+      "category": "Business",
+      "summary": "OpenAPI 3.0.1 specification for the Allegro PoC REST API. Defines a single POST /post endpoint at localhost:8080. Request body: PostObject with 13 fields matching ModelProperties enum (FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA). Response: PostResponseObject echoing the request.",
+      "business_rules": [
+        "API contract: POST /post with all 13 ERP form fields",
+        "Response echoes submitted data"
+      ],
+      "method_breakdown": [
+        { "name": "POST /post", "purpose": "Submit ERP form data, receive echo response" }
+      ],
+      "dependencies": [],
+      "lines_of_code": 97
+    }
+  ],
+  "summary": {
+    "business_files": 4,
+    "technical_files": 11,
+    "mixed_files": 2,
+    "languages_detected": ["Java 22", "JavaScript (Node.js)", "Vue.js 2.x", "YAML (OpenAPI 3.0.1)", "XML (Maven POM)"],
+    "total_lines_of_code": 1457,
+    "largest_file": "swing/src/main/java/websocket/Main.java (457 LOC)",
+    "architectural_patterns_detected": [
+      "Hub-and-Spoke (WebSocket broadcast relay)",
+      "MVP (Model-View-Presenter) in com.poc",
+      "EventEmitter / EventListener (custom pub-sub)",
+      "Value Object pattern (ValueModel<T>)",
+      "REST Client (HttpBinService)"
+    ]
+  }
+}
