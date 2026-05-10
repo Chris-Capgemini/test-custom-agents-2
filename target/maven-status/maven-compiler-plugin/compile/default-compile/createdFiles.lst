@@ -1,0 +1,15 @@
+com/poc/presentation/PocPresenter$1.class
+com/poc/model/ViewData.class
+websocket/Main$WebsocketClientEndpoint.class
+com/poc/model/EventEmitter.class
+com/poc/presentation/PocPresenter.class
+com/poc/model/HttpBinService.class
+com/poc/ValueModel.class
+com/poc/model/PocModel.class
+websocket/Main$Message.class
+websocket/Main$SearchResult.class
+websocket/Main.class
+com/poc/model/ModelProperties.class
+com/poc/model/EventListener.class
+com/Main.class
+com/poc/presentation/PocView.class
