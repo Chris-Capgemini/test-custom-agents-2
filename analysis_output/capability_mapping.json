@@ -1,0 +1,194 @@
+{
+  "mapping_timestamp": "2025-01-01T00:00:00Z",
+  "system_name": "Allegro PoC",
+  "business_domains": [
+    {
+      "domain_id": "BD-001",
+      "name": "Customer Data Management",
+      "description": "Capture, store, and submit customer personal information including identity, address, and banking details.",
+      "capabilities": [
+        {
+          "capability_id": "CAP-001",
+          "name": "Personal Identity Capture",
+          "description": "Collect and hold first name, last name, date of birth, and gender.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/model/ModelProperties.java",
+            "swing/src/main/java/com/poc/presentation/PocView.java",
+            "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+            "swing/src/main/java/com/poc/model/PocModel.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-002",
+          "name": "Address Data Capture",
+          "description": "Collect and hold street, postal code (PLZ), and city (Ort).",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/model/ModelProperties.java",
+            "swing/src/main/java/com/poc/presentation/PocView.java",
+            "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-003",
+          "name": "Banking Data Capture",
+          "description": "Collect and hold IBAN, BIC, and valid-from date for payment details.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/model/ModelProperties.java",
+            "swing/src/main/java/com/poc/presentation/PocView.java",
+            "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-004",
+          "name": "Customer Data Submission",
+          "description": "Serialise all captured data and submit to a backend HTTP endpoint.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/model/PocModel.java",
+            "swing/src/main/java/com/poc/model/HttpBinService.java"
+          ],
+          "coverage": "PARTIAL",
+          "coverage_notes": "Only submits to HTTPBin echo service; real backend not implemented."
+        }
+      ]
+    },
+    {
+      "domain_id": "BD-002",
+      "name": "UI / Presentation",
+      "description": "Render forms, gather user input, and display results.",
+      "capabilities": [
+        {
+          "capability_id": "CAP-005",
+          "name": "Form Rendering",
+          "description": "Display structured input form with German-locale labels.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/presentation/PocView.java",
+            "swing/src/main/java/websocket/Main.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-006",
+          "name": "Real-Time Data Binding",
+          "description": "Synchronise UI input fields with the underlying data model on every change.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-007",
+          "name": "Response Display",
+          "description": "Show server response data in the form's text area after submission.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+            "swing/src/main/java/com/poc/presentation/PocView.java"
+          ],
+          "coverage": "FULL"
+        }
+      ]
+    },
+    {
+      "domain_id": "BD-003",
+      "name": "Real-Time Communication",
+      "description": "Receive and display server-pushed data over WebSocket connections.",
+      "capabilities": [
+        {
+          "capability_id": "CAP-008",
+          "name": "WebSocket Connection Management",
+          "description": "Connect to, maintain, and close WebSocket connections with lifecycle event handling.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/websocket/Main.java",
+            "node-server/src/WebsocketServer.js"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-009",
+          "name": "Server-Pushed Message Routing",
+          "description": "Route incoming WebSocket messages to the correct UI component based on message target field.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/websocket/Main.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-010",
+          "name": "WebSocket Broadcast",
+          "description": "Node.js server broadcasts messages to all connected WebSocket clients.",
+          "level": 2,
+          "mapped_files": [
+            "node-server/src/WebsocketServer.js"
+          ],
+          "coverage": "FULL"
+        }
+      ]
+    },
+    {
+      "domain_id": "BD-004",
+      "name": "Event-Driven State Management",
+      "description": "Notify UI components of model state changes using an event bus.",
+      "capabilities": [
+        {
+          "capability_id": "CAP-011",
+          "name": "Event Publication",
+          "description": "Emit typed string events from the model to registered listeners.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/model/EventEmitter.java",
+            "swing/src/main/java/com/poc/model/PocModel.java"
+          ],
+          "coverage": "FULL"
+        },
+        {
+          "capability_id": "CAP-012",
+          "name": "Event Subscription",
+          "description": "Register handlers to respond to model events.",
+          "level": 2,
+          "mapped_files": [
+            "swing/src/main/java/com/poc/model/EventListener.java",
+            "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+          ],
+          "coverage": "FULL"
+        }
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "gap_id": "GAP-001",
+      "capability": "Input Validation",
+      "description": "No validation capability exists. Fields like IBAN, BIC, date of birth, and ZIP code accept any string without format validation.",
+      "priority": "High"
+    },
+    {
+      "gap_id": "GAP-002",
+      "capability": "Error Handling and User Feedback",
+      "description": "No capability to display error messages to the user when HTTP calls fail.",
+      "priority": "High"
+    },
+    {
+      "gap_id": "GAP-003",
+      "capability": "Security / Authentication",
+      "description": "No authentication, authorisation, or data encryption capability.",
+      "priority": "Medium"
+    },
+    {
+      "gap_id": "GAP-004",
+      "capability": "Persistence / Offline Storage",
+      "description": "No local data persistence; form data is only in-memory.",
+      "priority": "Low"
+    }
+  ]
+}
