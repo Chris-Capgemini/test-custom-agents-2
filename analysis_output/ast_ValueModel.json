@@ -1,0 +1,86 @@
+{
+  "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc",
+  "imports": [],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "ValueModel",
+      "modifiers": ["public"],
+      "typeParameters": [
+        { "name": "T", "bounds": [] }
+      ],
+      "extends": null,
+      "implements": [],
+      "annotations": [],
+      "fields": [
+        {
+          "name": "field",
+          "fieldType": "T",
+          "modifiers": ["private"],
+          "annotations": [],
+          "initialValue": null
+        }
+      ],
+      "constructors": [
+        {
+          "name": "ValueModel",
+          "modifiers": ["public"],
+          "parameters": [{ "name": "field", "type": "T", "annotations": [] }],
+          "throws": [],
+          "body": [
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "this", "field": "field" },
+              "value": { "type": "VariableReference", "name": "field", "variableType": "T" }
+            }
+          ]
+        }
+      ],
+      "methods": [
+        {
+          "name": "getField",
+          "modifiers": ["public"],
+          "returnType": "T",
+          "parameters": [],
+          "annotations": [],
+          "throws": [],
+          "body": [
+            {
+              "type": "ReturnStatement",
+              "value": { "type": "VariableReference", "name": "field", "variableType": "T" }
+            }
+          ],
+          "complexity": 1
+        },
+        {
+          "name": "setField",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [{ "name": "field", "type": "T", "annotations": [] }],
+          "annotations": [],
+          "throws": [],
+          "body": [
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "this", "field": "field" },
+              "value": { "type": "VariableReference", "name": "field", "variableType": "T" }
+            }
+          ],
+          "complexity": 1
+        }
+      ],
+      "innerClasses": []
+    }
+  ],
+  "complexity_metrics": {
+    "totalMethods": 2,
+    "totalFields": 1,
+    "totalConstructors": 1,
+    "cyclomaticComplexity": 1,
+    "linesOfCode": 18
+  },
+  "design_patterns": ["Generic Value Object / Property Holder"]
+}

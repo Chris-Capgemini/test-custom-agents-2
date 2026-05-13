@@ -1,0 +1,30 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": [],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "ViewData",
+      "modifiers": ["public"],
+      "typeParameters": [],
+      "extends": null,
+      "implements": [],
+      "annotations": [],
+      "fields": [],
+      "constructors": [],
+      "methods": [],
+      "innerClasses": []
+    }
+  ],
+  "complexity_metrics": {
+    "totalMethods": 0,
+    "totalFields": 0,
+    "totalConstructors": 0,
+    "cyclomaticComplexity": 1,
+    "linesOfCode": 4
+  },
+  "design_patterns": ["Placeholder / Marker Class (currently empty)"]
+}
