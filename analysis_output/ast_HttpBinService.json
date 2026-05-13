@@ -1,0 +1,266 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": [
+    "javax.json.Json",
+    "java.io.IOException",
+    "java.net.HttpURLConnection",
+    "java.util.Map",
+    "java.util.Scanner"
+  ],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "HttpBinService",
+      "modifiers": ["public"],
+      "typeParameters": [],
+      "extends": null,
+      "implements": [],
+      "annotations": [],
+      "fields": [
+        {
+          "name": "URL",
+          "fieldType": "String",
+          "modifiers": ["public", "static", "final"],
+          "annotations": [],
+          "initialValue": { "type": "Literal", "value": "http://localhost:8080" }
+        },
+        {
+          "name": "PATH",
+          "fieldType": "String",
+          "modifiers": ["public", "static", "final"],
+          "annotations": [],
+          "initialValue": { "type": "Literal", "value": "/post" }
+        },
+        {
+          "name": "CONTENT_TYPE",
+          "fieldType": "String",
+          "modifiers": ["public", "static", "final"],
+          "annotations": [],
+          "initialValue": { "type": "Literal", "value": "application/json" }
+        }
+      ],
+      "constructors": [],
+      "methods": [
+        {
+          "name": "post",
+          "modifiers": ["public"],
+          "returnType": "String",
+          "parameters": [
+            { "name": "data", "type": "Map<String, String>", "annotations": [] }
+          ],
+          "annotations": [],
+          "throws": ["IOException", "InterruptedException"],
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "name": "connection",
+              "variableType": "HttpURLConnection",
+              "value": {
+                "type": "CastExpression",
+                "targetType": "HttpURLConnection",
+                "expression": {
+                  "type": "MethodInvocation",
+                  "target": {
+                    "type": "ObjectCreation",
+                    "class": "java.net.URL",
+                    "arguments": [
+                      {
+                        "type": "BinaryExpression",
+                        "operator": "+",
+                        "left": { "type": "VariableReference", "name": "URL", "variableType": "String" },
+                        "right": { "type": "VariableReference", "name": "PATH", "variableType": "String" }
+                      }
+                    ]
+                  },
+                  "methodName": "openConnection",
+                  "arguments": []
+                }
+              }
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "connection",
+              "methodName": "setRequestMethod",
+              "arguments": [{ "type": "Literal", "value": "POST" }]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "connection",
+              "methodName": "setRequestProperty",
+              "arguments": [
+                { "type": "Literal", "value": "Content-Type" },
+                { "type": "VariableReference", "name": "CONTENT_TYPE", "variableType": "String" }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "connection",
+              "methodName": "setDoOutput",
+              "arguments": [{ "type": "Literal", "value": "true" }]
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "jsonGeneratorFactory",
+              "variableType": "var",
+              "value": {
+                "type": "MethodInvocation",
+                "target": "Json",
+                "methodName": "createGeneratorFactory",
+                "arguments": [{ "type": "Literal", "value": "null" }]
+              }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "generator",
+              "variableType": "var",
+              "value": {
+                "type": "MethodInvocation",
+                "target": "jsonGeneratorFactory",
+                "methodName": "createGenerator",
+                "arguments": [
+                  {
+                    "type": "MethodInvocation",
+                    "target": "connection",
+                    "methodName": "getOutputStream",
+                    "arguments": []
+                  }
+                ]
+              }
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "generator",
+              "methodName": "writeStartObject",
+              "arguments": []
+            },
+            {
+              "type": "ForEachStatement",
+              "variable": { "name": "entry", "type": "var" },
+              "iterable": {
+                "type": "MethodInvocation",
+                "target": "data",
+                "methodName": "entrySet",
+                "arguments": []
+              },
+              "body": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "generator",
+                  "methodName": "write",
+                  "arguments": [
+                    {
+                      "type": "MethodInvocation",
+                      "target": "entry",
+                      "methodName": "getKey",
+                      "arguments": []
+                    },
+                    {
+                      "type": "MethodInvocation",
+                      "target": "entry",
+                      "methodName": "getValue",
+                      "arguments": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "generator",
+              "methodName": "writeEnd",
+              "arguments": []
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "generator",
+              "methodName": "close",
+              "arguments": []
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "responseCode",
+              "variableType": "var",
+              "value": {
+                "type": "MethodInvocation",
+                "target": "connection",
+                "methodName": "getResponseCode",
+                "arguments": []
+              }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "responseBody",
+              "variableType": "var",
+              "value": {
+                "type": "MethodInvocation",
+                "target": {
+                  "type": "ObjectCreation",
+                  "class": "Scanner",
+                  "arguments": [
+                    {
+                      "type": "MethodInvocation",
+                      "target": "connection",
+                      "methodName": "getInputStream",
+                      "arguments": []
+                    }
+                  ]
+                },
+                "methodName": "useDelimiter",
+                "arguments": [{ "type": "Literal", "value": "\\A" }]
+              }
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "System.out",
+              "methodName": "println",
+              "arguments": [
+                {
+                  "type": "BinaryExpression",
+                  "operator": "+",
+                  "left": { "type": "Literal", "value": "Response code: " },
+                  "right": { "type": "VariableReference", "name": "responseCode" }
+                }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "System.out",
+              "methodName": "println",
+              "arguments": [
+                {
+                  "type": "BinaryExpression",
+                  "operator": "+",
+                  "left": { "type": "Literal", "value": "Response body: " },
+                  "right": { "type": "VariableReference", "name": "responseBody" }
+                }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "connection",
+              "methodName": "disconnect",
+              "arguments": []
+            },
+            {
+              "type": "ReturnStatement",
+              "value": { "type": "VariableReference", "name": "responseBody", "variableType": "String" }
+            }
+          ],
+          "complexity": 2
+        }
+      ],
+      "innerClasses": []
+    }
+  ],
+  "complexity_metrics": {
+    "totalMethods": 1,
+    "totalFields": 3,
+    "totalConstructors": 0,
+    "cyclomaticComplexity": 2,
+    "linesOfCode": 38
+  },
+  "design_patterns": ["Service Layer", "HTTP Client Wrapper"]
+}
