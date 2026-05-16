@@ -1,6 +1,6 @@
 package com.poc.model;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
