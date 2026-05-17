@@ -1,4 +1,12 @@
 {
+  "name": "node-websocket-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for the modernization PoC",
+  "main": "src/WebsocketServer.js",
+  "scripts": {
+    "start": "node src/WebsocketServer.js",
+    "test": "node --test test/websocket-server.test.js"
+  },
   "dependencies": {
     "websocket": "^1.0.35"
   }
