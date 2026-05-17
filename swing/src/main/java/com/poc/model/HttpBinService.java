@@ -1,10 +1,13 @@
 package com.poc.model;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.io.StringWriter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Map;
-import java.util.Scanner;
 
 public class HttpBinService {
 
@@ -12,27 +15,31 @@ public class HttpBinService {
     public static final String PATH = "/post";
     public static final String CONTENT_TYPE = "application/json";
 
+    // Reuse a single HttpClient instance across calls (thread-safe and recommended)
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+
     public String post(Map<String, String> data) throws IOException, InterruptedException {
-        HttpURLConnection connection = (HttpURLConnection) new java.net.URL(URL + PATH).openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", CONTENT_TYPE);
-        connection.setDoOutput(true);
-        var jsonGeneratorFactory = Json.createGeneratorFactory(null);
-        var generator = jsonGeneratorFactory.createGenerator(connection.getOutputStream());
-        generator.writeStartObject();
-        for (var entry : data.entrySet()) {
-            generator.write(entry.getKey(), entry.getValue());
+        // Build JSON body using jakarta.json
+        var stringWriter = new StringWriter();
+        try (var generator = Json.createGenerator(stringWriter)) {
+            generator.writeStartObject();
+            for (var entry : data.entrySet()) {
+                generator.write(entry.getKey(), entry.getValue());
+            }
+            generator.writeEnd();
         }
-        generator.writeEnd();
-        generator.close();
-        var responseCode = connection.getResponseCode();
-        var responseBody = new Scanner(connection.getInputStream()).useDelimiter("\\A").next();
-        System.out.println("Response code: " + responseCode);
-        System.out.println("Response body: " + responseBody);
-        connection.disconnect();
+        String requestBody = stringWriter.toString();
 
+        // Use modern java.net.http.HttpClient (Java 11+)
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(URL + PATH))
+                .header("Content-Type", CONTENT_TYPE)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
 
-
-        return responseBody;
+        var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Response code: " + response.statusCode());
+        System.out.println("Response body: " + response.body());
+        return response.body();
     }
 }
