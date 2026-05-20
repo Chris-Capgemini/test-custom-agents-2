@@ -14,8 +14,6 @@ public class EventEmitter {
 
 
     public void emit(String eventData) {
-        for (EventListener listener : listeners) {
-            listener.onEvent(eventData);
-        }
+        listeners.forEach(listener -> listener.onEvent(eventData));
     }
 }
