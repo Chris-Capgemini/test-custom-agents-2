@@ -55,3 +55,12 @@ websocket_swing/swing/src/main/java
 websocket_swing/swing/src/main/java/com
 ```
 
+---
+
+## 📘 Architecture Documentation
+
+A starter arc42 documentation file is available at:
+
+```text
+analysis_output/arc42-documentation.md
+```
