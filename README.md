@@ -55,3 +55,12 @@ websocket_swing/swing/src/main/java
 websocket_swing/swing/src/main/java/com
 ```
 
+---
+
+## 🤖 Generate Insights Documentation
+
+To start documentation generation with the repository orchestrator agent, use:
+
+```text
+/agent code-analysis-orchestrator do start docu
+```
