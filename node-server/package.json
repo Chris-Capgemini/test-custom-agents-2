@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "node src/WebsocketServer.js"
+  },
   "dependencies": {
     "websocket": "^1.0.35"
   }
