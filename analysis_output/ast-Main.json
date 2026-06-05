@@ -1,0 +1,88 @@
+{
+  "file_path": "swing/src/main/java/com/Main.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com",
+  "imports": [
+    "com.poc.model.EventEmitter",
+    "com.poc.model.PocModel",
+    "com.poc.presentation.PocPresenter",
+    "com.poc.presentation.PocView",
+    "java.util.concurrent.CountDownLatch"
+  ],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "Main",
+      "modifiers": ["public"],
+      "annotations": [],
+      "extends": null,
+      "implements": [],
+      "fields": [],
+      "methods": [
+        {
+          "name": "main",
+          "modifiers": ["public", "static"],
+          "returnType": "void",
+          "parameters": [{ "name": "args", "type": "String[]" }],
+          "throws": ["InterruptedException"],
+          "annotations": [],
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "name": "latch",
+              "variableType": "CountDownLatch",
+              "value": { "type": "ObjectCreation", "className": "CountDownLatch", "arguments": [{ "type": "Literal", "value": "1" }] }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "pocView",
+              "variableType": "PocView",
+              "value": { "type": "ObjectCreation", "className": "PocView", "arguments": [] }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "eventEmitter",
+              "variableType": "EventEmitter",
+              "value": { "type": "ObjectCreation", "className": "EventEmitter", "arguments": [] }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "pocModel",
+              "variableType": "PocModel",
+              "value": {
+                "type": "ObjectCreation",
+                "className": "PocModel",
+                "arguments": [{ "type": "VariableReference", "name": "eventEmitter" }]
+              }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "_",
+              "variableType": "PocPresenter",
+              "value": {
+                "type": "ObjectCreation",
+                "className": "PocPresenter",
+                "arguments": [
+                  { "type": "VariableReference", "name": "pocView" },
+                  { "type": "VariableReference", "name": "pocModel" },
+                  { "type": "VariableReference", "name": "eventEmitter" }
+                ]
+              }
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "latch",
+              "methodName": "await",
+              "arguments": [],
+              "returnType": "void",
+              "throws": ["InterruptedException"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": ["PocView", "EventEmitter", "PocModel", "PocPresenter"],
+  "complexity_metrics": { "total_methods": 1, "total_fields": 0, "cyclomatic_complexity": 1, "lines_of_code": 23 }
+}

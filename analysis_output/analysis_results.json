@@ -1,0 +1,559 @@
+{
+  "application": {
+    "name": "Allegro PoC",
+    "description": "A multi-component WebSocket-based modernization proof-of-concept connecting a legacy Java Swing desktop application to a modern Vue.js web frontend via a Node.js WebSocket relay server. The system enables person data capture, IBAN/payment management, and seamless data transfer from a search-enabled web UI to the legacy Allegro system.",
+    "version": "0.0.1-SNAPSHOT",
+    "architecture": "MVP (Model-View-Presenter) for the Java Swing layer; Component-based SPA for the Vue.js frontend; Relay server pattern for the Node.js WebSocket bridge.",
+    "tech_stack": {
+      "java": "22",
+      "java_frameworks": ["Java Swing (desktop UI)", "javax.json (JSON-P serialization)", "GlassFish Tyrus WebSocket client"],
+      "javascript_runtime": "Node.js",
+      "frontend_framework": "Vue.js 2.6",
+      "build_tools": ["Maven 4.0.0", "Vue CLI 4"],
+      "communication_protocols": ["HTTP/REST (Swing to httpbin backend)", "WebSocket ws://localhost:1337 (Vue client to Node relay)", "WebSocket broadcast (Node relay to all connected clients)"],
+      "backend_mock": "kennethreitz/httpbin Docker container on port 8080"
+    },
+    "business_domains": [
+      "Person Data Management",
+      "Payment and IBAN Management",
+      "Gender Selection",
+      "Address Management",
+      "Person Search",
+      "Legacy System Integration"
+    ]
+  },
+  "files": [
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java",
+      "package": "com",
+      "category": "Technical",
+      "summary": "Application entry point that wires the MVP triad (PocView, PocModel, PocPresenter) together and keeps the JVM alive via a CountDownLatch.",
+      "description": "Main serves as the composition root of the Allegro Swing application. It instantiates all three MVP components and injects the shared EventEmitter into both PocModel and PocPresenter, establishing the observer chain. The CountDownLatch prevents the main thread from exiting so the Swing event dispatch thread remains active. No business logic resides here; this file is purely structural.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Application Bootstrap",
+      "sub_capability": "MVP Component Wiring",
+      "method_breakdown": [
+        {
+          "method_name": "main",
+          "summary": "Bootstraps the Allegro Swing application by instantiating and wiring all MVP components.",
+          "parameters": ["args (String[]): Command-line arguments (unused)"],
+          "returns": "void",
+          "dependencies": ["PocView", "PocModel", "PocPresenter", "EventEmitter", "CountDownLatch"],
+          "significance": "Single point of application startup; establishes the entire MVP dependency graph and keeps the process alive for the Swing event loop."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "package": "com.poc.model",
+      "category": "Business",
+      "summary": "Central domain model storing all person, address, and payment field values in a typed EnumMap, and orchestrating HTTP submission of that data.",
+      "description": "PocModel is the authoritative data store for the Allegro form. It holds 13 domain properties — personal identifiers (first name, last name, date of birth), address components (street, ZIP, city), payment fields (IBAN, BIC, valid-from date), a text area, and three mutually exclusive gender flags — each wrapped in a generic ValueModel for type safety. When the user initiates an action, PocModel serialises all properties to a string map, delegates the HTTP POST to HttpBinService, and broadcasts the result or an error message via EventEmitter to all subscribers.",
+      "business_rules": [
+        "Model maintains exactly 13 domain properties: TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT, STREET, IBAN, BIC, VALID_FROM, MALE, FEMALE, DIVERSE.",
+        "Gender is stored as three independent Boolean-typed ValueModels (MALE, FEMALE, DIVERSE); mutual exclusivity is enforced at the UI layer by the ButtonGroup in PocView.",
+        "All model values are initialised to null at construction time.",
+        "On action(), all 13 properties are serialised to a String map (Boolean gender values are coerced to string via Object.toString()).",
+        "If the HTTP response body is non-empty, the raw response body string is emitted as a success event to all EventEmitter subscribers.",
+        "If the HTTP response body is empty, the literal string 'Failed operation' is emitted as an error event."
+      ],
+      "technical_libraries": [],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Domain Model State Management",
+      "method_breakdown": [
+        {
+          "method_name": "PocModel (constructor)",
+          "summary": "Initialises all 13 domain properties with null values and stores the EventEmitter reference.",
+          "parameters": ["eventEmitter (EventEmitter): Shared event bus for broadcasting submission results"],
+          "returns": "PocModel instance",
+          "dependencies": ["EventEmitter", "ValueModel", "ModelProperties", "EnumMap"],
+          "significance": "Defines the canonical set of business fields tracked by the application; null initialisation signals 'not yet entered' state."
+        },
+        {
+          "method_name": "action",
+          "summary": "Collects all model field values, posts them as JSON to the backend via HttpBinService, and emits the response or a failure message.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["HttpBinService", "EventEmitter", "ModelProperties", "ValueModel", "HashMap"],
+          "significance": "Core business action method that drives form submission, backend communication, and downstream result propagation to the view."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "package": "com.poc.model",
+      "category": "Business",
+      "summary": "Enum that defines the complete, authoritative set of domain field identifiers for the person and payment data model.",
+      "description": "ModelProperties provides the canonical vocabulary of 13 field names used consistently across the model layer, view-binding in the presenter, HTTP JSON serialisation, and the OpenAPI contract. It covers personal identification fields, address components, banking details, a validity date, and three mutually exclusive gender indicators. This enum is the single source of truth for field naming, preventing string-literal drift and enabling compile-time safety across all layers.",
+      "business_rules": [
+        "Defines exactly 13 named domain fields: TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT, STREET, IBAN, BIC, VALID_FROM, FEMALE, MALE, DIVERSE.",
+        "Field names map 1:1 to JSON keys used in the HTTP POST payload and to property names in the OpenAPI PostObject schema.",
+        "Gender is represented as three discrete flags (FEMALE, MALE, DIVERSE) rather than a single enumerated value, enabling independent Boolean tracking."
+      ],
+      "technical_libraries": [],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Domain Field Vocabulary",
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "package": "com.poc.model",
+      "category": "Technical",
+      "summary": "Lightweight publish-subscribe event bus that distributes string events to all registered EventListener instances synchronously.",
+      "description": "EventEmitter implements a simple observer pattern to decouple event producers (PocModel after HTTP submission) from consumers (PocPresenter updating the view). Listeners register via subscribe() and are notified synchronously in registration order when emit() is called. The bus is string-typed, making it a generic in-process message bus suitable for conveying HTTP response payloads or error messages.",
+      "business_rules": [
+        "All registered listeners receive every emitted event without filtering or routing.",
+        "Listeners are notified synchronously in registration order."
+      ],
+      "technical_libraries": [],
+      "business_capability": "Application Infrastructure",
+      "sub_capability": "In-Process Event-Driven Communication",
+      "method_breakdown": [
+        {
+          "method_name": "subscribe",
+          "summary": "Registers an EventListener to receive all future events emitted by this bus.",
+          "parameters": ["listener (EventListener): The callback to register"],
+          "returns": "void",
+          "dependencies": ["EventListener"],
+          "significance": "Enables the Presenter to react to model outcomes (HTTP responses) without direct coupling to the model's HTTP call."
+        },
+        {
+          "method_name": "emit",
+          "summary": "Broadcasts an event string to all currently registered listeners.",
+          "parameters": ["eventData (String): The event payload (HTTP response body or error message) to broadcast"],
+          "returns": "void",
+          "dependencies": ["EventListener"],
+          "significance": "Triggers synchronous notification of all subscribers, driving UI updates (form reset, response display) after form submission."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+      "file_name": "EventListener.java",
+      "package": "com.poc.model",
+      "category": "Technical",
+      "summary": "Functional interface defining the contract for receiving domain events from the EventEmitter.",
+      "description": "EventListener is a single-abstract-method (SAM) interface that enables lambda-based event handling. Any component needing to react to model events — such as the presenter updating the view after a successful HTTP POST — implements this interface. Its functional nature allows concise inline subscription registration in PocPresenter without anonymous class boilerplate.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Application Infrastructure",
+      "sub_capability": "Event-Driven Communication Contract",
+      "method_breakdown": [
+        {
+          "method_name": "onEvent",
+          "summary": "Callback invoked synchronously when the EventEmitter broadcasts an event to this listener.",
+          "parameters": ["eventData (String): The event payload (e.g., HTTP response body or 'Failed operation')"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Defines the integration point between model action outcomes and view/presenter reactions."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "package": "com.poc.model",
+      "category": "Technical",
+      "summary": "HTTP client service that serialises a key-value map to a flat JSON object and POSTs it to the configured backend endpoint, returning the raw response body.",
+      "description": "HttpBinService encapsulates all HTTP communication for the Allegro Swing application. It uses HttpURLConnection to open a POST connection, constructs a JSON object from the provided map using the javax.json streaming API (Json.createGeneratorFactory), and reads the full response body as a string. The backend defaults to http://localhost:8080/post — the httpbin echo service — providing an easy integration test harness for the PoC.",
+      "business_rules": [
+        "Target endpoint is hardcoded to http://localhost:8080/post.",
+        "Content-Type header is set to application/json for all requests.",
+        "The JSON request body is a flat object; every entry in the provided map becomes a top-level string key-value pair.",
+        "The complete response body is returned as a single string; the HTTP status code is logged to stdout but not used for conditional error branching.",
+        "Connection is explicitly disconnected after reading the response."
+      ],
+      "technical_libraries": ["javax.json (GlassFish JSON-P 1.0.4)"],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Backend HTTP Data Submission",
+      "method_breakdown": [
+        {
+          "method_name": "post",
+          "summary": "Opens an HTTP POST connection, serialises the data map as a JSON body, reads and returns the response body.",
+          "parameters": ["data (Map<String, String>): Key-value pairs representing all 13 model properties to be submitted"],
+          "returns": "String: Raw HTTP response body from the backend service",
+          "dependencies": ["javax.json.Json", "HttpURLConnection", "java.net.URL", "Scanner"],
+          "significance": "The sole outbound integration point of the Swing application; bridges the in-memory domain model to the REST backend API."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "package": "com.poc.model",
+      "category": "Technical",
+      "summary": "Empty placeholder class intended as a future view data transfer object; currently not implemented.",
+      "description": "ViewData is a stub class with no fields or methods. It is likely a placeholder for a future DTO pattern to encapsulate data passed between the model and view layers in alignment with MVP best practices. In the current PoC implementation, raw model data is accessed directly by the presenter.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Application Infrastructure",
+      "sub_capability": "View Data Transfer Object (Placeholder)",
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "package": "com.poc",
+      "category": "Technical",
+      "summary": "Generic type-safe wrapper that holds a single mutable field value, used by PocModel to store each domain property with compile-time type safety.",
+      "description": "ValueModel is a minimal generic container providing typed get/set access to a single value. It enables PocModel to store heterogeneous domain properties — String for text fields and Boolean for gender flags — in a uniform EnumMap structure while preserving compile-time type safety through parameterised typing. It acts as the atomic unit of the model's data layer, analogous to a simple property binding container.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "Application Infrastructure",
+      "sub_capability": "Typed Property Value Container",
+      "method_breakdown": [
+        {
+          "method_name": "ValueModel (constructor)",
+          "summary": "Creates a new ValueModel pre-initialised with the given field value (may be null).",
+          "parameters": ["field (T): Initial value of the wrapped field"],
+          "returns": "ValueModel<T> instance",
+          "dependencies": [],
+          "significance": "Allows null initialisation of all domain properties at model construction time, representing 'not yet entered' state."
+        },
+        {
+          "method_name": "getField",
+          "summary": "Returns the current value of the wrapped field.",
+          "parameters": [],
+          "returns": "T: The current field value",
+          "dependencies": [],
+          "significance": "Used by PocModel.action() when serialising all model properties for the HTTP POST payload."
+        },
+        {
+          "method_name": "setField",
+          "summary": "Replaces the wrapped field value with the given new value.",
+          "parameters": ["field (T): The new value to store"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Called by PocPresenter on every UI change event to keep the model in sync with user input in real time."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "package": "com.poc.presentation",
+      "category": "Mixed",
+      "summary": "Java Swing form that renders all person, address, gender, and payment input fields in a six-column GridBagLayout grid with German locale labels.",
+      "description": "PocView is the visual layer of the MVP pattern, constructing and displaying the Allegro desktop form window. It presents fields for personal data (Vorname/First Name, Name/Last Name, Geburtsdatum/Date of Birth), address information (Strasse/Street, PLZ/ZIP, Ort/City), banking details (IBAN, BIC, Gültig ab/Valid From), gender radio buttons (Weiblich/Female, Männlich/Male, Divers/Diverse), a response text area labelled RT, and an action button labelled Anordnen. Field labels are in German reflecting the target end-user locale. No business logic is embedded; the view is purely presentational.",
+      "business_rules": [
+        "Gender selection defaults to 'Weiblich' (Female) as the pre-selected option on form initialisation.",
+        "The three gender options (Weiblich, Männlich, Divers) are mutually exclusive, enforced by a shared javax.swing.ButtonGroup.",
+        "The action button is labelled 'Anordnen' (German for 'Arrange/Submit').",
+        "The application window title is 'Allegro', matching the legacy system name.",
+        "The form window is pre-sized to 800×650 pixels.",
+        "The RT (response/return text) area spans all six grid columns and has a fixed preferred height of 400px.",
+        "All form labels are in German: Vorname, Name, Geburtsdatum, Geschlecht, Strasse, PLZ, Ort, IBAN, BIC, Gültig ab, RT."
+      ],
+      "technical_libraries": ["javax.swing", "java.awt"],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Data Entry Form Presentation",
+      "method_breakdown": [
+        {
+          "method_name": "PocView (constructor)",
+          "summary": "Initialises the Swing window and immediately triggers UI component layout via initUI.",
+          "parameters": [],
+          "returns": "PocView instance",
+          "dependencies": ["javax.swing.JFrame"],
+          "significance": "Creates and makes visible the Allegro data entry form window."
+        },
+        {
+          "method_name": "initUI (private)",
+          "summary": "Constructs and arranges all form widgets using GridBagLayout — labels, text fields, radio button group, text area, and the action button — and makes the frame visible.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["GridBagLayout", "GridBagConstraints", "ButtonGroup", "JRadioButton", "JTextField", "JTextArea", "JButton", "JLabel", "JPanel", "FlowLayout"],
+          "significance": "Defines the complete visual structure, component hierarchy, and default state of the Allegro data entry form."
+        }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "package": "com.poc.presentation",
+      "category": "Business",
+      "summary": "MVP Presenter that establishes bidirectional data binding between all Swing UI components and their corresponding model properties, and manages form reset on successful backend response.",
+      "description": "PocPresenter is the coordination hub of the Allegro MVP pattern. It binds every text field and radio button in PocView to its corresponding ModelProperties entry using DocumentListeners and ChangeListeners, ensuring the model is updated in real time as the user types or selects. It subscribes to EventEmitter to react to submission outcomes: on a successful response, the response body is displayed in the text area, all form fields are cleared and reset to their defaults (including gender reverting to Female). The action button listener delegates to PocModel.action() to trigger the HTTP submission workflow.",
+      "business_rules": [
+        "Every keystroke (character insert or delete) in any text field immediately synchronises the corresponding model property value.",
+        "Every gender radio button state change immediately synchronises the corresponding Boolean model property.",
+        "On receiving a non-empty event (successful HTTP response), all form text fields are cleared to empty string.",
+        "On receiving an event response, the text area is populated with the full response content.",
+        "After form reset following a successful submission, gender state reverts to: Female=selected, Male=deselected, Diverse=deselected.",
+        "The 'Anordnen' button click triggers PocModel.action(), initiating HTTP serialisation and submission of all 13 field values.",
+        "All 13 model properties (10 text components + 3 radio buttons) are bound via initializeBindings() during presenter construction."
+      ],
+      "technical_libraries": ["javax.swing"],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Form Data Binding and Submission Orchestration",
+      "method_breakdown": [
+        {
+          "method_name": "PocPresenter (constructor)",
+          "summary": "Subscribes to the event bus for form reset handling, registers the action button listener for submission, and triggers full binding initialisation.",
+          "parameters": [
+            "view (PocView): The Swing UI component tree containing all form fields",
+            "model (PocModel): The domain data model holding all field values",
+            "eventEmitter (EventEmitter): The shared event bus for receiving submission outcomes"
+          ],
+          "returns": "PocPresenter instance",
+          "dependencies": ["PocView", "PocModel", "EventEmitter"],
+          "significance": "Establishes the complete reactive wiring between UI interaction, domain model updates, event responses, and form state management."
+        },
+        {
+          "method_name": "bind (JTextComponent overload)",
+          "summary": "Attaches a DocumentListener to a Swing text component so that all text changes (insert and remove events) are synchronised immediately to the specified model property.",
+          "parameters": [
+            "source (JTextComponent): The Swing text field or text area to observe",
+            "prop (ModelProperties): The String-typed model property to keep in sync"
+          ],
+          "returns": "void",
+          "dependencies": ["ValueModel<String>", "DocumentListener", "DocumentEvent", "ModelProperties"],
+          "significance": "Core real-time binding mechanism ensuring the model always reflects the current UI state for all text input fields."
+        },
+        {
+          "method_name": "bind (JRadioButton overload)",
+          "summary": "Attaches a ChangeListener to a radio button so that its selected state is synchronised immediately to the specified Boolean model property.",
+          "parameters": [
+            "source (JRadioButton): The gender radio button to observe",
+            "prop (ModelProperties): The Boolean-typed model property (MALE, FEMALE, or DIVERSE) to synchronise"
+          ],
+          "returns": "void",
+          "dependencies": ["ValueModel<Boolean>", "ChangeListener", "ModelProperties"],
+          "significance": "Enables real-time gender selection tracking in the domain model, complementing the UI-level mutual exclusivity enforced by ButtonGroup."
+        },
+        {
+          "method_name": "initializeBindings (private)",
+          "summary": "Calls the appropriate bind() overload for all 13 UI components: 10 text components (including text area) and 3 radio buttons.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["PocView field references", "ModelProperties enum values"],
+          "significance": "Single activation point that establishes the complete form-to-model reactive binding on application startup."
+        }
+      ]
+    },
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "package": "node-server",
+      "category": "Technical",
+      "summary": "Node.js WebSocket relay server that listens on port 1337 and broadcasts all incoming UTF-8 messages verbatim to every connected client.",
+      "description": "WebsocketServer acts as the real-time message relay hub connecting the Vue.js search frontend to the Allegro Swing application. It creates an HTTP server backed by a websocket.server instance, accepts connections from any origin, maintains an in-memory list of active client connections, and on each incoming UTF-8 message, forwards the raw JSON payload to all clients simultaneously. Disconnected clients are cleaned up from the registry to prevent stale send errors.",
+      "business_rules": [
+        "All incoming UTF-8 WebSocket messages are broadcast to ALL currently connected clients without filtering, routing, or content inspection.",
+        "Cross-origin WebSocket connections are accepted unconditionally (null origin passed to request.accept) — appropriate for PoC only.",
+        "Only UTF-8 typed messages are processed; binary-type messages are silently ignored.",
+        "The client registry is maintained purely in memory; it is lost on server restart.",
+        "Message content is forwarded verbatim — no envelope modification, no protocol translation."
+      ],
+      "technical_libraries": ["websocket npm package (v1.0.35)", "Node.js http module"],
+      "business_capability": "Legacy System Integration",
+      "sub_capability": "Real-Time WebSocket Message Relay",
+      "method_breakdown": [
+        {
+          "method_name": "wsServer.on('request') callback",
+          "summary": "Accepts incoming WebSocket upgrade requests, registers the new client connection, and attaches message and close event handlers.",
+          "parameters": ["request (WebSocketRequest): The incoming WebSocket upgrade request object"],
+          "returns": "void",
+          "dependencies": ["clients array", "websocket.server"],
+          "significance": "Entry point for all client connections; establishes per-client message relay and clean disconnect handling."
+        },
+        {
+          "method_name": "connection.on('message') callback",
+          "summary": "Receives an incoming UTF-8 WebSocket message and broadcasts it to all registered client connections.",
+          "parameters": ["message (IMessage): WebSocket message object with type and utf8Data properties"],
+          "returns": "void",
+          "dependencies": ["clients array"],
+          "significance": "Core relay logic enabling the Vue.js search client to push selected person and payment data to all connected Allegro Swing clients."
+        },
+        {
+          "method_name": "connection.on('close') callback",
+          "summary": "Removes the disconnecting client from the in-memory clients array using its registered index.",
+          "parameters": ["connection (WebSocketConnection): The closing connection object"],
+          "returns": "void",
+          "dependencies": ["clients array (splice)"],
+          "significance": "Prevents memory leaks and failed send attempts to stale disconnected client references."
+        }
+      ]
+    },
+    {
+      "file_path": "node-vue-client/src/App.vue",
+      "file_name": "App.vue",
+      "package": "node-vue-client",
+      "category": "Technical",
+      "summary": "Root Vue.js SPA component providing the Allegro application shell — branded header bar and Search component host.",
+      "description": "App.vue is the top-level Vue component that defines the Allegro web application shell. It renders a fixed-height header bar with the Allegro brand colour (red #ff2b06) displaying 'Search Mock' as the application title, a logo placeholder on the left, and hosts the Search component as the primary content area. No business logic resides here; it is a structural layout component.",
+      "business_rules": [
+        "The application header displays 'Search Mock' as the title label.",
+        "The header uses the Allegro corporate brand colour (#ff2b06 red background, white text, 80px height)."
+      ],
+      "technical_libraries": ["Vue.js 2.6"],
+      "business_capability": "Legacy System Integration",
+      "sub_capability": "Web Application Shell and Branding",
+      "method_breakdown": []
+    },
+    {
+      "file_path": "node-vue-client/src/main.js",
+      "file_name": "main.js",
+      "package": "node-vue-client",
+      "category": "Technical",
+      "summary": "Vue.js application bootstrap that creates the root Vue instance rendering the App component and mounts it to the #app DOM element.",
+      "description": "main.js is the standard Vue CLI entry point. It imports Vue and the root App component, disables production tip logging, creates the root Vue instance with the App component as the render function, and mounts it to the #app DOM element. No custom business logic is present.",
+      "business_rules": [],
+      "technical_libraries": ["Vue.js 2.6"],
+      "business_capability": "Application Bootstrap",
+      "sub_capability": "Vue SPA Initialisation",
+      "method_breakdown": []
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "package": "node-vue-client/components",
+      "category": "Business",
+      "summary": "Vue.js component providing multi-criteria person search, payment recipient (Zahlungsempfänger) selection, and one-click data transfer to the legacy Allegro Swing application via WebSocket.",
+      "description": "Search.vue is the primary business component of the Allegro web frontend. It presents a data entry form with personal fields (last name, first name, date of birth), address fields (ZIP, city, street, house number), and supplementary fields (customer number, nationality, IBAN/BIC — some read-only). The operator enters search criteria, clicks Suchen to filter a local mock dataset of 5 persons, selects a person from the tabular results, optionally selects one of the person's Zahlungsempfänger (payment recipient) entries (IBAN, BIC, valid-from date), and clicks 'Nach ALLEGRO übernehmen' to transmit the assembled record to the Allegro legacy system via the Node.js WebSocket relay. A textarea is also synchronised automatically via WebSocket for free-text communication.",
+      "business_rules": [
+        "Person search matches against: last name (partial, case-insensitive), first name (partial, case-insensitive), ZIP code (exact string match), city/Ort (partial, case-insensitive), street (partial, case-insensitive), house number (partial, case-insensitive).",
+        "A person record is included in search results if ANY single non-empty criterion matches (OR logic across all criteria).",
+        "Search results table columns: Kdn.-nr (customer number), Name, Vorname, Geburtsdatum, PLZ, Strasse + Hausnummer (concatenated), Ort.",
+        "Each person can have one or more Zahlungsempfänger entries; each entry has IBAN, BIC, and Gültig-ab (valid-from date).",
+        "Only one Zahlungsempfänger can be selected at a time; selection is highlighted in the payment table.",
+        "The 'Nach ALLEGRO übernehmen' button sends the selected person with their selected Zahlungsempfänger as a 'textfield' target WebSocket message.",
+        "IBAN and BIC form input fields are disabled (read-only), preventing direct manual entry; they are populated only from the selected Zahlungsempfänger.",
+        "Kundennummer, Betriebsbez., RV-Nummer, BG-Nummer, and Träger-Nr. der gE. form fields are all disabled.",
+        "Textarea content changes trigger automatic WebSocket broadcast as 'textarea' target messages via a Vue reactive watcher.",
+        "WebSocket connection to ws://localhost:1337/ is established automatically on component mount.",
+        "The JSON message envelope format is: { target: 'textfield' | 'textarea', content: <Object | String> }.",
+        "When sending with target 'textfield', the zahlungsempfaenger property of the cloned person object is replaced with the currently selected Zahlungsempfänger (rather than the full array).",
+        "The mock search dataset contains 5 German persons with realistic IBAN/BIC values: Hans Mayer (Trogen), Linda Reitmayr (Hof), Karl May (Berlin), Jens Mueller (Potsdam), Steffi Ruckmueller (Templin)."
+      ],
+      "technical_libraries": ["Vue.js 2.6", "WebSocket API (browser native W3C)"],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Person Search, Selection, and Allegro Data Transfer",
+      "method_breakdown": [
+        {
+          "method_name": "connect",
+          "summary": "Opens a WebSocket connection to the Node.js relay server at ws://localhost:1337/ and sets up the onopen status handler.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["WebSocket (browser native API)", "WebsocketServer.js relay"],
+          "significance": "Establishes the real-time bidirectional channel required for transmitting selected person and payment data to the Allegro Swing client."
+        },
+        {
+          "method_name": "disconnect",
+          "summary": "Closes the active WebSocket connection and resets connection status and log state.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["WebSocket"],
+          "significance": "Provides clean resource release when the component is torn down or the connection needs resetting."
+        },
+        {
+          "method_name": "searchPerson",
+          "summary": "Filters the in-memory mock person dataset (search_space) against the current form input using OR logic across all non-empty criteria, populating search_result.",
+          "parameters": [],
+          "returns": "void — reactively updates this.search_result array",
+          "dependencies": ["this.search_space (local mock data array)", "this.formdata (reactive form state)"],
+          "significance": "Core person lookup logic; determines which person records are displayed for operator selection."
+        },
+        {
+          "method_name": "sendMessage",
+          "summary": "Deep-clones the payload, optionally replaces the zahlungsempfaenger field with the selected entry, and sends the structured object as a JSON WebSocket message.",
+          "parameters": [
+            "e (Object | String): The data payload — either the selected person object or textarea text",
+            "target (String): Message routing label — 'textfield' for person/payment data, 'textarea' for free-text"
+          ],
+          "returns": "void",
+          "dependencies": ["this.socket (WebSocket connection)", "this.zahlungsempfaenger_selected"],
+          "significance": "The primary integration method that transfers operator-selected data from the modern Vue UI to the legacy Allegro Swing application."
+        },
+        {
+          "method_name": "selectResult",
+          "summary": "Marks a person record from search_result as the currently selected result and reveals its Zahlungsempfänger payment entries.",
+          "parameters": ["item (Object): A person record object from the search_result array"],
+          "returns": "void — updates this.selected_result",
+          "dependencies": [],
+          "significance": "Drives the payment recipient sub-table, enabling the operator to view and select the appropriate IBAN for the chosen person."
+        },
+        {
+          "method_name": "zahlungsempfaengerSelected",
+          "summary": "Records the clicked Zahlungsempfänger entry as the currently active payment selection.",
+          "parameters": ["zahlungsempfaenger (Object): A payment recipient record with iban, bic, valid_from, valid_until, type"],
+          "returns": "void — updates this.zahlungsempfaenger_selected",
+          "dependencies": [],
+          "significance": "Determines which IBAN and BIC entry is included in the data package transmitted to Allegro."
+        }
+      ]
+    },
+    {
+      "file_path": "api.yml",
+      "file_name": "api.yml",
+      "package": "root",
+      "category": "Mixed",
+      "summary": "OpenAPI 3.0.1 specification defining the single POST /post endpoint and its request/response schemas for the Allegro PoC backend service.",
+      "description": "api.yml is the formal contract between the Swing HTTP client and the httpbin backend service. It defines the PostObject schema whose 13 fields precisely mirror the ModelProperties enum, confirming the field naming conventions used as the API wire format. The PostResponseObject reflects the httpbin echo response structure. The spec documents the expected request envelope (user wrapper key) and response structure, and could be used to drive server-side code generation or integration tests.",
+      "business_rules": [
+        "The API accepts HTTP POST requests at the /post path on localhost:8080.",
+        "The PostObject schema defines exactly 13 string-typed fields: FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA.",
+        "All PostObject fields are typed as string in the API contract, including FEMALE, MALE, and DIVERSE (Boolean values are coerced to string before transmission).",
+        "The request body wraps the PostObject under a 'user' key: { user: PostObject }.",
+        "The response body wraps the echoed data under a 'postObject' key: { postObject: PostObject }.",
+        "The API is versioned at 1.0.0 and tagged under 'Post' with operationId 'Post'."
+      ],
+      "technical_libraries": [],
+      "business_capability": "Person and Payment Data Management",
+      "sub_capability": "Backend API Contract Definition",
+      "method_breakdown": []
+    }
+  ],
+  "architecture_patterns": [
+    {
+      "pattern": "Model-View-Presenter (MVP)",
+      "location": "swing/src/main/java/com/poc/",
+      "description": "The Java Swing application strictly follows MVP: PocModel holds state and business logic; PocView is passive and exposes only UI components; PocPresenter orchestrates bidirectional binding, event subscription, and action delegation. The EventEmitter provides the Model-to-Presenter notification channel without direct coupling."
+    },
+    {
+      "pattern": "Observer / Event Bus",
+      "location": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "description": "EventEmitter + EventListener implement the Observer pattern as an in-process event bus. PocModel emits events after HTTP operations; PocPresenter subscribes to update the view. This decouples the model layer from any specific view implementation."
+    },
+    {
+      "pattern": "Relay / Broker (WebSocket)",
+      "location": "node-server/src/WebsocketServer.js",
+      "description": "The Node.js server acts as a WebSocket message broker: it accepts connections from both the Vue client and the Swing client, and relays messages from any sender to all receivers. This enables the modern web UI to communicate with the legacy desktop application without direct coupling."
+    },
+    {
+      "pattern": "Single-File Component (SFC)",
+      "location": "node-vue-client/src/components/Search.vue",
+      "description": "Vue.js Single-File Components co-locate template, script, and scoped styles. Search.vue demonstrates the component pattern with props, reactive data, lifecycle hooks (mounted), methods, and watchers."
+    },
+    {
+      "pattern": "Value Object / Property Wrapper",
+      "location": "swing/src/main/java/com/poc/ValueModel.java",
+      "description": "ValueModel<T> wraps each individual domain property in a typed container, enabling uniform storage of heterogeneous types (String, Boolean) in the EnumMap and providing a clean API for the presenter to read and write field values."
+    }
+  ],
+  "communication_flow": {
+    "description": "Data flows from the user through three distinct layers: (1) Java Swing MVP — user fills the form, presenter syncs to model in real time, button click triggers HTTP POST to httpbin, response is displayed and form is reset. (2) Vue.js Search — operator searches for a person, selects a person and payment recipient, clicks to send data via WebSocket to Node.js relay. (3) Node.js Relay — broadcasts received WebSocket messages to all connected clients including the Swing client, enabling the modern web search to populate the legacy desktop form.",
+    "steps": [
+      "User enters data in PocView text fields and radio buttons",
+      "PocPresenter DocumentListeners/ChangeListeners update PocModel in real time",
+      "User clicks 'Anordnen' button",
+      "PocPresenter delegates to PocModel.action()",
+      "PocModel serialises all 13 properties to a String HashMap",
+      "HttpBinService POSTs JSON body to http://localhost:8080/post",
+      "httpbin echoes the response body",
+      "PocModel emits response body via EventEmitter",
+      "PocPresenter receives event, updates textArea with response, clears all fields",
+      "Separately: Vue operator enters search criteria in Search.vue",
+      "searchPerson() filters local mock dataset and displays results",
+      "Operator selects person row then selects Zahlungsempfänger entry",
+      "Operator clicks 'Nach ALLEGRO übernehmen'",
+      "sendMessage() transmits JSON { target: 'textfield', content: person+payment } via WebSocket",
+      "WebsocketServer.js broadcasts message to all connected clients",
+      "Allegro Swing client (if connected to ws://localhost:1337/) receives the payload"
+    ]
+  }
+}

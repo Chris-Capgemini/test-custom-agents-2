@@ -1,0 +1,670 @@
+{
+  "application": "Allegro PoC",
+  "extraction_scope": "All source files across Java Swing MVP, Node.js WebSocket relay, and Vue.js frontend components",
+  "business_domains": [
+    {
+      "domain": "Person Data Management",
+      "description": "Capture, storage, display, and transmission of individual person identity data including name, date of birth, and customer identifiers.",
+      "primary_files": [
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "node-vue-client/src/components/Search.vue"
+      ],
+      "rules": [
+        {
+          "rule_id": "PDM-001",
+          "rule": "A person record must include: first name (Vorname), last name (Name/Nachname), and date of birth (Geburtsdatum).",
+          "source_file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+          "source_element": "FIRST_NAME, LAST_NAME, DATE_OF_BIRTH enum values",
+          "rule_type": "Data Completeness"
+        },
+        {
+          "rule_id": "PDM-002",
+          "rule": "All person data fields are initialised to null, representing an 'empty/not-yet-entered' state before user interaction.",
+          "source_file": "swing/src/main/java/com/poc/model/PocModel.java",
+          "source_element": "PocModel constructor — new ValueModel<String>(null)",
+          "rule_type": "Initialisation"
+        },
+        {
+          "rule_id": "PDM-003",
+          "rule": "Person data fields synchronise with the domain model immediately on every character insertion or deletion (real-time binding).",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "bind(JTextComponent, ModelProperties) — insertUpdate and removeUpdate listeners",
+          "rule_type": "Data Synchronisation"
+        },
+        {
+          "rule_id": "PDM-004",
+          "rule": "On successful form submission, all person data fields (first name, last name, date of birth) are cleared to empty string.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "EventEmitter subscription lambda in PocPresenter constructor",
+          "rule_type": "Post-Submission Reset"
+        },
+        {
+          "rule_id": "PDM-005",
+          "rule": "The mock person dataset contains exactly 5 persons: Hans Mayer (Trogen, DOB 1981-01-08), Linda Reitmayr (Hof, DOB 1979-05-12), Karl May (Berlin, DOB 1964-11-02), Jens Mueller (Potsdam, DOB 1999-04-21), Steffi Ruckmueller (Templin, DOB 1961-11-05).",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "search_space array in data()",
+          "rule_type": "Reference Data"
+        },
+        {
+          "rule_id": "PDM-006",
+          "rule": "Each person in the dataset has a unique Kundennummer (customer number): 79423984, 67485246, 13725246, 41125291, 31228193.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "search_space knr property",
+          "rule_type": "Uniqueness Constraint"
+        }
+      ]
+    },
+    {
+      "domain": "Gender Selection",
+      "description": "Capture and storage of a person's gender as a mutually exclusive selection among three options: Female (Weiblich), Male (Männlich), and Diverse (Divers).",
+      "primary_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "api.yml"
+      ],
+      "rules": [
+        {
+          "rule_id": "GND-001",
+          "rule": "Gender has exactly three valid options: Weiblich (Female), Männlich (Male), Divers (Diverse).",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocView.java",
+          "source_element": "JRadioButton female, male, diverse field declarations",
+          "rule_type": "Enumeration / Domain Constraint"
+        },
+        {
+          "rule_id": "GND-002",
+          "rule": "Only one gender option may be selected at a time (mutual exclusivity).",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocView.java",
+          "source_element": "ButtonGroup gender containing female, male, diverse",
+          "rule_type": "Mutual Exclusivity"
+        },
+        {
+          "rule_id": "GND-003",
+          "rule": "The default gender selection on form initialisation and after form reset is Female (Weiblich).",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocView.java",
+          "source_element": "female.setSelected(true) in initUI()",
+          "rule_type": "Default Value"
+        },
+        {
+          "rule_id": "GND-004",
+          "rule": "After a successful form submission, gender state is explicitly reset: Female=selected, Male=deselected, Diverse=deselected.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "EventEmitter lambda: view.female.setSelected(true), view.male.setSelected(false), view.diverse.setSelected(false)",
+          "rule_type": "Post-Submission Reset"
+        },
+        {
+          "rule_id": "GND-005",
+          "rule": "Gender is stored in the domain model as three independent Boolean-typed properties (MALE, FEMALE, DIVERSE), not as a single enumerated value.",
+          "source_file": "swing/src/main/java/com/poc/model/PocModel.java",
+          "source_element": "model.put(ModelProperties.MALE/FEMALE/DIVERSE, new ValueModel<Boolean>(null))",
+          "rule_type": "Data Representation"
+        },
+        {
+          "rule_id": "GND-006",
+          "rule": "When transmitted via HTTP, gender Boolean flags are serialised as their string representations (e.g., 'true'/'false') in the JSON payload.",
+          "source_file": "swing/src/main/java/com/poc/model/PocModel.java",
+          "source_element": "action() — model.get(val).getField().toString() applied uniformly to all properties",
+          "rule_type": "Serialisation"
+        },
+        {
+          "rule_id": "GND-007",
+          "rule": "In the API contract, FEMALE, MALE, and DIVERSE are all declared as string fields (not boolean), confirming the string serialisation approach.",
+          "source_file": "api.yml",
+          "source_element": "components/schemas/PostObject properties: FEMALE, MALE, DIVERSE (type: string)",
+          "rule_type": "API Contract"
+        }
+      ]
+    },
+    {
+      "domain": "Address Management",
+      "description": "Capture, storage, and display of residential or contact address details including street, house number, postal code, and city.",
+      "primary_files": [
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "node-vue-client/src/components/Search.vue",
+        "api.yml"
+      ],
+      "rules": [
+        {
+          "rule_id": "ADR-001",
+          "rule": "Address data consists of three components: Street (Strasse), Postal Code (PLZ/ZIP), and City (Ort).",
+          "source_file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+          "source_element": "ZIP, ORT, STREET enum values",
+          "rule_type": "Data Structure"
+        },
+        {
+          "rule_id": "ADR-002",
+          "rule": "In the Vue.js search form, address data is extended with a house number (Hausnummer) field as a separate input.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "formdata.hausnr input field and search_space hausnr property",
+          "rule_type": "Data Structure Extension"
+        },
+        {
+          "rule_id": "ADR-003",
+          "rule": "In search results display, street and house number are concatenated into a single column ('Strasse': item.street + ' ' + item.hausnr).",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "Table TD: {{item.street}} {{item.hausnr}}",
+          "rule_type": "Display Formatting"
+        },
+        {
+          "rule_id": "ADR-004",
+          "rule": "Postal code (ZIP) is matched by exact string equality during person search; all other address fields use case-insensitive partial (substring) matching.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "searchPerson() — element.zip == formdata.zip (strict equality) vs. indexOf() for street/ort/hausnr",
+          "rule_type": "Search Matching Logic"
+        },
+        {
+          "rule_id": "ADR-005",
+          "rule": "After successful submission in the Swing form, all address fields (street, ZIP, city) are cleared to empty string.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "EventEmitter lambda: view.zip.setText(''), view.ort.setText(''), view.street.setText('')",
+          "rule_type": "Post-Submission Reset"
+        },
+        {
+          "rule_id": "ADR-006",
+          "rule": "A Postfach (PO Box) field is available in the Vue form as an optional alternative address component.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "formdata.postfach input field",
+          "rule_type": "Optional Field"
+        }
+      ]
+    },
+    {
+      "domain": "Payment and IBAN Management",
+      "description": "Capture, storage, selection, and transmission of banking payment details including IBAN, BIC, and payment validity dates. Supports multiple payment recipients (Zahlungsempfänger) per person.",
+      "primary_files": [
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "node-vue-client/src/components/Search.vue",
+        "api.yml"
+      ],
+      "rules": [
+        {
+          "rule_id": "PAY-001",
+          "rule": "Payment data consists of three fields: IBAN (International Bank Account Number), BIC (Bank Identifier Code), and VALID_FROM (validity start date).",
+          "source_file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+          "source_element": "IBAN, BIC, VALID_FROM enum values",
+          "rule_type": "Data Structure"
+        },
+        {
+          "rule_id": "PAY-002",
+          "rule": "A person can have multiple Zahlungsempfänger (payment recipient) entries, each with its own IBAN, BIC, valid_from date, valid_until date, and type.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "search_space[n].zahlungsempfaenger array (each person has 1-3 entries)",
+          "rule_type": "One-to-Many Relationship"
+        },
+        {
+          "rule_id": "PAY-003",
+          "rule": "Only one Zahlungsempfänger can be active/selected at a time for the current person selection.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "zahlungsempfaenger_selected state variable, zahlungsempfaengerSelected() method",
+          "rule_type": "Selection Constraint"
+        },
+        {
+          "rule_id": "PAY-004",
+          "rule": "IBAN and BIC fields in the Vue.js form are read-only (disabled); they cannot be manually entered and are populated only by selecting a Zahlungsempfänger.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "input v-model='formdata.iban' disabled; input v-model='formdata.bic' disabled",
+          "rule_type": "Data Entry Restriction"
+        },
+        {
+          "rule_id": "PAY-005",
+          "rule": "When transmitting person data to Allegro, the full zahlungsempfaenger array is replaced with only the single selected Zahlungsempfänger object.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "sendMessage() — obj_to_send.zahlungsempfaenger = this.zahlungsempfaenger_selected when target == 'textfield'",
+          "rule_type": "Data Transformation on Transmission"
+        },
+        {
+          "rule_id": "PAY-006",
+          "rule": "Payment data (IBAN, BIC) in the Swing form can be freely entered and is cleared to empty string after successful submission.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "EventEmitter lambda: view.iban.setText(''), view.bic.setText('')",
+          "rule_type": "Post-Submission Reset"
+        },
+        {
+          "rule_id": "PAY-007",
+          "rule": "VALID_FROM (Gültig ab) field is also cleared after successful submission.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "EventEmitter lambda: view.validFrom.setText('')",
+          "rule_type": "Post-Submission Reset"
+        },
+        {
+          "rule_id": "PAY-008",
+          "rule": "The Zahlungsempfänger display table columns are: IBAN, BIC, Gültig ab (valid from).",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "search_result_zahlungsempfänger table thead",
+          "rule_type": "Display Requirements"
+        },
+        {
+          "rule_id": "PAY-009",
+          "rule": "All IBAN values in the mock dataset follow the German IBAN format (DE + 2 check digits + 18 digits), e.g., DE27100777770209299700.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "search_space zahlungsempfaenger iban values",
+          "rule_type": "Data Format / Validation Reference"
+        }
+      ]
+    },
+    {
+      "domain": "Person Search",
+      "description": "Multi-criteria person lookup functionality enabling operators to find person records by any combination of personal, address, or identifier fields.",
+      "primary_files": [
+        "node-vue-client/src/components/Search.vue"
+      ],
+      "rules": [
+        {
+          "rule_id": "SRC-001",
+          "rule": "Person search supports up to six simultaneous criteria: last name, first name, ZIP code, city, street, and house number.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "searchPerson() if-condition using formdata.last, .first, .zip, .ort, .street, .hausnr",
+          "rule_type": "Search Criteria"
+        },
+        {
+          "rule_id": "SRC-002",
+          "rule": "A person is included in results if ANY one of the provided non-empty search criteria produces a match (inclusive OR logic).",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "searchPerson() — multiple || conditions in the if statement",
+          "rule_type": "Search Logic"
+        },
+        {
+          "rule_id": "SRC-003",
+          "rule": "String matching for last name, first name, city, street, and house number uses case-insensitive substring (indexOf) matching.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "element.name.toLowerCase().indexOf(formdata.last.toLowerCase()) >= 0",
+          "rule_type": "Matching Algorithm"
+        },
+        {
+          "rule_id": "SRC-004",
+          "rule": "ZIP code matching uses exact equality (==), not substring matching.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "formdata.zip && element.zip == formdata.zip",
+          "rule_type": "Matching Algorithm Exception"
+        },
+        {
+          "rule_id": "SRC-005",
+          "rule": "An empty search criterion does not participate in matching — only criteria with non-empty (truthy) input values are evaluated.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "formdata.last && ... || formdata.first && ... — short-circuit evaluation guards",
+          "rule_type": "Empty Input Handling"
+        },
+        {
+          "rule_id": "SRC-006",
+          "rule": "Search results are reset (cleared to empty array) at the start of each search operation.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "searchPerson() — this.search_result = [] before loop",
+          "rule_type": "State Management"
+        },
+        {
+          "rule_id": "SRC-007",
+          "rule": "The search operates against a local in-memory mock dataset (no backend API call is made for person lookup).",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "search_space array defined in data()",
+          "rule_type": "Data Source"
+        }
+      ]
+    },
+    {
+      "domain": "Form Submission and Response Handling",
+      "description": "Workflow for collecting form data, submitting to a backend service, handling the response, and resetting the form state.",
+      "primary_files": [
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/model/HttpBinService.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "api.yml"
+      ],
+      "rules": [
+        {
+          "rule_id": "FSH-001",
+          "rule": "Form submission is triggered exclusively by the 'Anordnen' button click event.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "view.button.addActionListener lambda",
+          "rule_type": "Trigger Condition"
+        },
+        {
+          "rule_id": "FSH-002",
+          "rule": "All 13 model properties are included in every submission regardless of whether they have been filled in.",
+          "source_file": "swing/src/main/java/com/poc/model/PocModel.java",
+          "source_element": "action() — iterates ModelProperties.values() without filtering",
+          "rule_type": "Submission Completeness"
+        },
+        {
+          "rule_id": "FSH-003",
+          "rule": "The HTTP endpoint for submission is POST http://localhost:8080/post.",
+          "source_file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+          "source_element": "URL = 'http://localhost:8080', PATH = '/post'",
+          "rule_type": "Integration Endpoint"
+        },
+        {
+          "rule_id": "FSH-004",
+          "rule": "The HTTP request body is a flat JSON object with one key-value pair per model property (no nesting).",
+          "source_file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+          "source_element": "post() — generator.writeStartObject() + generator.write(key, value) per entry",
+          "rule_type": "Request Format"
+        },
+        {
+          "rule_id": "FSH-005",
+          "rule": "If the HTTP response body is non-empty, it is treated as success and displayed in the text area.",
+          "source_file": "swing/src/main/java/com/poc/model/PocModel.java",
+          "source_element": "action() — if(!responseBody.isEmpty()) eventEmitter.emit(responseBody)",
+          "rule_type": "Success Condition"
+        },
+        {
+          "rule_id": "FSH-006",
+          "rule": "If the HTTP response body is empty, the literal error message 'Failed operation' is emitted.",
+          "source_file": "swing/src/main/java/com/poc/model/PocModel.java",
+          "source_element": "action() — else eventEmitter.emit('Failed operation')",
+          "rule_type": "Error Handling"
+        },
+        {
+          "rule_id": "FSH-007",
+          "rule": "On successful response, the form is fully reset: all text fields cleared, gender reverted to Female.",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "EventEmitter subscription lambda in PocPresenter constructor",
+          "rule_type": "Post-Submission Reset"
+        },
+        {
+          "rule_id": "FSH-008",
+          "rule": "IOException and InterruptedException thrown during HTTP submission are wrapped in RuntimeException (unhandled gracefully).",
+          "source_file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+          "source_element": "button ActionListener catch blocks — throw new RuntimeException(e)",
+          "rule_type": "Error Propagation"
+        }
+      ]
+    },
+    {
+      "domain": "Legacy System Integration (Allegro Transfer)",
+      "description": "Workflow for transferring selected person and payment data from the modern Vue.js search UI to the legacy Allegro Swing application via WebSocket relay.",
+      "primary_files": [
+        "node-vue-client/src/components/Search.vue",
+        "node-server/src/WebsocketServer.js"
+      ],
+      "rules": [
+        {
+          "rule_id": "LSI-001",
+          "rule": "Data transfer to Allegro is initiated by the 'Nach ALLEGRO übernehmen' button click.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "button v-on:click='sendMessage(selected_result, textfield)'",
+          "rule_type": "Trigger Condition"
+        },
+        {
+          "rule_id": "LSI-002",
+          "rule": "The data packet sent to Allegro always replaces the full Zahlungsempfänger array with only the single selected entry.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "sendMessage() — obj_to_send.zahlungsempfaenger = this.zahlungsempfaenger_selected",
+          "rule_type": "Data Transformation"
+        },
+        {
+          "rule_id": "LSI-003",
+          "rule": "The JSON message envelope transmitted via WebSocket has the structure: { target: string, content: object|string }.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "socket.send(JSON.stringify({ target: target, content: obj_to_send }))",
+          "rule_type": "Message Protocol"
+        },
+        {
+          "rule_id": "LSI-004",
+          "rule": "The relay server broadcasts every received message to ALL connected WebSocket clients without discrimination.",
+          "source_file": "node-server/src/WebsocketServer.js",
+          "source_element": "connection.on('message') — for loop over clients array, clients[i].sendUTF(json)",
+          "rule_type": "Broadcast Semantics"
+        },
+        {
+          "rule_id": "LSI-005",
+          "rule": "The WebSocket connection from the Vue client is established automatically on component mount (not on demand).",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "mounted() lifecycle hook — this.connect()",
+          "rule_type": "Connection Lifecycle"
+        },
+        {
+          "rule_id": "LSI-006",
+          "rule": "Free-text textarea content changes are automatically broadcast to Allegro via WebSocket as 'textarea' target messages.",
+          "source_file": "node-vue-client/src/components/Search.vue",
+          "source_element": "watch: { internal_content_textarea(val) { this.sendMessage(val, 'textarea') } }",
+          "rule_type": "Automatic Synchronisation"
+        },
+        {
+          "rule_id": "LSI-007",
+          "rule": "The WebSocket relay server accepts connections from any origin (null origin check) — suitable for development PoC, not production.",
+          "source_file": "node-server/src/WebsocketServer.js",
+          "source_element": "request.accept(null, request.origin)",
+          "rule_type": "Security Constraint (PoC Only)"
+        }
+      ]
+    },
+    {
+      "domain": "API Contract",
+      "description": "Formal OpenAPI specification defining the data schema, endpoint, and request/response format for the Allegro backend integration.",
+      "primary_files": ["api.yml"],
+      "rules": [
+        {
+          "rule_id": "API-001",
+          "rule": "The PostObject schema defines exactly 13 fields, all typed as string: FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, STREET, BIC, ORT, ZIP, FEMALE, MALE, DIVERSE, IBAN, VALID_FROM, TEXT_AREA.",
+          "source_file": "api.yml",
+          "source_element": "components/schemas/PostObject",
+          "rule_type": "Schema Definition"
+        },
+        {
+          "rule_id": "API-002",
+          "rule": "The HTTP request body must wrap the PostObject under a 'user' key: { user: PostObject }.",
+          "source_file": "api.yml",
+          "source_element": "requestBodies/PostRequest schema — user property referencing PostObject",
+          "rule_type": "Request Envelope"
+        },
+        {
+          "rule_id": "API-003",
+          "rule": "The HTTP response body wraps the returned data under a 'postObject' key in the response schema.",
+          "source_file": "api.yml",
+          "source_element": "responses/PostResponse schema — postObject property",
+          "rule_type": "Response Envelope"
+        },
+        {
+          "rule_id": "API-004",
+          "rule": "The API operates on a single endpoint: POST /post at server http://localhost:8080.",
+          "source_file": "api.yml",
+          "source_element": "servers URL + paths /post",
+          "rule_type": "Endpoint Definition"
+        }
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "workflow_id": "WF-001",
+      "workflow_name": "Swing Form Data Entry and Submission",
+      "description": "User fills in person, address, gender, and payment fields in the Allegro Swing desktop form and submits to the backend.",
+      "actors": ["End User (Swing Desktop Operator)"],
+      "steps": [
+        "1. Application launches: PocView form is displayed with all fields empty, gender defaulting to Female.",
+        "2. User enters text into any field — DocumentListener fires immediately and updates the corresponding model property.",
+        "3. User selects a gender radio button — ChangeListener fires and updates the MALE/FEMALE/DIVERSE Boolean model property.",
+        "4. User clicks 'Anordnen' button.",
+        "5. PocPresenter delegates to PocModel.action().",
+        "6. PocModel collects all 13 model properties into a String HashMap.",
+        "7. HttpBinService serialises the map as a flat JSON object and POSTs to http://localhost:8080/post.",
+        "8. HTTP response body is received.",
+        "9. If response is non-empty: EventEmitter emits the response body.",
+        "10. If response is empty: EventEmitter emits 'Failed operation'.",
+        "11. PocPresenter's event listener receives the event.",
+        "12. Text area is populated with the event data.",
+        "13. All text fields are cleared; gender reverts to Female selected."
+      ],
+      "business_rules_applied": ["PDM-003", "GND-002", "GND-003", "FSH-001", "FSH-002", "FSH-003", "FSH-004", "FSH-005", "FSH-006", "FSH-007"]
+    },
+    {
+      "workflow_id": "WF-002",
+      "workflow_name": "Vue.js Person Search and Allegro Transfer",
+      "description": "Operator uses the Vue.js web UI to search for a person, select their payment details, and transfer the complete record to the Allegro legacy system.",
+      "actors": ["Operator (Web Browser User)"],
+      "steps": [
+        "1. Vue.js app loads; Search component mounts and automatically connects to WebSocket ws://localhost:1337/.",
+        "2. Operator enters one or more search criteria (name, ZIP, city, street, etc.) in the person form.",
+        "3. Operator clicks 'Suchen' (Search) button.",
+        "4. searchPerson() filters local mock dataset using OR logic with case-insensitive partial matching (exact for ZIP).",
+        "5. Matching person records are displayed in the results table.",
+        "6. Operator clicks a person row to select it — their Zahlungsempfänger list appears in the payment table.",
+        "7. Operator clicks a Zahlungsempfänger row to select it — it is highlighted in green.",
+        "8. Operator clicks 'Nach ALLEGRO übernehmen' button.",
+        "9. sendMessage() deep-clones the selected person, replaces the zahlungsempfaenger array with only the selected entry.",
+        "10. The JSON message { target: 'textfield', content: person+payment } is sent via WebSocket to Node.js relay.",
+        "11. WebsocketServer.js broadcasts the message to all connected clients including the Allegro Swing application.",
+        "12. Allegro Swing client (if connected) receives the person and payment data."
+      ],
+      "business_rules_applied": ["SRC-001", "SRC-002", "SRC-003", "SRC-004", "SRC-005", "PAY-002", "PAY-003", "PAY-004", "PAY-005", "LSI-001", "LSI-002", "LSI-003", "LSI-004", "LSI-005"]
+    },
+    {
+      "workflow_id": "WF-003",
+      "workflow_name": "Real-Time Textarea Synchronisation",
+      "description": "Any text typed in the Vue.js textarea is automatically broadcast via WebSocket to all connected clients.",
+      "actors": ["Operator (Web Browser User)"],
+      "steps": [
+        "1. Operator types in the textarea in the Vue.js Search component.",
+        "2. Vue reactive watcher on internal_content_textarea fires on any change.",
+        "3. sendMessage(val, 'textarea') is called with the new textarea content.",
+        "4. JSON message { target: 'textarea', content: text } is sent to Node.js WebSocket relay.",
+        "5. All connected clients receive the textarea content update."
+      ],
+      "business_rules_applied": ["LSI-003", "LSI-004", "LSI-006"]
+    }
+  ],
+  "field_catalogue": [
+    {
+      "field_name": "FIRST_NAME",
+      "label_de": "Vorname",
+      "data_type": "String",
+      "component": "JTextField (Swing) / input text (Vue)",
+      "editable": true,
+      "domain": "Person Data Management",
+      "api_field": "FIRST_NAME"
+    },
+    {
+      "field_name": "LAST_NAME",
+      "label_de": "Name",
+      "data_type": "String",
+      "component": "JTextField (Swing) / input text (Vue)",
+      "editable": true,
+      "domain": "Person Data Management",
+      "api_field": "LAST_NAME"
+    },
+    {
+      "field_name": "DATE_OF_BIRTH",
+      "label_de": "Geburtsdatum / Gebohren",
+      "data_type": "String (date format not validated)",
+      "component": "JTextField (Swing) / input text (Vue)",
+      "editable": true,
+      "domain": "Person Data Management",
+      "api_field": "DATE_OF_BIRTH"
+    },
+    {
+      "field_name": "STREET",
+      "label_de": "Strasse",
+      "data_type": "String",
+      "component": "JTextField (Swing) / input text (Vue)",
+      "editable": true,
+      "domain": "Address Management",
+      "api_field": "STREET"
+    },
+    {
+      "field_name": "ZIP",
+      "label_de": "PLZ",
+      "data_type": "String",
+      "component": "JTextField (Swing) / input text (Vue)",
+      "editable": true,
+      "domain": "Address Management",
+      "api_field": "ZIP"
+    },
+    {
+      "field_name": "ORT",
+      "label_de": "Ort",
+      "data_type": "String",
+      "component": "JTextField (Swing) / input text (Vue)",
+      "editable": true,
+      "domain": "Address Management",
+      "api_field": "ORT"
+    },
+    {
+      "field_name": "IBAN",
+      "label_de": "IBAN",
+      "data_type": "String",
+      "component": "JTextField (Swing, editable) / input text (Vue, disabled)",
+      "editable": "true in Swing; false/read-only in Vue",
+      "domain": "Payment and IBAN Management",
+      "api_field": "IBAN"
+    },
+    {
+      "field_name": "BIC",
+      "label_de": "BIC",
+      "data_type": "String",
+      "component": "JTextField (Swing, editable) / input text (Vue, disabled)",
+      "editable": "true in Swing; false/read-only in Vue",
+      "domain": "Payment and IBAN Management",
+      "api_field": "BIC"
+    },
+    {
+      "field_name": "VALID_FROM",
+      "label_de": "Gültig ab",
+      "data_type": "String (date format not validated)",
+      "component": "JTextField (Swing) / table column (Vue Zahlungsempfänger)",
+      "editable": "true in Swing; read-only in Vue (from Zahlungsempfänger data)",
+      "domain": "Payment and IBAN Management",
+      "api_field": "VALID_FROM"
+    },
+    {
+      "field_name": "FEMALE",
+      "label_de": "Weiblich",
+      "data_type": "Boolean (String in API)",
+      "component": "JRadioButton (Swing)",
+      "editable": true,
+      "domain": "Gender Selection",
+      "api_field": "FEMALE",
+      "default_value": "true (pre-selected)"
+    },
+    {
+      "field_name": "MALE",
+      "label_de": "Männlich",
+      "data_type": "Boolean (String in API)",
+      "component": "JRadioButton (Swing)",
+      "editable": true,
+      "domain": "Gender Selection",
+      "api_field": "MALE",
+      "default_value": "false"
+    },
+    {
+      "field_name": "DIVERSE",
+      "label_de": "Divers",
+      "data_type": "Boolean (String in API)",
+      "component": "JRadioButton (Swing)",
+      "editable": true,
+      "domain": "Gender Selection",
+      "api_field": "DIVERSE",
+      "default_value": "false"
+    },
+    {
+      "field_name": "TEXT_AREA",
+      "label_de": "RT",
+      "data_type": "String",
+      "component": "JTextArea (Swing) / textarea (Vue)",
+      "editable": true,
+      "domain": "Form Submission and Response Handling",
+      "api_field": "TEXT_AREA",
+      "note": "Populated with HTTP response body after form submission in Swing; broadcast via WebSocket on change in Vue"
+    }
+  ],
+  "summary": {
+    "total_business_rules": 46,
+    "total_workflows": 3,
+    "total_fields": 13,
+    "business_domains_count": 8,
+    "key_insights": [
+      "The application is a modernisation PoC demonstrating how a legacy Java Swing desktop application (Allegro) can be complemented by a modern Vue.js web frontend via real-time WebSocket communication.",
+      "Gender is represented as three independent Boolean flags rather than a single enum, which simplifies API serialisation (all fields become strings) but requires UI-layer mutual exclusivity enforcement via ButtonGroup.",
+      "The Vue.js search component intentionally disables IBAN/BIC manual entry — banking data can only be populated by selecting from the structured Zahlungsempfänger list, enforcing data integrity.",
+      "The person search uses OR logic across all criteria, meaning a single matching criterion is sufficient to include a record — this is optimised for recall over precision.",
+      "The Node.js relay uses a broadcast-all model with no message filtering, which means all connected clients (both Swing and Vue instances) receive all messages — appropriate for a two-party PoC.",
+      "The HTTP submission endpoint uses httpbin (an echo service) as the backend mock, meaning the response always mirrors the request — form validation and server-side business rules are outside the PoC scope.",
+      "Real-time bidirectional binding in the MVP presenter ensures zero-lag model synchronisation — no explicit 'apply' or 'save' step exists before the final submission action."
+    ]
+  }
+}
