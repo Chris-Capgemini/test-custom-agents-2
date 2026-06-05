@@ -13,6 +13,7 @@ public class HttpBinService {
     public static final String PATH = "/post";
     public static final String CONTENT_TYPE = "application/json";
 
+    // HttpClient is designed to be long-lived and shared; one instance per service is the intended usage pattern.
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public String post(Map<String, String> data) throws IOException, InterruptedException {
@@ -41,7 +42,28 @@ public class HttpBinService {
         return sb.toString();
     }
 
+    /** Escapes a string value per RFC 8259 (JSON string escaping). */
     private String escape(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+        var sb = new StringBuilder(value.length() + 4);
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '"'  -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\b' -> sb.append("\\b");
+                case '\f' -> sb.append("\\f");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default   -> {
+                    if (c < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+            }
+        }
+        return sb.toString();
     }
 }
