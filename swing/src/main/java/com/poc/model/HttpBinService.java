@@ -57,7 +57,11 @@ public class HttpBinService {
                 case '\t' -> sb.append("\\t");
                 default   -> {
                     if (c < 0x20) {
-                        sb.append(String.format("\\u%04x", (int) c));
+                        // Use manual hex padding to avoid String.format overhead in the loop
+                        String hex = Integer.toHexString(c);
+                        sb.append("\\u");
+                        for (int j = hex.length(); j < 4; j++) sb.append('0');
+                        sb.append(hex);
                     } else {
                         sb.append(c);
                     }
