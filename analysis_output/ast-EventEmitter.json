@@ -1,0 +1,70 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": ["java.util.ArrayList", "java.util.List"],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "EventEmitter",
+      "modifiers": ["public"],
+      "annotations": [],
+      "extends": null,
+      "implements": [],
+      "fields": [
+        {
+          "name": "listeners",
+          "type": "List<EventListener>",
+          "modifiers": ["private", "final"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "className": "ArrayList<>", "arguments": [] }
+        }
+      ],
+      "constructors": [],
+      "methods": [
+        {
+          "name": "subscribe",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [{ "name": "listener", "type": "EventListener" }],
+          "throws": [],
+          "annotations": [],
+          "body": [
+            {
+              "type": "MethodInvocation",
+              "target": "listeners",
+              "methodName": "add",
+              "arguments": [{ "type": "VariableReference", "name": "listener" }]
+            }
+          ]
+        },
+        {
+          "name": "emit",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [{ "name": "eventData", "type": "String" }],
+          "throws": [],
+          "annotations": [],
+          "body": [
+            {
+              "type": "ForEachStatement",
+              "variable": { "name": "listener", "type": "EventListener" },
+              "iterable": { "type": "VariableReference", "name": "listeners" },
+              "body": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "listener",
+                  "methodName": "onEvent",
+                  "arguments": [{ "type": "VariableReference", "name": "eventData" }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": ["EventListener"],
+  "complexity_metrics": { "total_methods": 2, "total_fields": 1, "cyclomatic_complexity": 2, "lines_of_code": 21 }
+}

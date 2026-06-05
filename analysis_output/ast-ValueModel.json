@@ -1,0 +1,74 @@
+{
+  "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc",
+  "imports": [],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "ValueModel",
+      "modifiers": ["public"],
+      "typeParameters": [{ "name": "T", "bounds": [] }],
+      "annotations": [],
+      "extends": null,
+      "implements": [],
+      "fields": [
+        {
+          "name": "field",
+          "type": "T",
+          "modifiers": ["private"],
+          "annotations": [],
+          "initialValue": null
+        }
+      ],
+      "constructors": [
+        {
+          "name": "ValueModel",
+          "modifiers": ["public"],
+          "parameters": [{ "name": "field", "type": "T" }],
+          "body": [
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "this", "field": "field" },
+              "value": { "type": "VariableReference", "name": "field" }
+            }
+          ]
+        }
+      ],
+      "methods": [
+        {
+          "name": "getField",
+          "modifiers": ["public"],
+          "returnType": "T",
+          "parameters": [],
+          "throws": [],
+          "annotations": [],
+          "body": [
+            {
+              "type": "ReturnStatement",
+              "value": { "type": "VariableReference", "name": "field" }
+            }
+          ]
+        },
+        {
+          "name": "setField",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [{ "name": "field", "type": "T" }],
+          "throws": [],
+          "annotations": [],
+          "body": [
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "this", "field": "field" },
+              "value": { "type": "VariableReference", "name": "field" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "complexity_metrics": { "total_methods": 2, "total_fields": 1, "cyclomatic_complexity": 1, "lines_of_code": 18 }
+}
