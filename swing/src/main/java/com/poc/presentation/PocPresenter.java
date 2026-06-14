@@ -37,12 +37,13 @@ public class PocPresenter {
             view.diverse.setSelected(false);
         });
 
-        this.view.button.addActionListener(_ -> {
+        this.view.button.addActionListener(actionEvent -> {
             try {
                 model.action();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
         });
