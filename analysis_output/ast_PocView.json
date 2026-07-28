@@ -1,0 +1,345 @@
+{
+  "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.presentation",
+  "imports": [
+    "java.awt.*",
+    "javax.swing.*"
+  ],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "PocView",
+      "modifiers": ["public"],
+      "typeParameters": [],
+      "extends": null,
+      "implements": [],
+      "annotations": [],
+      "fields": [
+        {
+          "name": "frame",
+          "fieldType": "JFrame",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": {
+            "type": "ObjectCreation", "class": "JFrame",
+            "arguments": [{ "type": "Literal", "value": "Allegro" }]
+          }
+        },
+        {
+          "name": "textArea",
+          "fieldType": "JTextArea",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextArea", "arguments": [] }
+        },
+        {
+          "name": "name",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "firstName",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "dateOfBirth",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "zip",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "ort",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "street",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "iban",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "bic",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "validFrom",
+          "fieldType": "JTextField",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "JTextField", "arguments": [] }
+        },
+        {
+          "name": "female",
+          "fieldType": "JRadioButton",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": {
+            "type": "ObjectCreation", "class": "JRadioButton",
+            "arguments": [{ "type": "Literal", "value": "Weiblich" }]
+          }
+        },
+        {
+          "name": "male",
+          "fieldType": "JRadioButton",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": {
+            "type": "ObjectCreation", "class": "JRadioButton",
+            "arguments": [{ "type": "Literal", "value": "Männlich" }]
+          }
+        },
+        {
+          "name": "diverse",
+          "fieldType": "JRadioButton",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": {
+            "type": "ObjectCreation", "class": "JRadioButton",
+            "arguments": [{ "type": "Literal", "value": "Divers" }]
+          }
+        },
+        {
+          "name": "gender",
+          "fieldType": "ButtonGroup",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "class": "ButtonGroup", "arguments": [] }
+        },
+        {
+          "name": "button",
+          "fieldType": "JButton",
+          "modifiers": ["protected"],
+          "annotations": [],
+          "initialValue": {
+            "type": "ObjectCreation", "class": "JButton",
+            "arguments": [{ "type": "Literal", "value": "Anordnen" }]
+          }
+        }
+      ],
+      "constructors": [
+        {
+          "name": "PocView",
+          "modifiers": ["public"],
+          "parameters": [],
+          "throws": [],
+          "body": [
+            {
+              "type": "MethodInvocation",
+              "target": "this",
+              "methodName": "initUI",
+              "arguments": []
+            }
+          ]
+        }
+      ],
+      "methods": [
+        {
+          "name": "initUI",
+          "modifiers": ["private"],
+          "returnType": "void",
+          "parameters": [],
+          "annotations": [],
+          "throws": [],
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "name": "panel",
+              "variableType": "JPanel",
+              "value": { "type": "ObjectCreation", "class": "JPanel", "arguments": [] }
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "panel",
+              "methodName": "setLayout",
+              "arguments": [
+                { "type": "ObjectCreation", "class": "GridBagLayout", "arguments": [] }
+              ]
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "c",
+              "variableType": "GridBagConstraints",
+              "value": { "type": "ObjectCreation", "class": "GridBagConstraints", "arguments": [] }
+            },
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "c", "field": "ipady" },
+              "value": { "type": "Literal", "value": "4" }
+            },
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "c", "field": "insets" },
+              "value": {
+                "type": "ObjectCreation", "class": "Insets",
+                "arguments": [
+                  { "type": "Literal", "value": "4" },
+                  { "type": "Literal", "value": "4" },
+                  { "type": "Literal", "value": "4" },
+                  { "type": "Literal", "value": "4" }
+                ]
+              }
+            },
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "c", "field": "anchor" },
+              "value": { "type": "FieldAccess", "object": "GridBagConstraints", "field": "FIRST_LINE_END" }
+            },
+            {
+              "type": "Comment",
+              "text": "Row 0: Vorname / firstName, Name / name, Geburtsdatum / dateOfBirth – gridx 0..5, gridy 0"
+            },
+            {
+              "type": "GridBagRowSetup",
+              "row": 0,
+              "columns": [
+                { "gridx": 0, "component": "JLabel(Vorname)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 1, "component": "firstName", "fill": "HORIZONTAL", "weightx": 1 },
+                { "gridx": 2, "component": "JLabel(Name)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 3, "component": "name", "fill": "HORIZONTAL", "weightx": 1 },
+                { "gridx": 4, "component": "JLabel(Geburtsdatum)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 5, "component": "dateOfBirth", "fill": "HORIZONTAL", "weightx": 1 }
+              ]
+            },
+            {
+              "type": "Comment",
+              "text": "Gender radio group setup: ButtonGroup, female selected by default"
+            },
+            {
+              "type": "MethodInvocation", "target": "gender", "methodName": "add",
+              "arguments": [{ "type": "VariableReference", "name": "female" }]
+            },
+            {
+              "type": "MethodInvocation", "target": "gender", "methodName": "add",
+              "arguments": [{ "type": "VariableReference", "name": "male" }]
+            },
+            {
+              "type": "MethodInvocation", "target": "gender", "methodName": "add",
+              "arguments": [{ "type": "VariableReference", "name": "diverse" }]
+            },
+            {
+              "type": "MethodInvocation", "target": "female", "methodName": "setSelected",
+              "arguments": [{ "type": "Literal", "value": "true" }]
+            },
+            {
+              "type": "GridBagRowSetup",
+              "row": 1,
+              "columns": [
+                { "gridx": 0, "component": "JLabel(Geschlecht)", "fill": "CENTER", "weightx": 0 },
+                { "gridx": 1, "component": "genderPanel(female+male+diverse)", "fill": "WEST", "gridwidth": 5, "weightx": 1 }
+              ]
+            },
+            {
+              "type": "GridBagRowSetup",
+              "row": 2,
+              "columns": [
+                { "gridx": 0, "component": "JLabel(Strasse)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 1, "component": "street", "fill": "HORIZONTAL", "weightx": 1 },
+                { "gridx": 2, "component": "JLabel(PLZ)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 3, "component": "zip", "fill": "HORIZONTAL", "weightx": 1 },
+                { "gridx": 4, "component": "JLabel(Ort)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 5, "component": "ort", "fill": "HORIZONTAL", "weightx": 1 }
+              ]
+            },
+            {
+              "type": "GridBagRowSetup",
+              "row": 3,
+              "columns": [
+                { "gridx": 0, "component": "JLabel(IBAN)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 1, "component": "iban", "fill": "HORIZONTAL", "weightx": 1 },
+                { "gridx": 2, "component": "JLabel(BIC)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 3, "component": "bic", "fill": "HORIZONTAL", "weightx": 1 },
+                { "gridx": 4, "component": "JLabel(Gültig ab)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 5, "component": "validFrom", "fill": "HORIZONTAL", "weightx": 1 }
+              ]
+            },
+            {
+              "type": "GridBagRowSetup",
+              "row": 4,
+              "columns": [
+                { "gridx": 0, "component": "JLabel(RT)", "fill": "NONE", "weightx": 0 },
+                { "gridx": 1, "component": "textArea(200x400, EtchedBorder)", "fill": "HORIZONTAL", "gridwidth": 6, "weightx": 1 }
+              ]
+            },
+            {
+              "type": "GridBagRowSetup",
+              "row": 5,
+              "columns": [
+                { "gridx": 1, "component": "button(Anordnen)", "fill": "NONE", "weightx": 0 }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": { "type": "MethodInvocation", "target": "frame", "methodName": "getContentPane", "arguments": [] },
+              "methodName": "add",
+              "arguments": [{ "type": "VariableReference", "name": "panel" }]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "frame",
+              "methodName": "setDefaultCloseOperation",
+              "arguments": [{ "type": "FieldAccess", "object": "JFrame", "field": "EXIT_ON_CLOSE" }]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "frame",
+              "methodName": "setSize",
+              "arguments": [
+                { "type": "Literal", "value": "800" },
+                { "type": "Literal", "value": "650" }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "frame",
+              "methodName": "setVisible",
+              "arguments": [{ "type": "Literal", "value": "true" }]
+            }
+          ],
+          "complexity": 1
+        }
+      ],
+      "innerClasses": []
+    }
+  ],
+  "complexity_metrics": {
+    "totalMethods": 1,
+    "totalFields": 16,
+    "totalConstructors": 1,
+    "cyclomaticComplexity": 1,
+    "linesOfCode": 203
+  },
+  "design_patterns": [
+    "MVP – Passive View Layer",
+    "GridBagLayout Form Pattern",
+    "Protected field access for Presenter binding"
+  ]
+}
