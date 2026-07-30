@@ -1,4 +1,11 @@
 {
+  "name": "websocket-server",
+  "version": "1.0.0",
+  "description": "WebSocket relay server for the Allegro application",
+  "main": "src/WebsocketServer.js",
+  "scripts": {
+    "start": "node src/WebsocketServer.js"
+  },
   "dependencies": {
     "websocket": "^1.0.35"
   }
