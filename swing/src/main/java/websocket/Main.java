@@ -6,19 +6,17 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 
-import javax.json.Json;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParser.Event;
-import javax.json.stream.JsonParserFactory;
+import jakarta.json.Json;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.WebSocketContainer;
 import javax.swing.*;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
 
 public class Main {
 
@@ -44,8 +42,6 @@ public class Main {
 	private static JRadioButton rb_male = new JRadioButton("Männlich");
 	private static JRadioButton rb_diverse = new JRadioButton("Divers");
 	private static ButtonGroup bg_gender = new ButtonGroup();
-
-	private static JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
 
 	public static void main(String[] args) throws IOException, DeploymentException {
 		initUI();
@@ -237,7 +233,7 @@ public class Main {
 		frame.setVisible(true);
 	}
 
-	@javax.websocket.ClientEndpoint
+	@ClientEndpoint
 	public static class WebsocketClientEndpoint {
 
 		Session userSession = null;
@@ -280,28 +276,26 @@ public class Main {
 		 * Callback hook for Message Events. This method will be invoked when a client
 		 * send a message.
 		 *
-		 * @param message The text message
+		 * @param json The text message (JSON payload)
 		 */
 		@OnMessage
 		public void onMessage(String json) {
 			Message message = extract(json);
-			switch (message.target) {
-			case "textarea":
-				textArea.setText(message.content);
-				return;
-			case "textfield":
-				SearchResult searchResult = toSearchResult(message.content);
-				tf_name.setText(searchResult.name);
-				tf_first.setText(searchResult.first);
-				tf_dob.setText(searchResult.dob);
-				tf_zip.setText(searchResult.zip);
-				tf_ort.setText(searchResult.ort);
-				tf_street.setText(searchResult.street);
-				tf_hausnr.setText(searchResult.hausnr);
-				tf_ze_iban.setText(searchResult.ze_iban);
-				tf_ze_bic.setText(searchResult.ze_bic);
-				tf_ze_valid_from.setText(searchResult.ze_valid_from);
-				return;
+			switch (message.target()) {
+				case "textarea" -> textArea.setText(message.content());
+				case "textfield" -> {
+					SearchResult sr = toSearchResult(message.content());
+					tf_name.setText(sr.name());
+					tf_first.setText(sr.first());
+					tf_dob.setText(sr.dob());
+					tf_zip.setText(sr.zip());
+					tf_ort.setText(sr.ort());
+					tf_street.setText(sr.street());
+					tf_hausnr.setText(sr.hausnr());
+					tf_ze_iban.setText(sr.ze_iban());
+					tf_ze_bic.setText(sr.ze_bic());
+					tf_ze_valid_from.setText(sr.ze_valid_from());
+				}
 			}
 		}
 
@@ -309,149 +303,62 @@ public class Main {
 			this.userSession.getAsyncRemote().sendText(message);
 		}
 
+		/**
+		 * Extracts a {@link Message} from a JSON string containing {@code target} and
+		 * {@code content} fields. When the target is {@code "textarea"} the
+		 * {@code content} field value is returned; for all other targets the full JSON
+		 * object is serialised back to a string so that {@link Main#toSearchResult}
+		 * can re-use the existing contract without a second network read.
+		 * <p>
+		 * The top-level JSON is read only once here.
+		 */
 		public static Message extract(String json) {
-			JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-			boolean target = false;
-			String strTarget = "";
-			boolean content = false;
-			String strContent = "";
-			while (jsonParser.hasNext()) {
-				Event e = jsonParser.next();
-				if (Event.KEY_NAME.equals(e) && "target".equals(jsonParser.getString())) {
-					target = true;
-				}
-				if (target && Event.VALUE_STRING.equals(e)) {
-					strTarget = jsonParser.getString();
-					target = false;
-				}
-
-				if (Event.KEY_NAME.equals(e) && "content".equals(jsonParser.getString())) {
-					content = true;
-				}
-				if (content && Event.VALUE_STRING.equals(e)) {
-					if ("textarea".equals(strTarget)) {
-						strContent = jsonParser.getString();
-					} else {
-						strContent = json;
-					}
-					content = false;
-				}
+			try (var reader = Json.createReader(new StringReader(json))) {
+				var obj = reader.readObject();
+				var target = obj.getString("target", "");
+				// For "textarea" the payload is the string value of the "content" key.
+				// For "textfield" the payload is the whole raw JSON message so that
+				// toSearchResult() can extract the individual fields from it.
+				var content = "textarea".equals(target) ? obj.getString("content", "") : json;
+				return new Message(target, content);
 			}
-			return new Message(strTarget, strContent);
 		}
 	}
 
-	private static final class Message {
-		public final String target;
-		public final String content;
+	/** Immutable value object representing a WebSocket message. */
+	private record Message(String target, String content) {}
 
-		public Message(String target, String message) {
-			super();
-			this.target = target;
-			this.content = message;
-		}
-	}
+	/** Immutable value object representing a person-search result payload. */
+	private record SearchResult(
+			String name,
+			String first,
+			String dob,
+			String zip,
+			String ort,
+			String street,
+			String hausnr,
+			String ze_iban,
+			String ze_bic,
+			String ze_valid_from) {}
 
+	/**
+	 * Deserialises a JSON object string into a {@link SearchResult}.
+	 * Uses Jakarta JSON-P {@code JsonReader} for clean, concise parsing.
+	 */
 	public static SearchResult toSearchResult(String json) {
-		SearchResult searchResult = new SearchResult();
-		
-		JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-		boolean name = false;
-		boolean first = false;
-		boolean dob = false;
-		boolean zip = false;
-		boolean ort = false;
-		boolean street = false;
-		boolean hausnr = false;
-		boolean ze_iban = false;
-		boolean ze_bic = false;
-		boolean ze_Valid_from = false;
-		while (jsonParser.hasNext()) {
-			Event e = jsonParser.next();
-			if (Event.KEY_NAME.equals(e) && "name".equals(jsonParser.getString())) {
-				name = true;
-			}
-			if (name && Event.VALUE_STRING.equals(e)) {
-				searchResult.name = jsonParser.getString();
-				name = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "first".equals(jsonParser.getString())) {
-				first = true;
-			}
-			if (first && Event.VALUE_STRING.equals(e)) {
-				searchResult.first = jsonParser.getString();
-				first = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "dob".equals(jsonParser.getString())) {
-				dob = true;
-			}
-			if (dob && Event.VALUE_STRING.equals(e)) {
-				searchResult.dob = jsonParser.getString();
-				dob = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "zip".equals(jsonParser.getString())) {
-				zip = true;
-			}
-			if (zip && Event.VALUE_STRING.equals(e)) {
-				searchResult.zip = jsonParser.getString();
-				zip = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "ort".equals(jsonParser.getString())) {
-				ort = true;
-			}
-			if (ort && Event.VALUE_STRING.equals(e)) {
-				searchResult.ort = jsonParser.getString();
-				ort = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "street".equals(jsonParser.getString())) {
-				street = true;
-			}
-			if (street && Event.VALUE_STRING.equals(e)) {
-				searchResult.street = jsonParser.getString();
-				street = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "hausnr".equals(jsonParser.getString())) {
-				hausnr = true;
-			}
-			if (hausnr && Event.VALUE_STRING.equals(e)) {
-				searchResult.hausnr = jsonParser.getString();
-				hausnr = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "iban".equals(jsonParser.getString())) {
-				ze_iban = true;
-			}
-			if (ze_iban && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_iban = jsonParser.getString();
-				ze_iban = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "bic".equals(jsonParser.getString())) {
-				ze_bic = true;
-			}
-			if (ze_bic && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_bic = jsonParser.getString();
-				ze_bic = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "valid_from".equals(jsonParser.getString())) {
-				ze_Valid_from = true;
-			}
-			if (ze_Valid_from && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_valid_from = jsonParser.getString();
-				ze_Valid_from = false;
-			}
+		try (var reader = Json.createReader(new StringReader(json))) {
+			var obj = reader.readObject();
+			return new SearchResult(
+					obj.getString("name", ""),
+					obj.getString("first", ""),
+					obj.getString("dob", ""),
+					obj.getString("zip", ""),
+					obj.getString("ort", ""),
+					obj.getString("street", ""),
+					obj.getString("hausnr", ""),
+					obj.getString("iban", ""),
+					obj.getString("bic", ""),
+					obj.getString("valid_from", ""));
 		}
-		return searchResult;
-	}
-	
-	private static final class SearchResult {
-		public String name;
-		public String first;
-		public String dob;
-		public String zip;
-		public String ort;
-		public String street;
-		public String hausnr;
-		public String ze_iban;
-		public String ze_bic;
-		public String ze_valid_from;
 	}
 }
