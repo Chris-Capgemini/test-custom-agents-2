@@ -14,19 +14,19 @@ public class PocModel {
     private EventEmitter eventEmitter;
 
     public PocModel(EventEmitter eventEmitter) {
-        model.put(ModelProperties.TEXT_AREA, new ValueModel<String>(null));
-        model.put(ModelProperties.FIRST_NAME, new ValueModel<String>(null));
-        model.put(ModelProperties.LAST_NAME, new ValueModel<String>(null));
-        model.put(ModelProperties.DATE_OF_BIRTH, new ValueModel<String>(null));
-        model.put(ModelProperties.ZIP, new ValueModel<String>(null));
-        model.put(ModelProperties.ORT, new ValueModel<String>(null));
-        model.put(ModelProperties.STREET, new ValueModel<String>(null));
-        model.put(ModelProperties.IBAN, new ValueModel<String>(null));
-        model.put(ModelProperties.BIC, new ValueModel<String>(null));
-        model.put(ModelProperties.VALID_FROM, new ValueModel<String>(null));
-        model.put(ModelProperties.MALE, new ValueModel<Boolean>(null));
-        model.put(ModelProperties.FEMALE, new ValueModel<Boolean>(null));
-        model.put(ModelProperties.DIVERSE, new ValueModel<Boolean>(null));
+        model.put(ModelProperties.TEXT_AREA, new ValueModel<>(null));
+        model.put(ModelProperties.FIRST_NAME, new ValueModel<>(null));
+        model.put(ModelProperties.LAST_NAME, new ValueModel<>(null));
+        model.put(ModelProperties.DATE_OF_BIRTH, new ValueModel<>(null));
+        model.put(ModelProperties.ZIP, new ValueModel<>(null));
+        model.put(ModelProperties.ORT, new ValueModel<>(null));
+        model.put(ModelProperties.STREET, new ValueModel<>(null));
+        model.put(ModelProperties.IBAN, new ValueModel<>(null));
+        model.put(ModelProperties.BIC, new ValueModel<>(null));
+        model.put(ModelProperties.VALID_FROM, new ValueModel<>(null));
+        model.put(ModelProperties.MALE, new ValueModel<>(null));
+        model.put(ModelProperties.FEMALE, new ValueModel<>(null));
+        model.put(ModelProperties.DIVERSE, new ValueModel<>(null));
         this.eventEmitter = eventEmitter;
     }
 

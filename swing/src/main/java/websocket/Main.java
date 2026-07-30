@@ -2,14 +2,12 @@ package websocket;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import javax.json.Json;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParser.Event;
-import javax.json.stream.JsonParserFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.swing.*;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
@@ -45,7 +43,8 @@ public class Main {
 	private static JRadioButton rb_diverse = new JRadioButton("Divers");
 	private static ButtonGroup bg_gender = new ButtonGroup();
 
-	private static JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
+	private static final ObjectMapper mapper = new ObjectMapper();
+	private static final TypeReference<Map<String, String>> MAP_TYPE_REF = new TypeReference<>() {};
 
 	public static void main(String[] args) throws IOException, DeploymentException {
 		initUI();
@@ -310,34 +309,16 @@ public class Main {
 		}
 
 		public static Message extract(String json) {
-			JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-			boolean target = false;
-			String strTarget = "";
-			boolean content = false;
-			String strContent = "";
-			while (jsonParser.hasNext()) {
-				Event e = jsonParser.next();
-				if (Event.KEY_NAME.equals(e) && "target".equals(jsonParser.getString())) {
-					target = true;
-				}
-				if (target && Event.VALUE_STRING.equals(e)) {
-					strTarget = jsonParser.getString();
-					target = false;
-				}
-
-				if (Event.KEY_NAME.equals(e) && "content".equals(jsonParser.getString())) {
-					content = true;
-				}
-				if (content && Event.VALUE_STRING.equals(e)) {
-					if ("textarea".equals(strTarget)) {
-						strContent = jsonParser.getString();
-					} else {
-						strContent = json;
-					}
-					content = false;
-				}
+			try {
+				Map<String, String> map = mapper.readValue(json, MAP_TYPE_REF);
+				String target = map.getOrDefault("target", "");
+				String content = "textarea".equals(target)
+						? map.getOrDefault("content", "")
+						: json;
+				return new Message(target, content);
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to parse incoming WebSocket message", e);
 			}
-			return new Message(strTarget, strContent);
 		}
 	}
 
@@ -354,90 +335,20 @@ public class Main {
 
 	public static SearchResult toSearchResult(String json) {
 		SearchResult searchResult = new SearchResult();
-		
-		JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
-		boolean name = false;
-		boolean first = false;
-		boolean dob = false;
-		boolean zip = false;
-		boolean ort = false;
-		boolean street = false;
-		boolean hausnr = false;
-		boolean ze_iban = false;
-		boolean ze_bic = false;
-		boolean ze_Valid_from = false;
-		while (jsonParser.hasNext()) {
-			Event e = jsonParser.next();
-			if (Event.KEY_NAME.equals(e) && "name".equals(jsonParser.getString())) {
-				name = true;
-			}
-			if (name && Event.VALUE_STRING.equals(e)) {
-				searchResult.name = jsonParser.getString();
-				name = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "first".equals(jsonParser.getString())) {
-				first = true;
-			}
-			if (first && Event.VALUE_STRING.equals(e)) {
-				searchResult.first = jsonParser.getString();
-				first = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "dob".equals(jsonParser.getString())) {
-				dob = true;
-			}
-			if (dob && Event.VALUE_STRING.equals(e)) {
-				searchResult.dob = jsonParser.getString();
-				dob = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "zip".equals(jsonParser.getString())) {
-				zip = true;
-			}
-			if (zip && Event.VALUE_STRING.equals(e)) {
-				searchResult.zip = jsonParser.getString();
-				zip = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "ort".equals(jsonParser.getString())) {
-				ort = true;
-			}
-			if (ort && Event.VALUE_STRING.equals(e)) {
-				searchResult.ort = jsonParser.getString();
-				ort = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "street".equals(jsonParser.getString())) {
-				street = true;
-			}
-			if (street && Event.VALUE_STRING.equals(e)) {
-				searchResult.street = jsonParser.getString();
-				street = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "hausnr".equals(jsonParser.getString())) {
-				hausnr = true;
-			}
-			if (hausnr && Event.VALUE_STRING.equals(e)) {
-				searchResult.hausnr = jsonParser.getString();
-				hausnr = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "iban".equals(jsonParser.getString())) {
-				ze_iban = true;
-			}
-			if (ze_iban && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_iban = jsonParser.getString();
-				ze_iban = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "bic".equals(jsonParser.getString())) {
-				ze_bic = true;
-			}
-			if (ze_bic && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_bic = jsonParser.getString();
-				ze_bic = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "valid_from".equals(jsonParser.getString())) {
-				ze_Valid_from = true;
-			}
-			if (ze_Valid_from && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_valid_from = jsonParser.getString();
-				ze_Valid_from = false;
-			}
+		try {
+			Map<String, String> map = mapper.readValue(json, MAP_TYPE_REF);
+			searchResult.name         = map.get("name");
+			searchResult.first        = map.get("first");
+			searchResult.dob          = map.get("dob");
+			searchResult.zip          = map.get("zip");
+			searchResult.ort          = map.get("ort");
+			searchResult.street       = map.get("street");
+			searchResult.hausnr       = map.get("hausnr");
+			searchResult.ze_iban      = map.get("iban");
+			searchResult.ze_bic       = map.get("bic");
+			searchResult.ze_valid_from = map.get("valid_from");
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to parse search result JSON", e);
 		}
 		return searchResult;
 	}
