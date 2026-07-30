@@ -1,0 +1,242 @@
+{
+  "analysis_timestamp": "2025-01-01T00:00:00Z",
+  "repository_name": "test-custom-agents-2 (websocket_swing / Allegro PoC)",
+  "total_files_analyzed": 11,
+  "files": [
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Application entry point. Wires the MVP triad together: creates PocView, EventEmitter, PocModel, and PocPresenter, then blocks the main thread indefinitely with a CountDownLatch(1) so the Swing event-dispatch thread can remain alive.",
+      "business_rules": [],
+      "method_breakdown": [
+        {
+          "method": "main(String[] args)",
+          "visibility": "public static",
+          "description": "Bootstrap method; constructs all MVP components and parks the main thread."
+        }
+      ],
+      "dependencies": [
+        "com.poc.model.EventEmitter",
+        "com.poc.model.PocModel",
+        "com.poc.presentation.PocPresenter",
+        "com.poc.presentation.PocView",
+        "java.util.concurrent.CountDownLatch"
+      ],
+      "notes": "Uses Java 22 unnamed-variable pattern (var _ = new PocPresenter(...)) to suppress unused-variable warning."
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Generic value holder / wrapper class used as the data cell inside PocModel. Provides typed getter and setter for a single field of type T.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "method": "ValueModel(T field)", "visibility": "public", "description": "Constructor setting the initial value." },
+        { "method": "getField()", "visibility": "public", "description": "Returns the wrapped value." },
+        { "method": "setField(T field)", "visibility": "public", "description": "Updates the wrapped value." }
+      ],
+      "dependencies": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Simple synchronous publish-subscribe event bus. Maintains a list of EventListener subscribers and broadcasts a String payload to each on emit().",
+      "business_rules": [],
+      "method_breakdown": [
+        { "method": "subscribe(EventListener)", "visibility": "public", "description": "Registers a new listener." },
+        { "method": "emit(String eventData)", "visibility": "public", "description": "Dispatches the event payload to all registered listeners sequentially." }
+      ],
+      "dependencies": ["com.poc.model.EventListener", "java.util.ArrayList", "java.util.List"]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+      "file_name": "EventListener.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Functional interface representing an observer in the pub-sub pattern. Implemented via lambda in PocPresenter.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "method": "onEvent(String eventData)", "visibility": "public abstract", "description": "Called by EventEmitter when an event is dispatched." }
+      ],
+      "dependencies": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "HTTP client service that posts form data as JSON to a local HTTPBin server (localhost:8080/post). Builds a JSON object from a String map using javax.json streaming API and returns the raw response body.",
+      "business_rules": [
+        "All model properties are serialised as String key-value pairs in a JSON POST body.",
+        "A non-empty response body is treated as successful; empty body triggers a failure event."
+      ],
+      "method_breakdown": [
+        { "method": "post(Map<String,String> data)", "visibility": "public", "description": "Serialises the data map to JSON, posts to localhost:8080/post, reads and returns the response body string." }
+      ],
+      "dependencies": [
+        "javax.json.Json",
+        "java.io.IOException",
+        "java.net.HttpURLConnection",
+        "java.util.Map",
+        "java.util.Scanner"
+      ],
+      "constants": {
+        "URL": "http://localhost:8080",
+        "PATH": "/post",
+        "CONTENT_TYPE": "application/json"
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "Enum defining all form field identifiers. Represents the complete set of data fields: personal info, address, banking details, and gender selection.",
+      "business_rules": [
+        "The canonical list of capturable data fields is defined here; changes require an enum modification."
+      ],
+      "method_breakdown": [],
+      "values": [
+        "TEXT_AREA", "FIRST_NAME", "LAST_NAME", "DATE_OF_BIRTH",
+        "ZIP", "ORT", "STREET", "IBAN", "BIC", "VALID_FROM",
+        "FEMALE", "MALE", "DIVERSE"
+      ],
+      "dependencies": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "Central data model. Holds a map of all ModelProperties to ValueModel instances. Delegates HTTP submission to HttpBinService and fires events on success/failure via EventEmitter.",
+      "business_rules": [
+        "All ModelProperties are initialised to null at startup.",
+        "On action(), every field value is logged to stdout.",
+        "On action(), all fields are submitted as a flat JSON map to the HTTP backend.",
+        "If the HTTP response is non-empty, the response body is emitted as a success event.",
+        "If the HTTP response is empty, 'Failed operation' string is emitted."
+      ],
+      "method_breakdown": [
+        { "method": "PocModel(EventEmitter)", "visibility": "public", "description": "Initialises all 13 ValueModel entries in the EnumMap." },
+        { "method": "action()", "visibility": "public", "description": "Logs all field values, serialises to a HashMap, calls httpBinService.post(), and emits the result." }
+      ],
+      "dependencies": [
+        "com.poc.ValueModel",
+        "com.poc.model.HttpBinService",
+        "com.poc.model.EventEmitter",
+        "com.poc.model.ModelProperties",
+        "java.util.EnumMap",
+        "java.util.HashMap"
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "language": "Java",
+      "category": "Technical",
+      "summary": "Placeholder / stub class in the model package. Currently empty — intended as a DTO between View and Model layers but not yet implemented.",
+      "business_rules": [],
+      "method_breakdown": [],
+      "dependencies": [],
+      "notes": "Dead code / stub. Should either be implemented or removed."
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "Swing View class for the Allegro form. Creates a JFrame titled 'Allegro' with a 6-column GridBagLayout containing personal info fields, gender radio buttons, address fields, banking fields, response text area, and action button.",
+      "business_rules": [
+        "Default gender selection is 'Weiblich' (Female).",
+        "Form labels are in German locale.",
+        "Window is fixed at 800x650 pixels.",
+        "Closing the window terminates the JVM (EXIT_ON_CLOSE)."
+      ],
+      "method_breakdown": [
+        { "method": "PocView()", "visibility": "public", "description": "Constructor calling initUI()." },
+        { "method": "initUI()", "visibility": "private", "description": "Builds and displays the full Swing form layout." }
+      ],
+      "dependencies": ["javax.swing.*", "java.awt.*"]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "Java",
+      "category": "Business",
+      "summary": "Presenter in MVP. Binds PocView UI components to PocModel ValueModel fields via DocumentListeners (text) and ChangeListeners (radio buttons). Triggers model.action() on button click. Subscribes to EventEmitter to update the view on server response.",
+      "business_rules": [
+        "On every keystroke, the model is synchronously updated with current field content.",
+        "Clicking 'Anordnen' submits all current model data to the backend.",
+        "On successful submission, all text fields are cleared, gender resets to Weiblich, and server response appears in text area.",
+        "IOException and InterruptedException from model.action() are re-thrown as unchecked RuntimeException."
+      ],
+      "method_breakdown": [
+        { "method": "PocPresenter(PocView, PocModel, EventEmitter)", "visibility": "public", "description": "Wires event listener, button action listener, calls initializeBindings()." },
+        { "method": "bind(JTextComponent, ModelProperties)", "visibility": "private", "description": "Attaches DocumentListener to synchronise text changes into the model." },
+        { "method": "bind(JRadioButton, ModelProperties)", "visibility": "private", "description": "Attaches ChangeListener to synchronise radio button state into the model." },
+        { "method": "initializeBindings()", "visibility": "private", "description": "Calls bind() for all 13 form fields." }
+      ],
+      "dependencies": [
+        "com.poc.ValueModel",
+        "com.poc.model.EventEmitter",
+        "com.poc.model.ModelProperties",
+        "com.poc.model.PocModel",
+        "javax.swing.*",
+        "javax.swing.event.DocumentListener"
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java (websocket package)",
+      "language": "Java",
+      "category": "Mixed",
+      "summary": "Standalone Swing application implementing a WebSocket client. Renders an 'Allegro' form, connects to ws://localhost:1337/, receives JSON messages routed to either a textarea or person-data text fields. Contains WebsocketClientEndpoint (@ClientEndpoint), Message, and SearchResult inner classes. JSON is parsed manually with javax.json streaming API.",
+      "business_rules": [
+        "WebSocket messages with target='textarea' update only the response text area.",
+        "WebSocket messages with target='textfield' populate all person/address/banking fields.",
+        "On WebSocket connection close, the application main thread is released.",
+        "The button click only logs to stdout — no data submission is wired in this variant."
+      ],
+      "method_breakdown": [
+        { "method": "main(String[])", "visibility": "public static", "description": "Initialises UI, creates WebSocket connection to ws://localhost:1337/." },
+        { "method": "initUI()", "visibility": "private static", "description": "Builds Swing form (identical layout to PocView)." },
+        { "method": "onOpen(Session)", "visibility": "public", "description": "@OnOpen WebSocket handler." },
+        { "method": "onClose(Session, CloseReason)", "visibility": "public", "description": "@OnClose handler — releases CountDownLatch." },
+        { "method": "onMessage(String json)", "visibility": "public", "description": "@OnMessage handler — routes to textarea or textfield update." },
+        { "method": "sendMessage(String)", "visibility": "public", "description": "Asynchronously sends text over the WebSocket session." },
+        { "method": "extract(String json)", "visibility": "public static", "description": "Parses JSON to extract target and content fields into a Message." },
+        { "method": "toSearchResult(String json)", "visibility": "public static", "description": "Parses full JSON payload into a SearchResult." }
+      ],
+      "dependencies": [
+        "javax.websocket.*",
+        "javax.json.*",
+        "javax.swing.*",
+        "java.awt.*",
+        "java.net.URI",
+        "java.util.concurrent.CountDownLatch"
+      ]
+    }
+  ],
+  "summary": {
+    "business_files": 4,
+    "technical_files": 5,
+    "mixed_files": 2,
+    "languages_detected": ["Java 22", "JavaScript (Node.js)", "YAML (OpenAPI 3.0)"],
+    "total_approximate_lines_of_code": 670,
+    "frameworks_and_libraries": [
+      "Java Swing (AWT / javax.swing)",
+      "javax.websocket / Tyrus Standalone Client 1.15",
+      "javax.json 1.1.4 / Glassfish javax.json 1.0.4",
+      "Maven 3.x (build)",
+      "Node.js websocket module",
+      "Vue.js (node-vue-client)"
+    ],
+    "build_tool": "Maven",
+    "java_version": "22"
+  }
+}

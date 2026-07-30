@@ -1,0 +1,140 @@
+{
+  "analysis_timestamp": "2025-01-01T00:00:00Z",
+  "diagrams": [
+    {
+      "diagram_id": "UML-001",
+      "type": "ClassDiagram",
+      "name": "MVP Module Class Diagram",
+      "description": "Full class diagram of the com.poc MVP module showing all classes, interfaces, enums, relationships, and methods.",
+      "components_shown": [
+        "Main", "PocView", "PocPresenter", "PocModel", "ValueModel",
+        "ModelProperties", "EventEmitter", "EventListener", "HttpBinService", "ViewData"
+      ],
+      "relationships": [
+        { "from": "Main", "to": "PocView", "type": "creates" },
+        { "from": "Main", "to": "EventEmitter", "type": "creates" },
+        { "from": "Main", "to": "PocModel", "type": "creates" },
+        { "from": "Main", "to": "PocPresenter", "type": "creates" },
+        { "from": "PocPresenter", "to": "PocView", "type": "uses" },
+        { "from": "PocPresenter", "to": "PocModel", "type": "uses" },
+        { "from": "PocPresenter", "to": "EventEmitter", "type": "subscribes" },
+        { "from": "PocPresenter", "to": "EventListener", "type": "implements (lambda)" },
+        { "from": "PocModel", "to": "ValueModel", "type": "stores 13x" },
+        { "from": "PocModel", "to": "ModelProperties", "type": "keys" },
+        { "from": "PocModel", "to": "EventEmitter", "type": "emits" },
+        { "from": "PocModel", "to": "HttpBinService", "type": "delegates" },
+        { "from": "EventEmitter", "to": "EventListener", "type": "notifies" }
+      ],
+      "output_file": "analysis_output/uml-diagrams.md#1-class-diagram--mvp-module"
+    },
+    {
+      "diagram_id": "UML-002",
+      "type": "ClassDiagram",
+      "name": "WebSocket Client Class Diagram",
+      "description": "Class diagram of websocket.Main showing the monolithic structure with inner classes.",
+      "components_shown": ["websocket.Main", "WebsocketClientEndpoint", "Message", "SearchResult"],
+      "relationships": [
+        { "from": "websocket.Main", "to": "WebsocketClientEndpoint", "type": "inner class" },
+        { "from": "websocket.Main", "to": "Message", "type": "inner class" },
+        { "from": "websocket.Main", "to": "SearchResult", "type": "inner class" },
+        { "from": "WebsocketClientEndpoint", "to": "Message", "type": "creates" },
+        { "from": "WebsocketClientEndpoint", "to": "SearchResult", "type": "creates" }
+      ],
+      "output_file": "analysis_output/uml-diagrams.md#2-class-diagram--websocket-client"
+    },
+    {
+      "diagram_id": "UML-003",
+      "type": "SequenceDiagram",
+      "name": "Form Submission Sequence",
+      "description": "Complete sequence from button click through HTTP POST to form reset.",
+      "participants": ["User", "PocView", "PocPresenter", "PocModel", "HttpBinService", "HTTPBin", "EventEmitter"],
+      "output_file": "analysis_output/uml-diagrams.md#4-sequence-diagram--form-submission"
+    },
+    {
+      "diagram_id": "UML-004",
+      "type": "SequenceDiagram",
+      "name": "WebSocket Message Receive Sequence",
+      "description": "Sequence for WebSocket message receipt, JSON parsing, and UI update.",
+      "participants": ["Node.js WS Server", "WebsocketClientEndpoint", "javax.json JsonParser", "Swing UI"],
+      "output_file": "analysis_output/uml-diagrams.md#5-sequence-diagram--websocket-message-receive"
+    },
+    {
+      "diagram_id": "UML-005",
+      "type": "SequenceDiagram",
+      "name": "Application Bootstrap Sequence",
+      "description": "Startup sequence for the MVP application.",
+      "participants": ["JVM", "Main", "PocView", "EventEmitter", "PocModel", "PocPresenter", "Swing EDT"],
+      "output_file": "analysis_output/uml-diagrams.md#6-sequence-diagram--application-bootstrap"
+    },
+    {
+      "diagram_id": "UML-006",
+      "type": "UseCaseDiagram",
+      "name": "System Use Cases",
+      "description": "Use case diagram showing actors and all system use cases.",
+      "actors": ["User", "HTTPBin Server", "WebSocket Server"],
+      "use_cases": [
+        "Enter Personal Information",
+        "Enter Address Details",
+        "Enter Banking Details",
+        "Select Gender",
+        "Submit Form (Anordnen)",
+        "View Server Response",
+        "Connect to WebSocket Server",
+        "Receive Real-Time Data (textarea)",
+        "Receive Real-Time Data (form fields)"
+      ],
+      "output_file": "analysis_output/uml-diagrams.md#7-use-case-diagram"
+    },
+    {
+      "diagram_id": "ARC-001",
+      "type": "ComponentDiagram",
+      "name": "Layer Architecture",
+      "description": "Four-layer architecture view: Presentation, Model, Service, WebSocket.",
+      "output_file": "analysis_output/architecture-diagrams.md#1-layer-architecture-diagram"
+    },
+    {
+      "diagram_id": "ARC-002",
+      "type": "ComponentDiagram",
+      "name": "Full System Context",
+      "description": "C4-style context diagram showing all systems and external dependencies.",
+      "output_file": "analysis_output/architecture-diagrams.md#4-full-system-context-diagram"
+    },
+    {
+      "diagram_id": "ARC-003",
+      "type": "DataFlowDiagram",
+      "name": "Data Flow — Form Submission",
+      "description": "Shows data flowing from user input through binding layer, model state, serialisation, HTTP, and back to view.",
+      "output_file": "analysis_output/architecture-diagrams.md#6-data-flow-diagram"
+    },
+    {
+      "diagram_id": "BPMN-001",
+      "type": "BPMNFlowchart",
+      "name": "MVP Form Submission Workflow",
+      "description": "Complete BPMN-style workflow for form data entry and HTTP submission.",
+      "output_file": "analysis_output/bpmn-workflows.md#wf-001--mvp-form-submission-workflow"
+    },
+    {
+      "diagram_id": "BPMN-002",
+      "type": "BPMNFlowchart",
+      "name": "WebSocket Data Receive Workflow",
+      "description": "BPMN-style workflow for WebSocket message receipt and routing.",
+      "output_file": "analysis_output/bpmn-workflows.md#wf-002--websocket-data-receive-workflow"
+    },
+    {
+      "diagram_id": "BPMN-003",
+      "type": "BPMNFlowchart",
+      "name": "Application Bootstrap Workflow",
+      "description": "Startup sequence as BPMN workflow.",
+      "output_file": "analysis_output/bpmn-workflows.md#wf-003--application-bootstrap-workflow"
+    }
+  ],
+  "total_diagrams": 12,
+  "diagram_types": {
+    "ClassDiagram": 2,
+    "SequenceDiagram": 3,
+    "UseCaseDiagram": 1,
+    "ComponentDiagram": 2,
+    "DataFlowDiagram": 1,
+    "BPMNFlowchart": 3
+  }
+}
