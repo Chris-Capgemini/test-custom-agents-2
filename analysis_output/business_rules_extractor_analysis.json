@@ -1,0 +1,852 @@
+{
+  "extraction_timestamp": "2026-02-05T16:00:00Z",
+  "agent": "business-rules-agent",
+  "application": "Allegro Modernisation PoC — Java Swing WebSocket Bridge",
+  "repository": "Chris-Capgemini/test-custom-agents-2",
+  "total_rules_extracted": 31,
+  "rules_by_type": {
+    "validation": 6,
+    "calculation": 0,
+    "decision": 6,
+    "process": 13,
+    "authorization": 1,
+    "temporal": 2,
+    "data_constraint": 3
+  },
+  "rules_by_domain": {
+    "Customer Search": 5,
+    "Payment Recipient Selection": 4,
+    "WebSocket Message Routing": 5,
+    "Allegro Swing Desktop Form": 5,
+    "HTTP Submission": 4,
+    "Domain Data Model": 5,
+    "Real-Time Text Synchronisation": 3
+  },
+  "rules": [
+
+    {
+      "rule_id": "BR-001",
+      "rule_name": "Multi-Field OR Search Logic",
+      "rule_type": "Decision",
+      "description": "A customer record is included in search results if ANY of the provided search fields matches — the search uses OR logic, not AND. A user entering both a name and a ZIP will get results that match either criterion.",
+      "business_domain": "Customer Search",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson()"],
+      "conditions": "Triggered when the user clicks the 'Suchen' (Search) button",
+      "actions": "Iterates the in-memory search_space array; pushes any record satisfying at least one non-empty field match into search_result",
+      "exceptions": "Fields left empty are automatically excluded from matching (see BR-004)",
+      "priority": "Critical",
+      "stakeholders": ["End Users", "Product Owner", "QA"],
+      "code_example": "if (this.formdata.last && element.name.toLowerCase().indexOf(this.formdata.last.toLowerCase()) >= 0\n  || this.formdata.first && element.first.toLowerCase().indexOf(this.formdata.first.toLowerCase()) >= 0\n  || this.formdata.zip && element.zip == this.formdata.zip\n  || ...)"
+    },
+
+    {
+      "rule_id": "BR-002",
+      "rule_name": "ZIP Code Exact Match Constraint",
+      "rule_type": "Validation",
+      "description": "The PLZ (Postleitzahl / ZIP code) field uses strict equality matching (==) rather than substring matching. A user must enter the full, exact ZIP code to retrieve a match on that field.",
+      "business_domain": "Customer Search",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson()"],
+      "conditions": "When the ZIP input field is non-empty during a search",
+      "actions": "Compares entered ZIP value with element.zip using == (exact equality)",
+      "exceptions": "No partial or prefix ZIP matching is supported",
+      "priority": "High",
+      "stakeholders": ["End Users", "Business Analysts"],
+      "code_example": "this.formdata.zip && element.zip == this.formdata.zip"
+    },
+
+    {
+      "rule_id": "BR-003",
+      "rule_name": "Case-Insensitive Substring Matching for Text Fields",
+      "rule_type": "Decision",
+      "description": "All text search fields except ZIP (name/Nachname, first/Vorname, ort/Ort, street/Strasse, hausnr/Hausnummer) use case-insensitive substring matching. A search for 'may' will match 'Mayer'.",
+      "business_domain": "Customer Search",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson()"],
+      "conditions": "When any text field other than ZIP is non-empty during a search",
+      "actions": "Converts both the search term and the field value to lowercase before calling indexOf()",
+      "exceptions": "ZIP code uses exact match (see BR-002)",
+      "priority": "High",
+      "stakeholders": ["End Users"],
+      "code_example": "element.name.toLowerCase().indexOf(this.formdata.last.toLowerCase()) >= 0"
+    },
+
+    {
+      "rule_id": "BR-004",
+      "rule_name": "Empty Search Fields Are Excluded from Matching",
+      "rule_type": "Decision",
+      "description": "Only form fields that have been filled in by the user participate in the search. An empty field does not produce matches (it does not match all records). The truthy check `this.formdata.last &&` gates the comparison.",
+      "business_domain": "Customer Search",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson()"],
+      "conditions": "Always applied during searchPerson()",
+      "actions": "Field comparison is short-circuit evaluated — if formdata field is falsy, the OR clause for that field is skipped",
+      "exceptions": "None",
+      "priority": "High",
+      "stakeholders": ["End Users", "QA"],
+      "code_example": "this.formdata.last && element.name.toLowerCase()..."
+    },
+
+    {
+      "rule_id": "BR-005",
+      "rule_name": "Fixed In-Memory Customer Dataset (Mock Data)",
+      "rule_type": "Process",
+      "description": "The application operates on a hardcoded in-memory dataset of exactly 5 German customer records. This is a PoC mock; no database or backend API is queried. All data is embedded in Search.vue.",
+      "business_domain": "Customer Search",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["data()"],
+      "conditions": "Always active — there is no external data source",
+      "actions": "search_space array is used as the sole source of truth for all customer lookups",
+      "exceptions": "Any production implementation must replace this with a real API call",
+      "priority": "Critical",
+      "stakeholders": ["Developers", "Product Owner"],
+      "code_example": "search_space: [{first:'Hans', name:'Mayer', dob:'1981-01-08', zip:'95183', ...}, ...]"
+    },
+
+    {
+      "rule_id": "BR-006",
+      "rule_name": "Zahlungsempfänger Must Be Selected Before Allegro Transfer",
+      "rule_type": "Validation",
+      "description": "Before transferring customer data to Allegro via WebSocket, the user must select one Zahlungsempfänger (payment recipient) from the secondary results table. If no selection is made, zahlungsempfaenger_selected defaults to an empty string and that empty value is sent.",
+      "business_domain": "Payment Recipient Selection",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["sendMessage()", "zahlungsempfaengerSelected()"],
+      "conditions": "When the 'Nach ALLEGRO übernehmen' button is clicked",
+      "actions": "The zahlungsempfaenger property of the outgoing JSON is replaced with the single selected zahlungsempfaenger object (or empty string if none selected)",
+      "exceptions": "No hard enforcement — if no selection is made, an empty string is sent in the zahlungsempfaenger field without error",
+      "priority": "Critical",
+      "stakeholders": ["End Users", "Business Analysts", "Compliance"],
+      "code_example": "zahlungsempfaenger_selected: \"\",\n// then on send:\nobj_to_send.zahlungsempfaenger = this.zahlungsempfaenger_selected;"
+    },
+
+    {
+      "rule_id": "BR-007",
+      "rule_name": "Zahlungsempfänger Array Replaced with Single Selection on Transfer",
+      "rule_type": "Process",
+      "description": "When preparing the customer record for transfer to Allegro, the full array of Zahlungsempfänger records is replaced with only the single user-selected payment recipient. The outgoing payload carries exactly one payment record.",
+      "business_domain": "Payment Recipient Selection",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["sendMessage()"],
+      "conditions": "Only when target == 'textfield' (Allegro transfer, not textarea sync)",
+      "actions": "Deep-clones the selected_result object, then overwrites zahlungsempfaenger with the single selected entry",
+      "exceptions": "Textarea sync (target == 'textarea') does not apply this substitution",
+      "priority": "High",
+      "stakeholders": ["Business Analysts", "Allegro System"],
+      "code_example": "let obj_to_send = (JSON.parse(JSON.stringify(e)));\nif (target == \"textfield\") {\n  obj_to_send.zahlungsempfaenger = this.zahlungsempfaenger_selected;\n}"
+    },
+
+    {
+      "rule_id": "BR-008",
+      "rule_name": "Each Customer May Have One to Three Zahlungsempfänger",
+      "rule_type": "Data Constraint",
+      "description": "In the mock dataset, each customer record contains an array of 1 to 3 Zahlungsempfänger entries. The system supports any number of payment recipients per customer, with the user selecting which one to transfer.",
+      "business_domain": "Payment Recipient Selection",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["data()"],
+      "conditions": "Structural property of the customer data model",
+      "actions": "The Zahlungsempfänger table renders all entries for the selected customer, allowing row selection",
+      "exceptions": "No upper bound is enforced beyond the mock data",
+      "priority": "Medium",
+      "stakeholders": ["Business Analysts", "Data Architects"],
+      "code_example": "zahlungsempfaenger: [\n  {iban:'DE27...', bic:'ERFBDE8E759', valid_from:'2020-01-04', valid_until:'', type:''},\n  {iban:'DE11...', bic:'DRESDEFE152', valid_from:'2019-03-12', valid_until:'', type:''}\n]"
+    },
+
+    {
+      "rule_id": "BR-009",
+      "rule_name": "Zahlungsempfänger Record Contains IBAN, BIC, and Valid-From Date",
+      "rule_type": "Data Constraint",
+      "description": "Each Zahlungsempfänger (payment recipient) record must contain three core fields: IBAN (bank account number), BIC (bank identifier code), and valid_from (the date from which this payment record is valid). The fields valid_until and type are present in the mock data but always empty.",
+      "business_domain": "Payment Recipient Selection",
+      "source_files": ["node-vue-client/src/components/Search.vue", "api.yml"],
+      "source_methods": ["data()"],
+      "conditions": "Required structure for any Zahlungsempfänger used in the Allegro transfer",
+      "actions": "These three fields are transmitted to Allegro and populated into the IBAN, BIC, and 'Gültig ab' form fields",
+      "exceptions": "valid_until and type are tracked in the data model but currently always empty (not transferred to Allegro)",
+      "priority": "High",
+      "stakeholders": ["Business Analysts", "Compliance", "Payment Processing"],
+      "code_example": "{iban:'DE27100777770209299700', bic:'ERFBDE8E759', valid_from:'2020-01-04', valid_until:'', type:''}"
+    },
+
+    {
+      "rule_id": "BR-010",
+      "rule_name": "WebSocket Message Routing by Target Field",
+      "rule_type": "Decision",
+      "description": "Every WebSocket message carries a 'target' field that routes it to the correct UI component. The value 'textfield' triggers population of all customer data fields in the Swing form; the value 'textarea' updates only the freeform text area.",
+      "business_domain": "WebSocket Message Routing",
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "source_methods": ["sendMessage()", "onMessage(String json)", "extract(String json)"],
+      "conditions": "Applied on every incoming WebSocket message in the Java Swing client",
+      "actions": "Switch on message.target: 'textarea' → setText on textArea; 'textfield' → parse JSON and populate all text fields",
+      "exceptions": "Any unrecognised target value is silently ignored (no default case in the switch)",
+      "priority": "Critical",
+      "stakeholders": ["Developers", "Integration Team"],
+      "code_example": "switch (message.target) {\n  case \"textarea\": textArea.setText(message.content); return;\n  case \"textfield\": SearchResult sr = toSearchResult(message.content); ...\n}"
+    },
+
+    {
+      "rule_id": "BR-011",
+      "rule_name": "Complete Customer Record Transferred as Single Atomic Bundle",
+      "rule_type": "Process",
+      "description": "When the user clicks 'Nach ALLEGRO übernehmen', the entire customer record (all personal and selected payment fields) is serialised as a single JSON payload and sent over WebSocket in one message. There is no mechanism for partial or incremental field transfer.",
+      "business_domain": "WebSocket Message Routing",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["sendMessage()"],
+      "conditions": "User clicks 'Nach ALLEGRO übernehmen' with a customer selected",
+      "actions": "Serialises person + selected Zahlungsempfänger into one JSON object and sends via WebSocket",
+      "exceptions": "None",
+      "priority": "High",
+      "stakeholders": ["Integration Team", "Allegro System"],
+      "code_example": "this.socket.send(JSON.stringify({ target: target, content: obj_to_send }));"
+    },
+
+    {
+      "rule_id": "BR-012",
+      "rule_name": "Unconditional Broadcast to All Connected Clients",
+      "rule_type": "Process",
+      "description": "The Node.js relay server re-broadcasts every received message to ALL currently connected clients without any filtering, targeting, or authentication. Both the originating Vue client and any connected Swing clients receive the same message.",
+      "business_domain": "WebSocket Message Routing",
+      "source_files": ["node-server/src/WebsocketServer.js"],
+      "source_methods": ["connection.on('message', ...)"],
+      "conditions": "Triggered on every incoming WebSocket message",
+      "actions": "Iterates the clients array and calls sendUTF(json) on each",
+      "exceptions": "No sender exclusion — the originating client also receives its own message back",
+      "priority": "High",
+      "stakeholders": ["Developers", "Integration Team", "Security"],
+      "code_example": "for (var i = 0; i < clients.length; i++) {\n  clients[i].sendUTF(json);\n}"
+    },
+
+    {
+      "rule_id": "BR-013",
+      "rule_name": "Origin-Agnostic WebSocket Connection Acceptance",
+      "rule_type": "Authorization",
+      "description": "The Node.js server accepts WebSocket connections from any origin by passing null as the accepted origin in request.accept(). No origin validation, authentication, or authorisation is applied.",
+      "business_domain": "WebSocket Message Routing",
+      "source_files": ["node-server/src/WebsocketServer.js"],
+      "source_methods": ["wsServer.on('request', ...)"],
+      "conditions": "Any client attempts to establish a WebSocket connection",
+      "actions": "Connection is accepted unconditionally with request.accept(null, request.origin)",
+      "exceptions": "Production deployment must implement origin whitelisting and authentication",
+      "priority": "Critical",
+      "stakeholders": ["Security Team", "Architects"],
+      "code_example": "var connection = request.accept(null, request.origin);"
+    },
+
+    {
+      "rule_id": "BR-014",
+      "rule_name": "Only UTF-8 Text Messages Are Relayed",
+      "rule_type": "Validation",
+      "description": "The Node.js relay server only processes and re-broadcasts messages of type 'utf8'. Binary frames or other message types are silently discarded.",
+      "business_domain": "WebSocket Message Routing",
+      "source_files": ["node-server/src/WebsocketServer.js"],
+      "source_methods": ["connection.on('message', ...)"],
+      "conditions": "On every incoming WebSocket message frame",
+      "actions": "if (message.type === 'utf8') { broadcast } — non-UTF8 messages are ignored",
+      "exceptions": "None",
+      "priority": "Medium",
+      "stakeholders": ["Developers"],
+      "code_example": "if (message.type === 'utf8') {\n  var json = message.utf8Data;\n  // broadcast ...\n}"
+    },
+
+    {
+      "rule_id": "BR-015",
+      "rule_name": "Gender Is a Mutually Exclusive Single Selection",
+      "rule_type": "Validation",
+      "description": "In the Allegro Swing form, the three gender options (Weiblich/Female, Männlich/Male, Divers/Diverse) are grouped into a ButtonGroup, enforcing that at most one can be selected at any time. Selecting one automatically deselects the others.",
+      "business_domain": "Allegro Swing Desktop Form",
+      "source_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "source_methods": ["initUI()"],
+      "conditions": "Any time a gender radio button is clicked in the Swing UI",
+      "actions": "Java ButtonGroup enforces single selection; the previously selected option is automatically deselected",
+      "exceptions": "The underlying model stores gender as three independent Boolean values (FEMALE/MALE/DIVERSE), creating a model-vs-UI inconsistency — see BR-026",
+      "priority": "High",
+      "stakeholders": ["End Users", "Compliance", "Data Quality"],
+      "code_example": "gender.add(female);\ngender.add(male);\ngender.add(diverse);\nfemale.setSelected(true);"
+    },
+
+    {
+      "rule_id": "BR-016",
+      "rule_name": "Default Gender is Female (Weiblich) at Form Initialisation",
+      "rule_type": "Process",
+      "description": "When the Allegro Swing form is first initialised and after every successful HTTP submission (form reset), the gender selection defaults to 'Weiblich' (Female). Male and Diverse are set to unselected.",
+      "business_domain": "Allegro Swing Desktop Form",
+      "source_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+      ],
+      "source_methods": ["initUI()", "PocPresenter constructor (event subscriber)"],
+      "conditions": "On initial form load and after every successful form submission",
+      "actions": "female.setSelected(true); male.setSelected(false); diverse.setSelected(false)",
+      "exceptions": "This default can be overridden by an incoming WebSocket 'textfield' message if the payload includes gender fields",
+      "priority": "Medium",
+      "stakeholders": ["End Users", "Business Analysts"],
+      "code_example": "view.female.setSelected(true);\nview.male.setSelected(false);\nview.diverse.setSelected(false);"
+    },
+
+    {
+      "rule_id": "BR-017",
+      "rule_name": "Full Form Population from Incoming WebSocket Data",
+      "rule_type": "Process",
+      "description": "When a 'textfield' WebSocket message is received, all matching form fields in the Swing client are overwritten with the values from the payload. The entire form is repopulated atomically from the incoming customer record.",
+      "business_domain": "Allegro Swing Desktop Form",
+      "source_files": ["swing/src/main/java/websocket/Main.java"],
+      "source_methods": ["onMessage(String json)", "toSearchResult(String json)"],
+      "conditions": "On receipt of a WebSocket message with target == 'textfield'",
+      "actions": "Parses the JSON payload into a SearchResult struct and calls setText() on each Swing text field",
+      "exceptions": "Fields present in the form but absent from the JSON payload (e.g., missing keys) are set to null/empty by default Java behaviour",
+      "priority": "Critical",
+      "stakeholders": ["Allegro Users", "Integration Team"],
+      "code_example": "tf_name.setText(searchResult.name);\ntf_first.setText(searchResult.first);\ntf_dob.setText(searchResult.dob);\n// ... all 10 fields"
+    },
+
+    {
+      "rule_id": "BR-018",
+      "rule_name": "House Number (Hausnummer) Present in Legacy Client but Absent from MVP Model",
+      "rule_type": "Data Constraint",
+      "description": "The legacy monolithic Swing client (websocket/Main.java) includes a dedicated text field for Hausnummer (tf_hausnr) and parses it from the WebSocket JSON ('hausnr' key). However, the MVP model (ModelProperties enum) and the OpenAPI spec do NOT include a house number field. This is a field mapping gap between the two implementations.",
+      "business_domain": "Allegro Swing Desktop Form",
+      "source_files": [
+        "swing/src/main/java/websocket/Main.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "api.yml"
+      ],
+      "source_methods": ["initUI()", "toSearchResult()", "ModelProperties enum"],
+      "conditions": "Structural — present whenever customer data is transferred",
+      "actions": "Legacy client populates tf_hausnr from 'hausnr' JSON key; MVP model silently loses the house number on HTTP submission",
+      "exceptions": "None — this is a gap requiring resolution",
+      "priority": "High",
+      "stakeholders": ["Developers", "Business Analysts", "Data Architects"],
+      "code_example": "// Legacy: tf_hausnr.setText(searchResult.hausnr);\n// MVP ModelProperties: no HAUSNR entry\n// api.yml: no hausnr in PostObject schema"
+    },
+
+    {
+      "rule_id": "BR-019",
+      "rule_name": "Post-Submission Form Reset to Default State",
+      "rule_type": "Process",
+      "description": "After a successful HTTP POST submission (non-empty response from HTTPBin), all editable form fields in the Allegro Swing UI are cleared to empty strings, and the gender is reset to Female. The response body is displayed in the text area as confirmation.",
+      "business_domain": "Allegro Swing Desktop Form",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "source_methods": ["PocPresenter constructor — eventEmitter.subscribe(...)"],
+      "conditions": "Triggered by the EventEmitter when PocModel.action() receives a non-empty HTTP response",
+      "actions": "Clears: firstName, name, dateOfBirth, zip, ort, street, iban, bic, validFrom; sets female=true, male=false, diverse=false; sets textArea to response body",
+      "exceptions": "The reset is NOT triggered on failure (empty response) — the form retains its data",
+      "priority": "High",
+      "stakeholders": ["Allegro Users", "Business Analysts"],
+      "code_example": "eventEmitter.subscribe(eventData -> {\n  view.textArea.setText(eventData);\n  view.firstName.setText(\"\");\n  view.name.setText(\"\");\n  // ... all fields cleared\n  view.female.setSelected(true);\n});"
+    },
+
+    {
+      "rule_id": "BR-020",
+      "rule_name": "All 13 Domain Fields Submitted Atomically in HTTP POST",
+      "rule_type": "Process",
+      "description": "When the 'Anordnen' button is clicked, all 13 model properties are serialised and submitted together in a single HTTP POST request to the HTTPBin endpoint. There is no selective or partial submission. Fields with null values are submitted as the string 'null'.",
+      "business_domain": "HTTP Submission",
+      "source_files": [
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/model/HttpBinService.java"
+      ],
+      "source_methods": ["PocModel.action()", "HttpBinService.post()"],
+      "conditions": "User clicks the 'Anordnen' button in the Swing form",
+      "actions": "Iterates all ModelProperties enum values, adds each to a HashMap, calls HttpBinService.post(data)",
+      "exceptions": "NULL RISK: model.get(val).getField().toString() will throw NullPointerException if any field value is null — all fields are initialised to null and only populated if the user types or receives WebSocket data",
+      "priority": "Critical",
+      "stakeholders": ["Allegro Users", "Integration Team", "QA"],
+      "code_example": "for(var val : ModelProperties.values()) {\n  data.put(val.toString(), model.get(val).getField().toString());\n}"
+    },
+
+    {
+      "rule_id": "BR-021",
+      "rule_name": "Non-Empty HTTP Response Body Indicates Success",
+      "rule_type": "Decision",
+      "description": "The Allegro Swing client determines whether the HTTP POST submission succeeded by checking whether the response body string is non-empty. An empty body is treated as a failure and emits 'Failed operation'. HTTP status codes are not evaluated.",
+      "business_domain": "HTTP Submission",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "source_methods": ["PocModel.action()"],
+      "conditions": "After HttpBinService.post() returns",
+      "actions": "if (!responseBody.isEmpty()) → emit response body (success path); else → emit 'Failed operation'",
+      "exceptions": "HTTP 4xx/5xx errors are not distinguished from success — only body emptiness is checked. A 500 response with a non-empty body would be treated as success.",
+      "priority": "High",
+      "stakeholders": ["Developers", "QA", "Integration Team"],
+      "code_example": "if(!responseBody.isEmpty()) {\n  eventEmitter.emit(responseBody);\n} else {\n  eventEmitter.emit(\"Failed operation\");\n}"
+    },
+
+    {
+      "rule_id": "BR-022",
+      "rule_name": "HTTP POST Uses Fixed JSON Content-Type",
+      "rule_type": "Validation",
+      "description": "All HTTP POST submissions to the backend endpoint use Content-Type: application/json. The request body is a flat JSON object with all 13 field names as keys.",
+      "business_domain": "HTTP Submission",
+      "source_files": ["swing/src/main/java/com/poc/model/HttpBinService.java"],
+      "source_methods": ["HttpBinService.post()"],
+      "conditions": "Every HTTP submission",
+      "actions": "Sets Connection-Type header to 'application/json'; generates JSON using javax.json streaming API",
+      "exceptions": "None",
+      "priority": "Medium",
+      "stakeholders": ["Developers", "Integration Team"],
+      "code_example": "connection.setRequestProperty(\"Content-Type\", CONTENT_TYPE); // \"application/json\""
+    },
+
+    {
+      "rule_id": "BR-023",
+      "rule_name": "HTTP Endpoint is Hardcoded to Localhost HTTPBin",
+      "rule_type": "Process",
+      "description": "The HTTP submission target URL is hardcoded as http://localhost:8080/post pointing to a local HTTPBin Docker container. This is a PoC-only endpoint; production integration with the real Allegro backend requires parameterisation.",
+      "business_domain": "HTTP Submission",
+      "source_files": ["swing/src/main/java/com/poc/model/HttpBinService.java"],
+      "source_methods": ["HttpBinService class constants"],
+      "conditions": "Always — no configuration mechanism exists",
+      "actions": "All form submissions are sent to the hardcoded URL",
+      "exceptions": "Production deployment must externalise this URL to a configuration file or environment variable",
+      "priority": "Critical",
+      "stakeholders": ["Developers", "DevOps", "Architects"],
+      "code_example": "public static final String URL = \"http://localhost:8080\";\npublic static final String PATH = \"/post\";"
+    },
+
+    {
+      "rule_id": "BR-024",
+      "rule_name": "13 Canonical Domain Fields Define the Customer Record",
+      "rule_type": "Data Constraint",
+      "description": "The authoritative set of customer domain fields is defined by the ModelProperties enum and mirrored in the OpenAPI spec. The 13 fields are: TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH, ZIP, ORT, STREET, IBAN, BIC, VALID_FROM, FEMALE, MALE, DIVERSE.",
+      "business_domain": "Domain Data Model",
+      "source_files": [
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "api.yml"
+      ],
+      "source_methods": ["ModelProperties enum"],
+      "conditions": "Structural — defines the complete data contract between Swing client and HTTPBin backend",
+      "actions": "All 13 fields are initialised in PocModel, bound to UI components in PocPresenter, and serialised in every HTTP POST",
+      "exceptions": "Hausnummer (house number) is present in the legacy client and Vue UI but absent from this canonical list — see BR-018",
+      "priority": "Critical",
+      "stakeholders": ["Business Analysts", "Data Architects", "Integration Team"],
+      "code_example": "public enum ModelProperties {\n  TEXT_AREA, FIRST_NAME, LAST_NAME, DATE_OF_BIRTH,\n  ZIP, ORT, STREET, IBAN, BIC, VALID_FROM,\n  FEMALE, MALE, DIVERSE\n}"
+    },
+
+    {
+      "rule_id": "BR-025",
+      "rule_name": "All Fields Initialised to Null — No Default Values",
+      "rule_type": "Data Constraint",
+      "description": "Every model field is initialised with null as its initial value in PocModel. There are no default values for any customer data field. Fields remain null until the user types, a WebSocket message arrives, or a form reset occurs.",
+      "business_domain": "Domain Data Model",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java"],
+      "source_methods": ["PocModel constructor"],
+      "conditions": "At application startup and after re-initialisation",
+      "actions": "model.put(ModelProperties.FIRST_NAME, new ValueModel<String>(null)) for each field",
+      "exceptions": "Calling model.get(val).getField().toString() on any null field will cause NullPointerException — see BR-020",
+      "priority": "High",
+      "stakeholders": ["Developers", "QA"],
+      "code_example": "model.put(ModelProperties.FIRST_NAME, new ValueModel<String>(null));\nmodel.put(ModelProperties.MALE, new ValueModel<Boolean>(null));"
+    },
+
+    {
+      "rule_id": "BR-026",
+      "rule_name": "Gender Stored as Three Independent Booleans (Model Inconsistency Risk)",
+      "rule_type": "Data Constraint",
+      "description": "Gender is represented in the domain model as three independent Boolean fields (FEMALE, MALE, DIVERSE) rather than a single enumerated value. This means the model can technically represent invalid states where two or all three are simultaneously true. The UI enforces mutual exclusivity via ButtonGroup, but the model does not.",
+      "business_domain": "Domain Data Model",
+      "source_files": [
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java"
+      ],
+      "source_methods": ["ModelProperties enum", "PocPresenter.bind(JRadioButton, ModelProperties)"],
+      "conditions": "Structural — exists whenever gender data is stored or transmitted",
+      "actions": "Three separate ChangeListeners independently update FEMALE, MALE, and DIVERSE Boolean values in the model",
+      "exceptions": "The Swing ButtonGroup prevents simultaneous true values at the UI level, but programmatic model manipulation bypasses this guard",
+      "priority": "Medium",
+      "stakeholders": ["Developers", "Data Architects", "Compliance"],
+      "code_example": "model.put(ModelProperties.MALE, new ValueModel<Boolean>(null));\nmodel.put(ModelProperties.FEMALE, new ValueModel<Boolean>(null));\nmodel.put(ModelProperties.DIVERSE, new ValueModel<Boolean>(null));"
+    },
+
+    {
+      "rule_id": "BR-027",
+      "rule_name": "Date Fields Use ISO 8601 Format (YYYY-MM-DD)",
+      "rule_type": "Temporal",
+      "description": "All date values in the system — Date of Birth (dob/DATE_OF_BIRTH) and Zahlungsempfänger Valid-From (valid_from/VALID_FROM) — are represented as ISO 8601 strings in YYYY-MM-DD format, as demonstrated by the mock dataset.",
+      "business_domain": "Domain Data Model",
+      "source_files": ["node-vue-client/src/components/Search.vue", "api.yml"],
+      "source_methods": ["data() — search_space mock data"],
+      "conditions": "Any time a date value is included in a customer record",
+      "actions": "Dates are treated as plain strings throughout the pipeline — no date parsing, validation, or formatting is applied",
+      "exceptions": "No format validation is enforced — non-ISO strings would be accepted silently",
+      "priority": "Medium",
+      "stakeholders": ["Business Analysts", "Integration Team"],
+      "code_example": "dob: '1981-01-08',\nvalid_from: '2020-01-04'"
+    },
+
+    {
+      "rule_id": "BR-028",
+      "rule_name": "Kundennummer Present in Search and Display but Not Transmitted to Allegro API",
+      "rule_type": "Data Constraint",
+      "description": "The customer number (knr / Kundennummer) is present in the mock dataset, displayed in the search results table, and included in the WebSocket payload sent to the Allegro Swing client. However, it is NOT defined in the ModelProperties enum and NOT included in the OpenAPI specification for the HTTP POST endpoint. It is therefore lost during the HTTP submission step.",
+      "business_domain": "Domain Data Model",
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "api.yml"
+      ],
+      "source_methods": ["data()", "ModelProperties enum"],
+      "conditions": "Occurs in every end-to-end transfer that includes the customer number",
+      "actions": "knr appears in search table display and WebSocket JSON payload, but has no corresponding field in the MVP model or API spec",
+      "exceptions": "None — this is a data loss gap",
+      "priority": "High",
+      "stakeholders": ["Business Analysts", "Data Architects", "Product Owner"],
+      "code_example": "// Vue: {first:'Hans', name:'Mayer', knr:'79423984', ...}\n// WebSocket payload includes knr\n// ModelProperties: no KNR entry\n// api.yml: no knr in PostObject schema"
+    },
+
+    {
+      "rule_id": "BR-029",
+      "rule_name": "No Input Validation Exists Anywhere in the Pipeline",
+      "rule_type": "Validation",
+      "description": "Neither the Vue.js search form, the Node.js relay, nor the Java Swing client applies any input validation, type checking, format verification, or business constraint enforcement on user-entered data before submission. The absence of validation is a systemic gap.",
+      "business_domain": "Domain Data Model",
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/model/HttpBinService.java"
+      ],
+      "source_methods": ["searchPerson()", "PocModel.action()", "HttpBinService.post()"],
+      "conditions": "Always — no validation logic is present in the codebase",
+      "actions": "All values are accepted as-is; invalid IBANs, malformed dates, and empty required fields are passed through without error",
+      "exceptions": "The absence of validation IS the exception — production implementation must add comprehensive validation",
+      "priority": "Critical",
+      "stakeholders": ["QA", "Security", "Compliance", "Business Analysts"],
+      "code_example": "// No validation in searchPerson() — all form fields accepted as-is\n// No validation in PocModel.action() — null fields cause NPE\n// No validation in HttpBinService.post() — raw data forwarded to endpoint"
+    },
+
+    {
+      "rule_id": "BR-030",
+      "rule_name": "Live Textarea Content Synchronised to Allegro on Every Keystroke",
+      "rule_type": "Process",
+      "description": "A Vue watcher on the internal_content_textarea data property triggers sendMessage() on every character change in the freeform textarea. This sends the full current textarea content to all WebSocket subscribers (including the Allegro Swing client) in real time.",
+      "business_domain": "Real-Time Text Synchronisation",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["watch.internal_content_textarea"],
+      "conditions": "Any time the textarea content changes (every keystroke, paste, delete)",
+      "actions": "Calls sendMessage(val, 'textarea') which sends { target: 'textarea', content: val } over WebSocket",
+      "exceptions": "WebSocket must be open; no debouncing or throttling is applied — high-frequency messages possible during rapid typing",
+      "priority": "Medium",
+      "stakeholders": ["End Users", "Developers", "Performance Team"],
+      "code_example": "watch: {\n  internal_content_textarea: function(val) {\n    this.sendMessage(val, \"textarea\");\n  }\n}"
+    },
+
+    {
+      "rule_id": "BR-031",
+      "rule_name": "Textarea Sync Routed Separately from Customer Data Transfer",
+      "rule_type": "Decision",
+      "description": "Freeform textarea content uses target='textarea' routing, which is handled distinctly from customer data (target='textfield'). In the Swing client, textarea messages update only the text area component without touching any personal or payment data fields.",
+      "business_domain": "Real-Time Text Synchronisation",
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "source_methods": ["sendMessage()", "onMessage(String json)"],
+      "conditions": "On receipt of a WebSocket message with target == 'textarea'",
+      "actions": "textArea.setText(message.content) — only the JTextArea component is updated; all data fields remain unchanged",
+      "exceptions": "None",
+      "priority": "Low",
+      "stakeholders": ["Developers"],
+      "code_example": "case \"textarea\":\n  textArea.setText(message.content);\n  return;"
+    }
+
+  ],
+
+  "workflows": [
+
+    {
+      "workflow_id": "WF-001",
+      "workflow_name": "Customer Search and Allegro Data Transfer",
+      "description": "The primary business workflow: a user searches for a German customer in the web UI, selects the customer and a payment recipient, then transfers all data to the Allegro legacy Swing desktop client via WebSocket.",
+      "trigger": "User interacts with the Vue.js Search UI",
+      "participants": ["Web User", "Vue.js Search UI", "Node.js Relay Server", "Allegro Swing Client"],
+      "business_rules_applied": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-017"],
+      "steps": [
+        {
+          "step_number": 1,
+          "name": "Enter Search Criteria",
+          "description": "User fills in one or more fields in the search form (Name, Vorname, PLZ, Ort, Strasse, Hausnummer)",
+          "rules_applied": ["BR-004"],
+          "decision_point": false,
+          "next_steps": [2]
+        },
+        {
+          "step_number": 2,
+          "name": "Execute Search",
+          "description": "User clicks 'Suchen'. The system applies OR logic across all non-empty fields: text fields use case-insensitive substring match; PLZ uses exact equality match.",
+          "rules_applied": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005"],
+          "decision_point": true,
+          "next_steps": [3, 7]
+        },
+        {
+          "step_number": 3,
+          "name": "Review Search Results",
+          "description": "Matching customer records are displayed in a results table showing Kdn.-nr, Name, Vorname, Geburtsdatum, PLZ, Strasse, Ort",
+          "rules_applied": [],
+          "decision_point": true,
+          "next_steps": [4, 1]
+        },
+        {
+          "step_number": 4,
+          "name": "Select Customer Record",
+          "description": "User clicks a result row to select a customer. The selected row is highlighted. The customer's Zahlungsempfänger list is displayed in the secondary table.",
+          "rules_applied": ["BR-008"],
+          "decision_point": false,
+          "next_steps": [5]
+        },
+        {
+          "step_number": 5,
+          "name": "Select Zahlungsempfänger",
+          "description": "User selects one payment recipient row from the Zahlungsempfänger table (IBAN, BIC, Gültig ab). Only one may be selected.",
+          "rules_applied": ["BR-006", "BR-008", "BR-009"],
+          "decision_point": false,
+          "next_steps": [6]
+        },
+        {
+          "step_number": 6,
+          "name": "Initiate Allegro Transfer",
+          "description": "User clicks 'Nach ALLEGRO übernehmen'. The system clones the selected customer record, replaces the Zahlungsempfänger array with the single selected entry, and sends the payload as a JSON WebSocket message with target='textfield'.",
+          "rules_applied": ["BR-006", "BR-007", "BR-011"],
+          "decision_point": false,
+          "next_steps": [8]
+        },
+        {
+          "step_number": 7,
+          "name": "No Results Found",
+          "description": "No customer records matched the search criteria. The results table remains empty.",
+          "rules_applied": [],
+          "decision_point": false,
+          "next_steps": [1]
+        },
+        {
+          "step_number": 8,
+          "name": "Node.js Relay Broadcasts Message",
+          "description": "The Node.js server receives the UTF-8 JSON message and broadcasts it to all connected WebSocket clients without filtering.",
+          "rules_applied": ["BR-012", "BR-013", "BR-014"],
+          "decision_point": false,
+          "next_steps": [9]
+        },
+        {
+          "step_number": 9,
+          "name": "Allegro Swing Client Populates Form",
+          "description": "The Java Swing client receives the message, routes it via the 'textfield' target, parses the JSON payload, and sets all customer and payment fields in the desktop form.",
+          "rules_applied": ["BR-010", "BR-017"],
+          "decision_point": false,
+          "next_steps": [10]
+        },
+        {
+          "step_number": 10,
+          "name": "Transfer Complete",
+          "description": "All customer and payment data fields are now populated in the Allegro Swing form. The Allegro operator can review, edit, and submit.",
+          "rules_applied": [],
+          "decision_point": false,
+          "next_steps": []
+        }
+      ],
+      "end_states": [
+        "Allegro form fully populated with customer and payment data",
+        "No search results found — user refines search criteria",
+        "WebSocket connection unavailable — data not transferred"
+      ]
+    },
+
+    {
+      "workflow_id": "WF-002",
+      "workflow_name": "Allegro Form Submission (Anordnen)",
+      "description": "The Allegro operator reviews the populated form, optionally edits fields, then clicks 'Anordnen' to submit all 13 domain fields via HTTP POST to the backend.",
+      "trigger": "User clicks 'Anordnen' button in the Allegro Swing desktop form",
+      "participants": ["Allegro Operator", "Allegro Swing Client", "HTTPBin Backend"],
+      "business_rules_applied": ["BR-015", "BR-016", "BR-020", "BR-021", "BR-022", "BR-023", "BR-024", "BR-025", "BR-029"],
+      "steps": [
+        {
+          "step_number": 1,
+          "name": "Review and Edit Form",
+          "description": "Allegro operator reviews all 13 form fields (personal data, gender, address, IBAN, BIC, valid_from, text area). Fields may be edited directly before submission.",
+          "rules_applied": ["BR-015", "BR-024"],
+          "decision_point": false,
+          "next_steps": [2]
+        },
+        {
+          "step_number": 2,
+          "name": "Click Anordnen",
+          "description": "User clicks the 'Anordnen' button. PocPresenter delegates to PocModel.action().",
+          "rules_applied": [],
+          "decision_point": false,
+          "next_steps": [3]
+        },
+        {
+          "step_number": 3,
+          "name": "Serialise All Fields to JSON",
+          "description": "All 13 ModelProperties are iterated. Each field value is converted to string and added to a HashMap. If any field is null, NullPointerException is thrown.",
+          "rules_applied": ["BR-020", "BR-024", "BR-025"],
+          "decision_point": true,
+          "next_steps": [4, 7]
+        },
+        {
+          "step_number": 4,
+          "name": "HTTP POST to Backend",
+          "description": "HttpBinService sends the serialised JSON as HTTP POST to http://localhost:8080/post with Content-Type: application/json.",
+          "rules_applied": ["BR-022", "BR-023"],
+          "decision_point": false,
+          "next_steps": [5]
+        },
+        {
+          "step_number": 5,
+          "name": "Evaluate Response",
+          "description": "PocModel.action() checks whether the HTTP response body is non-empty. Note: HTTP status code is not checked.",
+          "rules_applied": ["BR-021"],
+          "decision_point": true,
+          "next_steps": [6, 8]
+        },
+        {
+          "step_number": 6,
+          "name": "Success: Reset Form",
+          "description": "EventEmitter broadcasts the response body. PocPresenter clears all text fields, resets gender to Female (Weiblich), and displays the response in the text area.",
+          "rules_applied": ["BR-016", "BR-019"],
+          "decision_point": false,
+          "next_steps": []
+        },
+        {
+          "step_number": 7,
+          "name": "NullPointerException on Null Field",
+          "description": "If any model field is null (not yet populated), model.get(val).getField().toString() throws NPE. The RuntimeException propagates to the UI thread.",
+          "rules_applied": ["BR-025"],
+          "decision_point": false,
+          "next_steps": []
+        },
+        {
+          "step_number": 8,
+          "name": "Failure: Display Error",
+          "description": "If the response body is empty, EventEmitter emits 'Failed operation'. The text area displays this message; the form data is NOT cleared.",
+          "rules_applied": ["BR-021"],
+          "decision_point": false,
+          "next_steps": []
+        }
+      ],
+      "end_states": [
+        "Success: form cleared, response body displayed in text area",
+        "Failure: 'Failed operation' shown in text area, form data retained",
+        "Error: NullPointerException if any field is null at submission time"
+      ]
+    },
+
+    {
+      "workflow_id": "WF-003",
+      "workflow_name": "Real-Time Freeform Text Synchronisation",
+      "description": "A continuously active background workflow that synchronises the content of the Vue.js textarea to the Allegro Swing text area in real time on every keystroke.",
+      "trigger": "User types, pastes, or deletes text in the Vue.js textarea",
+      "participants": ["Web User", "Vue.js Search UI", "Node.js Relay Server", "Allegro Swing Client"],
+      "business_rules_applied": ["BR-010", "BR-012", "BR-013", "BR-014", "BR-030", "BR-031"],
+      "steps": [
+        {
+          "step_number": 1,
+          "name": "User Modifies Textarea",
+          "description": "User types or pastes text in the Vue.js textarea component bound to internal_content_textarea",
+          "rules_applied": [],
+          "decision_point": false,
+          "next_steps": [2]
+        },
+        {
+          "step_number": 2,
+          "name": "Vue Watcher Triggers Send",
+          "description": "Vue's reactive watcher detects the value change and immediately calls sendMessage(val, 'textarea') — no debouncing applied",
+          "rules_applied": ["BR-030"],
+          "decision_point": false,
+          "next_steps": [3]
+        },
+        {
+          "step_number": 3,
+          "name": "WebSocket Message Sent",
+          "description": "JSON payload { target: 'textarea', content: <text> } is sent over WebSocket to Node.js relay",
+          "rules_applied": ["BR-031"],
+          "decision_point": false,
+          "next_steps": [4]
+        },
+        {
+          "step_number": 4,
+          "name": "Relay Broadcasts to All Clients",
+          "description": "Node.js broadcasts the message to all connected WebSocket clients",
+          "rules_applied": ["BR-012", "BR-013", "BR-014"],
+          "decision_point": false,
+          "next_steps": [5]
+        },
+        {
+          "step_number": 5,
+          "name": "Swing Client Updates Text Area",
+          "description": "Java Swing client routes the 'textarea' target message and calls textArea.setText(message.content)",
+          "rules_applied": ["BR-010", "BR-031"],
+          "decision_point": false,
+          "next_steps": []
+        }
+      ],
+      "end_states": [
+        "Allegro text area reflects current Vue textarea content",
+        "Sync fails silently if WebSocket connection is closed"
+      ]
+    }
+
+  ],
+
+  "identified_gaps": [
+    {
+      "gap_id": "GAP-001",
+      "title": "No Input Validation Anywhere",
+      "description": "No validation of any kind (format, required fields, business constraints) exists in the entire pipeline",
+      "affected_rules": ["BR-029"],
+      "severity": "Critical",
+      "recommendation": "Implement IBAN checksum validation, ISO date format checks, required field enforcement, and minimum field length rules"
+    },
+    {
+      "gap_id": "GAP-002",
+      "title": "NullPointerException Risk on Form Submission",
+      "description": "PocModel.action() calls .toString() on potentially-null field values without null guards",
+      "affected_rules": ["BR-020", "BR-025"],
+      "severity": "Critical",
+      "recommendation": "Add null checks before .toString() or use String.valueOf(field) which handles null safely"
+    },
+    {
+      "gap_id": "GAP-003",
+      "title": "Hausnummer Field Gap Between Implementations",
+      "description": "House number exists in legacy client and Vue payload but is missing from ModelProperties enum and API spec",
+      "affected_rules": ["BR-018"],
+      "severity": "High",
+      "recommendation": "Add HAUS_NR to ModelProperties enum and to the OpenAPI PostObject schema"
+    },
+    {
+      "gap_id": "GAP-004",
+      "title": "Kundennummer Lost During HTTP Submission",
+      "description": "Customer number is present in search results and WebSocket payload but absent from the API spec and model",
+      "affected_rules": ["BR-028"],
+      "severity": "High",
+      "recommendation": "Add KNR (Kundennummer) to ModelProperties enum and API spec if business requires it at submission time"
+    },
+    {
+      "gap_id": "GAP-005",
+      "title": "No Zahlungsempfänger Selection Enforcement",
+      "description": "The system sends an empty string if the user clicks transfer without selecting a payment recipient",
+      "affected_rules": ["BR-006"],
+      "severity": "High",
+      "recommendation": "Disable or guard the 'Nach ALLEGRO übernehmen' button until a Zahlungsempfänger is selected"
+    },
+    {
+      "gap_id": "GAP-006",
+      "title": "No WebSocket Reconnection Logic",
+      "description": "Neither Java nor Vue clients attempt reconnection on disconnect, breaking the integration silently",
+      "affected_rules": ["BR-011", "BR-030"],
+      "severity": "Medium",
+      "recommendation": "Implement exponential back-off reconnection in both clients"
+    },
+    {
+      "gap_id": "GAP-007",
+      "title": "HTTP Status Code Not Evaluated",
+      "description": "Success is determined by response body emptiness, not HTTP status code — a 500 error with body is treated as success",
+      "affected_rules": ["BR-021"],
+      "severity": "Medium",
+      "recommendation": "Check connection.getResponseCode() before evaluating the body; treat 2xx as success only"
+    }
+  ]
+}
