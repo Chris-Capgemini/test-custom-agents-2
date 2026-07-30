@@ -1,0 +1,28 @@
+name: "Copilot Setup Steps"
+
+# Configure the environment for GitHub Copilot coding agent.
+# This workflow installs Java 21 (LTS) and caches Maven dependencies
+# so the agent can build and test the project.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin LTS)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Pre-warm Maven dependencies
+        run: mvn dependency:resolve --batch-mode --no-transfer-progress || true
