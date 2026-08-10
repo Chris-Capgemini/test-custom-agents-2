@@ -1,0 +1,31 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": [],
+  "typeDeclarations": [
+    {
+      "type": "InterfaceDeclaration",
+      "name": "EventListener",
+      "modifiers": ["public"],
+      "annotations": [],
+      "extends": [],
+      "methods": [
+        {
+          "name": "onEvent",
+          "modifiers": ["abstract"],
+          "returnType": "void",
+          "parameters": [{ "name": "eventData", "type": "String" }],
+          "throws": [],
+          "annotations": [],
+          "body": null,
+          "functionalInterface": true,
+          "lambdaTarget": true
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "complexity_metrics": { "total_methods": 1, "total_fields": 0, "cyclomatic_complexity": 1, "lines_of_code": 5 }
+}

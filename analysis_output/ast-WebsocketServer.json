@@ -1,0 +1,167 @@
+{
+  "file_path": "node-server/src/WebsocketServer.js",
+  "language": "javascript",
+  "ast_version": "1.0",
+  "moduleType": "CommonJS",
+  "requires": [
+    { "name": "webSocketServer", "module": "websocket", "property": "server" },
+    { "name": "http", "module": "http" }
+  ],
+  "globalVariables": [
+    { "name": "webSocketsServerPort", "type": "number", "value": 1337, "modifiers": ["var"] },
+    { "name": "messages",             "type": "Array",  "value": [],   "modifiers": ["var"] },
+    { "name": "clients",              "type": "Array",  "value": [],   "modifiers": ["var"] }
+  ],
+  "statements": [
+    {
+      "type": "VariableDeclaration",
+      "name": "server",
+      "variableType": "http.Server",
+      "modifiers": ["var"],
+      "value": {
+        "type": "MethodInvocation",
+        "target": "http",
+        "methodName": "createServer",
+        "arguments": [
+          {
+            "type": "FunctionExpression",
+            "parameters": [
+              { "name": "request",  "type": "http.IncomingMessage" },
+              { "name": "response", "type": "http.ServerResponse" }
+            ],
+            "body": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "MethodInvocation",
+      "target": "server",
+      "methodName": "listen",
+      "arguments": [
+        { "type": "VariableReference", "name": "webSocketsServerPort" },
+        {
+          "type": "ArrowFunctionExpression",
+          "parameters": [],
+          "body": [
+            { "type": "MethodInvocation", "target": "console", "methodName": "log", "arguments": [{ "type": "TemplateLiteral", "value": "Server is listening on port ${webSocketsServerPort}" }] }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "VariableDeclaration",
+      "name": "wsServer",
+      "variableType": "WebSocketServer",
+      "modifiers": ["var"],
+      "value": {
+        "type": "ObjectCreation",
+        "className": "webSocketServer",
+        "arguments": [{ "type": "ObjectLiteral", "properties": [{ "key": "httpServer", "value": { "type": "VariableReference", "name": "server" } }] }]
+      }
+    },
+    {
+      "type": "MethodInvocation",
+      "target": "wsServer",
+      "methodName": "on",
+      "arguments": [
+        { "type": "Literal", "value": "\"request\"" },
+        {
+          "type": "FunctionExpression",
+          "parameters": [{ "name": "request", "type": "WebSocketRequest" }],
+          "body": [
+            { "type": "MethodInvocation", "target": "console", "methodName": "log", "arguments": [] },
+            {
+              "type": "VariableDeclaration",
+              "name": "connection",
+              "variableType": "WebSocketConnection",
+              "modifiers": ["var"],
+              "value": {
+                "type": "MethodInvocation",
+                "target": "request",
+                "methodName": "accept",
+                "arguments": [
+                  { "type": "Literal", "value": "null" },
+                  { "type": "FieldAccess", "object": "request", "field": "origin" }
+                ]
+              }
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "index",
+              "variableType": "number",
+              "modifiers": ["var"],
+              "value": {
+                "type": "BinaryExpression",
+                "operator": "-",
+                "left": { "type": "MethodInvocation", "target": "clients", "methodName": "push", "arguments": [{ "type": "VariableReference", "name": "connection" }] },
+                "right": { "type": "Literal", "value": "1" }
+              }
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "connection",
+              "methodName": "on",
+              "arguments": [
+                { "type": "Literal", "value": "\"message\"" },
+                {
+                  "type": "FunctionExpression",
+                  "parameters": [{ "name": "message", "type": "WebSocketMessage" }],
+                  "body": [
+                    {
+                      "type": "IfStatement",
+                      "condition": {
+                        "type": "BinaryExpression",
+                        "operator": "===",
+                        "left": { "type": "FieldAccess", "object": "message", "field": "type" },
+                        "right": { "type": "Literal", "value": "\"utf8\"" }
+                      },
+                      "thenBlock": [
+                        {
+                          "type": "VariableDeclaration",
+                          "name": "json",
+                          "variableType": "string",
+                          "modifiers": ["var"],
+                          "value": { "type": "FieldAccess", "object": "message", "field": "utf8Data" }
+                        },
+                        { "type": "MethodInvocation", "target": "console", "methodName": "log", "arguments": [] },
+                        {
+                          "type": "ForStatement",
+                          "init": { "type": "VariableDeclaration", "name": "i", "value": { "type": "Literal", "value": "0" } },
+                          "condition": { "type": "BinaryExpression", "operator": "<", "left": { "type": "VariableReference", "name": "i" }, "right": { "type": "FieldAccess", "object": "clients", "field": "length" } },
+                          "update": { "type": "UnaryExpression", "operator": "++", "operand": { "type": "VariableReference", "name": "i" } },
+                          "body": [
+                            { "type": "MethodInvocation", "target": { "type": "IndexAccess", "object": "clients", "index": { "type": "VariableReference", "name": "i" } }, "methodName": "sendUTF", "arguments": [{ "type": "VariableReference", "name": "json" }] }
+                          ]
+                        }
+                      ],
+                      "elseBlock": null
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "connection",
+              "methodName": "on",
+              "arguments": [
+                { "type": "Literal", "value": "\"close\"" },
+                {
+                  "type": "FunctionExpression",
+                  "parameters": [{ "name": "connection", "type": "WebSocketConnection" }],
+                  "body": [
+                    { "type": "MethodInvocation", "target": "console", "methodName": "log", "arguments": [] },
+                    { "type": "MethodInvocation", "target": "clients", "methodName": "splice", "arguments": [{ "type": "VariableReference", "name": "index" }, { "type": "Literal", "value": "1" }] }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": ["websocket", "http"],
+  "complexity_metrics": { "total_functions": 4, "total_global_vars": 3, "cyclomatic_complexity": 3, "lines_of_code": 68 }
+}

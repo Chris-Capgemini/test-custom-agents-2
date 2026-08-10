@@ -1,0 +1,185 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": [
+    "com.poc.ValueModel",
+    "java.io.IOException",
+    "java.util.EnumMap",
+    "java.util.HashMap",
+    "java.util.Map"
+  ],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "PocModel",
+      "modifiers": ["public"],
+      "annotations": [],
+      "extends": null,
+      "implements": [],
+      "fields": [
+        {
+          "name": "model",
+          "type": "Map<ModelProperties, ValueModel<?>>",
+          "modifiers": ["public"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "className": "EnumMap", "typeArguments": ["ModelProperties.class"] }
+        },
+        {
+          "name": "httpBinService",
+          "type": "HttpBinService",
+          "modifiers": ["private"],
+          "annotations": [],
+          "initialValue": { "type": "ObjectCreation", "className": "HttpBinService", "arguments": [] }
+        },
+        {
+          "name": "eventEmitter",
+          "type": "EventEmitter",
+          "modifiers": ["private"],
+          "annotations": [],
+          "initialValue": null
+        }
+      ],
+      "constructors": [
+        {
+          "name": "PocModel",
+          "modifiers": ["public"],
+          "parameters": [{ "name": "eventEmitter", "type": "EventEmitter" }],
+          "body": [
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.TEXT_AREA" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.FIRST_NAME" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.LAST_NAME" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.DATE_OF_BIRTH" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.ZIP" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.ORT" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.STREET" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.IBAN" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.BIC" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.VALID_FROM" }, { "type": "ObjectCreation", "className": "ValueModel<String>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.MALE" }, { "type": "ObjectCreation", "className": "ValueModel<Boolean>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.FEMALE" }, { "type": "ObjectCreation", "className": "ValueModel<Boolean>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "MethodInvocation", "target": "model", "methodName": "put", "arguments": [{ "type": "EnumLiteral", "value": "ModelProperties.DIVERSE" }, { "type": "ObjectCreation", "className": "ValueModel<Boolean>", "arguments": [{ "type": "Literal", "value": "null" }] }] },
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "eventEmitter" }, "value": { "type": "VariableReference", "name": "eventEmitter" } }
+          ]
+        }
+      ],
+      "methods": [
+        {
+          "name": "action",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [],
+          "throws": ["IOException", "InterruptedException"],
+          "annotations": [],
+          "body": [
+            {
+              "type": "ForEachStatement",
+              "variable": { "name": "val", "type": "ModelProperties" },
+              "iterable": { "type": "MethodInvocation", "target": "ModelProperties", "methodName": "values", "arguments": [] },
+              "body": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "System.out",
+                  "methodName": "println",
+                  "arguments": [
+                    {
+                      "type": "BinaryExpression",
+                      "operator": "+",
+                      "left": {
+                        "type": "BinaryExpression",
+                        "operator": "+",
+                        "left": { "type": "MethodInvocation", "target": "val", "methodName": "toString", "arguments": [] },
+                        "right": { "type": "Literal", "value": "\": \"" }
+                      },
+                      "right": {
+                        "type": "MethodInvocation",
+                        "target": { "type": "MethodInvocation", "target": "model", "methodName": "get", "arguments": [{ "type": "VariableReference", "name": "val" }] },
+                        "methodName": "getField",
+                        "arguments": []
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "data",
+              "variableType": "HashMap<String, String>",
+              "value": { "type": "ObjectCreation", "className": "HashMap<String, String>", "arguments": [] }
+            },
+            {
+              "type": "ForEachStatement",
+              "variable": { "name": "val", "type": "ModelProperties" },
+              "iterable": { "type": "MethodInvocation", "target": "ModelProperties", "methodName": "values", "arguments": [] },
+              "body": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "data",
+                  "methodName": "put",
+                  "arguments": [
+                    { "type": "MethodInvocation", "target": "val", "methodName": "toString", "arguments": [] },
+                    {
+                      "type": "MethodInvocation",
+                      "target": {
+                        "type": "MethodInvocation",
+                        "target": "model",
+                        "methodName": "get",
+                        "arguments": [{ "type": "VariableReference", "name": "val" }]
+                      },
+                      "methodName": "getField",
+                      "arguments": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "VariableDeclaration",
+              "name": "responseBody",
+              "variableType": "String",
+              "value": {
+                "type": "MethodInvocation",
+                "target": "httpBinService",
+                "methodName": "post",
+                "arguments": [{ "type": "VariableReference", "name": "data" }]
+              }
+            },
+            {
+              "type": "IfStatement",
+              "condition": {
+                "type": "UnaryExpression",
+                "operator": "!",
+                "operand": {
+                  "type": "MethodInvocation",
+                  "target": "responseBody",
+                  "methodName": "isEmpty",
+                  "arguments": []
+                }
+              },
+              "thenBlock": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "eventEmitter",
+                  "methodName": "emit",
+                  "arguments": [{ "type": "VariableReference", "name": "responseBody" }]
+                }
+              ],
+              "elseBlock": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "eventEmitter",
+                  "methodName": "emit",
+                  "arguments": [{ "type": "Literal", "value": "\"Failed operation\"" }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": ["ValueModel", "HttpBinService", "EventEmitter", "ModelProperties"],
+  "complexity_metrics": { "total_methods": 1, "total_fields": 3, "cyclomatic_complexity": 4, "lines_of_code": 49 }
+}

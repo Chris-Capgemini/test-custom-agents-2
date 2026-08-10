@@ -1,0 +1,35 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": [],
+  "typeDeclarations": [
+    {
+      "type": "EnumDeclaration",
+      "name": "ModelProperties",
+      "modifiers": ["public"],
+      "annotations": [],
+      "implements": [],
+      "constants": [
+        { "name": "TEXT_AREA", "ordinal": 0 },
+        { "name": "FIRST_NAME", "ordinal": 1 },
+        { "name": "LAST_NAME", "ordinal": 2 },
+        { "name": "DATE_OF_BIRTH", "ordinal": 3 },
+        { "name": "ZIP", "ordinal": 4 },
+        { "name": "ORT", "ordinal": 5 },
+        { "name": "STREET", "ordinal": 6 },
+        { "name": "IBAN", "ordinal": 7 },
+        { "name": "BIC", "ordinal": 8 },
+        { "name": "VALID_FROM", "ordinal": 9 },
+        { "name": "FEMALE", "ordinal": 10 },
+        { "name": "MALE", "ordinal": 11 },
+        { "name": "DIVERSE", "ordinal": 12 }
+      ],
+      "fields": [],
+      "methods": []
+    }
+  ],
+  "dependencies": [],
+  "complexity_metrics": { "total_methods": 0, "total_fields": 0, "enum_constants": 13, "cyclomatic_complexity": 1, "lines_of_code": 18 }
+}

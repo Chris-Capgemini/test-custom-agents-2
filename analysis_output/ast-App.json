@@ -1,0 +1,38 @@
+{
+  "file_path": "node-vue-client/src/App.vue",
+  "language": "vue",
+  "ast_version": "1.0",
+  "moduleType": "ESModule",
+  "template": {
+    "rootElement": "div#app",
+    "children": [
+      { "tag": "div", "id": "header", "children": [
+          { "tag": "span", "id": "logo" },
+          { "tag": "span", "text": "Search Mock" }
+        ]
+      },
+      { "tag": "Search", "component": true, "props": { "content_textarea": "Search Mock" } }
+    ]
+  },
+  "script": {
+    "imports": [
+      { "name": "Search", "from": "./components/Search.vue", "default": true }
+    ],
+    "componentOptions": {
+      "name": "app",
+      "components": {
+        "Search": { "type": "ComponentReference", "name": "Search" }
+      }
+    }
+  },
+  "style": {
+    "scoped": false,
+    "rules": [
+      { "selector": "#app",    "properties": ["font-family", "-webkit-font-smoothing", "text-align", "color", "margin-top"] },
+      { "selector": "#header", "properties": ["color", "background-color", "font-size", "margin", "padding", "height"] },
+      { "selector": "#logo",   "properties": ["position", "left", "display", "background-size", "background-repeat", "width", "height"] }
+    ]
+  },
+  "dependencies": ["Search.vue"],
+  "complexity_metrics": { "total_components": 1, "cyclomatic_complexity": 1, "lines_of_code": 47 }
+}
