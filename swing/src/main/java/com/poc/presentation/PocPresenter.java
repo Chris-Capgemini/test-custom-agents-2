@@ -37,7 +37,7 @@ public class PocPresenter {
             view.diverse.setSelected(false);
         });
 
-        this.view.button.addActionListener(_ -> {
+        this.view.button.addActionListener(evt -> {
             try {
                 model.action();
             } catch (IOException e) {
