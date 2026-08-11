@@ -73,6 +73,28 @@ public class TestDataBuilder {
     }
 
     /**
+     * Returns a complete set of test data for a male system administrator named "Thomas Richter".
+     * Used for OS update security patch scenarios.
+     */
+    public static Map<String, String> thomasRichter() {
+        Map<String, String> data = new HashMap<>();
+        data.put("FIRST_NAME", "Thomas");
+        data.put("LAST_NAME", "Richter");
+        data.put("DATE_OF_BIRTH", "14.03.1975");
+        data.put("STREET", "Sicherheitsweg 7");
+        data.put("ZIP", "60329");
+        data.put("ORT", "Frankfurt");
+        data.put("IBAN", "DE12500105170648489890");
+        data.put("BIC", "BELADEBEXXX");
+        data.put("VALID_FROM", "01.08.2024");
+        data.put("MALE", "true");
+        data.put("FEMALE", "false");
+        data.put("DIVERSE", "false");
+        data.put("TEXT_AREA", "OS security patch CVE-2024-001");
+        return data;
+    }
+
+    /**
      * Returns an empty (but non-null) map representing minimal test data.
      */
     public static Map<String, String> empty() {
