@@ -42,3 +42,21 @@ If unclear, ask: "What is the source technology and what should it be migrated t
 
 ## 🔄 Orchestration Pipeline
 
+
+1. **Analysis Phase**
+   - Handoff to `transformation.analysis` with prompt: "Analyze the source technology and create a migration plan."
+   - Expect output file: `output/analysis.md` with sections:
+     - `# Analysis Summary`
+     - `# Migration Plan`
+    - If file is missing, respond with: "Analysis failed. Please check the analysis agent's output for errors."
+
+2. **Migration Phase**
+    - Handoff to `transformation.migration` with prompt: "Execute the migration plan and produce the migrated codebase."
+    - Expect output file: `output/migrated_code.md`
+    - If file is missing, respond with: "Migration failed. Please check the migration agent's output for errors."
+
+3. **Validation Phase**
+    - Handoff to `transformation.validation` with prompt: "Validate the migrated codebase against the original functionality and produce a summary report."
+    - Expect output file: `output/validation_report.md`
+    - If file is missing, respond with: "Validation failed. Please check the validation agent's output for errors."
+    
