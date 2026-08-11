@@ -1,0 +1,17 @@
+{
+  "skill_name": "swing-to-angular-validation-migrator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Convert a Java validator that checks a BetriebTO and nested person data into a TypeScript validator implementing IValidator. The Java code uses context.setPropertyPath, ValidationMessageKeys, Predicate logic, and LocalDateUtil.",
+      "expected_output": "A TypeScript validator that writes messages to IValidationGlobalContext, uses string property paths, optional chaining, and the mapped helper utilities.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Migrate a Swing validation class with German comments and several null checks on nested transport objects into Angular validation logic. Keep the comments in German and reuse PredicateHelper for combined conditions.",
+      "expected_output": "A validator implementation that preserves German wording, safely handles undefined attributes, and maps Java predicate logic to the target TypeScript helpers.",
+      "files": []
+    }
+  ]
+}
