@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-07-23",
+    "template": "CLEAN_TEMPLATE",
+    "platform": "genrevive-codespace"
+  },
+  "project": {
+    "name": "Set your project name here",
+    "description": "Describe your modernization goal",
+    "targetPlatform": "Azure",
+    "estimatedComplexity": "medium",
+    "timeline": {
+      "start": "",
+      "targetCompletion": ""
+    }
+  },
+  "team": {
+    "lead": "",
+    "stakeholders": [],
+    "reviewers": []
+  },
+  "modernization": {
+    "scope": [
+      "code-migration",
+      "infrastructure",
+      "testing",
+      "deployment"
+    ],
+    "strategies": {
+      "replatform": false,
+      "refactor": true,
+      "rearchitect": false,
+      "repurchase": false
+    },
+    "targetTechnologies": {
+      "runtime": "Java 21 or higher",
+      "framework": "Spring Boot 3.x",
+      "database": "PostgreSQL 14+",
+      "cloud": "Azure (App Service, AKS, or Container Apps)"
+    }
+  },
+  "risks": [
+    {
+      "description": "Add identified risks",
+      "mitigation": "Add mitigation strategies",
+      "severity": "medium"
+    }
+  ],
+  "success_criteria": [
+    "All tests passing",
+    "Performance baseline met",
+    "Zero breaking changes in API",
+    "Documentation complete"
+  ],
+  "devcontainer": {
+    "enabled": true,
+    "autoStart": true,
+    "includeGitHubCopilot": true
+  }
+}
