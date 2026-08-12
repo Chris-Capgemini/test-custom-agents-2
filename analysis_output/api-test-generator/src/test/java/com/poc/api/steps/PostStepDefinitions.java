@@ -161,6 +161,7 @@ public class PostStepDefinitions {
             case "Hans Müller" -> TestDataBuilder.hansMueller();
             case "Maria Schmidt" -> TestDataBuilder.mariaSchmidt();
             case "Alex Weber" -> TestDataBuilder.alexWeber();
+            case "Thomas Richter" -> TestDataBuilder.thomasRichter();
             default -> throw new IllegalArgumentException("Unknown user persona: " + userName);
         };
     }
