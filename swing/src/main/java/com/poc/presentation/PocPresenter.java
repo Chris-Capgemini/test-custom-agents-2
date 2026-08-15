@@ -13,13 +13,15 @@ import javax.swing.text.JTextComponent;
 import java.io.IOException;
 
 public class PocPresenter {
-    private PocView view;
-    private PocModel model;
+
+    private final PocView view;
+    private final PocModel model;
 
     public PocPresenter(PocView view, PocModel model, EventEmitter eventEmitter) {
         this.view = view;
         this.model = model;
 
+        // Listen for model events and refresh the view
         eventEmitter.subscribe(eventData -> {
             System.out.println("Event data is : " + eventData);
             view.textArea.setText(eventData);
@@ -37,12 +39,11 @@ public class PocPresenter {
             view.diverse.setSelected(false);
         });
 
-        this.view.button.addActionListener(_ -> {
+        // Use 'ignored' instead of '_' — unnamed lambda params require Java 22+
+        this.view.button.addActionListener(ignored -> {
             try {
                 model.action();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -50,16 +51,16 @@ public class PocPresenter {
         initializeBindings();
     }
 
+    @SuppressWarnings("unchecked")
     private void bind(JTextComponent source, ModelProperties prop) {
-        var model = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
-        model.setField(source.getText());
+        var valueModel = (ValueModel<String>) PocPresenter.this.model.get(prop);
+        valueModel.setField(source.getText());
         source.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 try {
                     var content = e.getDocument().getText(0, e.getDocument().getLength());
-                    model.setField(content);
-                    System.out.println("I am in insert update. " + e.getDocument().getText(0, e.getDocument().getLength()));
+                    valueModel.setField(content);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -69,9 +70,7 @@ public class PocPresenter {
             public void removeUpdate(DocumentEvent e) {
                 try {
                     var content = e.getDocument().getText(0, e.getDocument().getLength());
-                    var model = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
-                    model.setField(content);
-                    System.out.println("I am in remove update. " + e.getDocument().getText(0, e.getDocument().getLength()));
+                    valueModel.setField(content);
                 } catch (BadLocationException ex) {
                     throw new RuntimeException(ex);
                 }
@@ -79,21 +78,20 @@ public class PocPresenter {
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-
+                // Attribute changes (e.g. bold/italic) do not affect the model value
             }
         });
     }
 
-
+    @SuppressWarnings("unchecked")
     private void bind(JRadioButton source, ModelProperties prop) {
-        var model = (ValueModel<Boolean>) PocPresenter.this.model.model.get(prop);
-        model.setField(source.isSelected());
+        var valueModel = (ValueModel<Boolean>) PocPresenter.this.model.get(prop);
+        valueModel.setField(source.isSelected());
         source.addChangeListener(evt -> {
-            model.setField(source.isSelected());
-            System.out.println(source.isSelected());
+            valueModel.setField(source.isSelected());
+            System.out.println(prop + " selected: " + source.isSelected());
         });
     }
-
 
     private void initializeBindings() {
         bind(view.textArea, ModelProperties.TEXT_AREA);
