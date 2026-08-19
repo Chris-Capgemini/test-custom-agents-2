@@ -55,3 +55,21 @@ websocket_swing/swing/src/main/java
 websocket_swing/swing/src/main/java/com
 ```
 
+---
+
+## 📐 Architecture Documentation
+
+A comprehensive **arc42 architecture documentation** has been generated for this project.
+
+📄 **File:** [`docs/arc42-architecture.md`](./docs/arc42-architecture.md)
+
+The document covers all 12 arc42 sections:
+- System context & external interfaces
+- Component building blocks (Vue.js SPA, Node.js WebSocket relay, Java Swing MVP)
+- Runtime scenarios (customer search → data transfer → HTTP submission)
+- Deployment view & port allocation
+- Crosscutting concepts (WebSocket envelope, MVP pattern, Observer pattern)
+- Architectural decision records (ADR-001 through ADR-005)
+- Risks, technical debt, and improvement recommendations
+- Full glossary (German domain terms + technical terms)
+
