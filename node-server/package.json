@@ -1,4 +1,11 @@
 {
+  "name": "node-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for Allegro modernization PoC",
+  "main": "src/WebsocketServer.js",
+  "scripts": {
+    "start": "node src/WebsocketServer.js"
+  },
   "dependencies": {
     "websocket": "^1.0.35"
   }

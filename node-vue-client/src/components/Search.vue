@@ -89,7 +89,7 @@
 
 <script>
 export default {
-  name: 'Search',
+  name: 'PersonSearch',
   props: {
     result_selected: String,
     content_textarea: String
