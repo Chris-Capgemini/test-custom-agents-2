@@ -4,16 +4,16 @@
   <span id="logo"></span>
   <span>Search Mock</span>
   </div>
-  <Search content_textarea="Search Mock"/>
+  <PersonSearch content_textarea="Search Mock"/>
   </div>
 </template>
 
 <script>
-import Search from './components/Search.vue'
+import PersonSearch from './components/Search.vue'
 export default {
-  name: 'app',
+  name: 'App',
   components: {
-    Search
+    PersonSearch
   }
 }
 </script>
