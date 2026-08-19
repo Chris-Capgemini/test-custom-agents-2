@@ -1,0 +1,183 @@
+{
+  "extraction_timestamp": "2025-07-14T00:00:00Z",
+  "system_name": "ERPApp — Allegro Modernization PoC",
+  "total_rules_extracted": 8,
+  "rules": [
+    {
+      "rule_id": "BR-001",
+      "rule_name": "Multi-Field Customer Search",
+      "rule_type": "Decision",
+      "description": "A customer record from the in-memory search_space[] is included in search results if ANY of the following match (case-insensitive partial match): last name contains formdata.last, first name contains formdata.first, ZIP equals formdata.zip, city contains formdata.ort, street contains formdata.street, house number contains formdata.hausnr. At least one non-empty criterion must match. If no criteria are entered, no results are returned.",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson()"],
+      "priority": "High",
+      "business_domain": "Customer Management",
+      "example": "Searching name='May' returns both 'Mayer' (Hans) and 'May' (Karl) due to substring match"
+    },
+    {
+      "rule_id": "BR-002",
+      "rule_name": "Payment Recipient Selection",
+      "rule_type": "Process",
+      "description": "When a customer is selected from search results, their associated Zahlungsempfaenger (payment recipients) are displayed in a secondary table showing IBAN, BIC, and Gueltig ab (valid from date). The user must click a payment recipient row to select it. Only the currently selected Zahlungsempfaenger (not the full list) is included in the data transfer message to Allegro.",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["zahlungsempfaengerSelected(ze)", "sendMessage(e, 'textfield')"],
+      "priority": "High",
+      "business_domain": "Payment Data Management",
+      "example": "Selecting Hans Mayer shows his 2 payment recipients. User selects DE27100777770209299700. Only that IBAN/BIC is sent to Allegro."
+    },
+    {
+      "rule_id": "BR-003",
+      "rule_name": "WebSocket Broadcast to All Clients",
+      "rule_type": "Process",
+      "description": "Every UTF-8 message received by the Node.js WebSocket server is broadcast to ALL currently connected clients, including the sender. No message filtering, routing, or targeting is performed at the server level. Client-side routing by the 'target' field is required to determine how to process each message.",
+      "source_files": ["node-server/src/WebsocketServer.js"],
+      "source_methods": ["connection.on('message')"],
+      "priority": "High",
+      "business_domain": "Real-Time Communication",
+      "example": "Vue.js sends {target:'textfield', content:{...}}. Node.js broadcasts to all clients. Swing client receives and processes it. Vue.js also receives it (but ignores it)."
+    },
+    {
+      "rule_id": "BR-004",
+      "rule_name": "Message Target Routing",
+      "rule_type": "Decision",
+      "description": "WebSocket messages contain a 'target' field that determines how the receiving Swing client processes the 'content' field. If target='textfield': all person and payment fields (name, first, dob, zip, ort, street, hausnr, iban, bic, valid_from) are populated into the corresponding JTextField components. If target='textarea': the content string is set into the JTextArea.",
+      "source_files": ["swing/src/main/java/websocket/Main.java"],
+      "source_methods": ["WebsocketClientEndpoint.onMessage(String json)", "extract(String json)"],
+      "priority": "Critical",
+      "business_domain": "Real-Time ERP Integration",
+      "example": "Message {target:'textarea', content:'Hello'} → textArea.setText('Hello'). Message {target:'textfield', content:{name:'Mayer',...}} → tf_name.setText('Mayer'), etc."
+    },
+    {
+      "rule_id": "BR-005",
+      "rule_name": "Data Transfer to Allegro ERP",
+      "rule_type": "Process",
+      "description": "When the user clicks 'Nach ALLEGRO uebernehmen', the currently selected_result (customer) is cloned and the zahlungsempfaenger field is replaced with the single zahlungsempfaenger_selected (not the full array). This combined object is sent as the 'content' of a WebSocket message with target='textfield' to the Allegro Swing client.",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["sendMessage(selected_result, 'textfield')"],
+      "priority": "Critical",
+      "business_domain": "Real-Time ERP Integration",
+      "example": "Selected customer Hans Mayer with IBAN DE27100777770209299700 → JSON {target:'textfield', content:{name:'Mayer', first:'Hans', ..., zahlungsempfaenger:{iban:'DE27...', bic:'ERFBDE8E759', valid_from:'2020-01-04'}}}"
+    },
+    {
+      "rule_id": "BR-006",
+      "rule_name": "Gender Selection (Radio Button Group)",
+      "rule_type": "Validation",
+      "description": "The form includes mutually exclusive gender options: Weiblich (female), Maennlich (male), Divers (diverse). In the MVP Swing client, gender state is bound to boolean ValueModel<Boolean> instances via ChangeListener. In the websocket Swing client, a ButtonGroup enforces mutual exclusion. On form reset (after action), female is re-selected as the default. Gender values are submitted to the REST API as string representations of booleans.",
+      "source_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "source_methods": ["bind(JRadioButton, ModelProperties)", "PocView.initUI()"],
+      "priority": "Medium",
+      "business_domain": "Person Data Management"
+    },
+    {
+      "rule_id": "BR-007",
+      "rule_name": "Live Form Data Binding (MVP Pattern)",
+      "rule_type": "Process",
+      "description": "In the MVP Swing client, each JTextField is bound to its corresponding ModelProperties entry via a DocumentListener. On every insertUpdate or removeUpdate event, the full document text is retrieved and written to the corresponding ValueModel<String>. JRadioButton state is bound via ChangeListener. This means the PocModel is always in sync with the current form state without requiring explicit 'read form' logic on submit.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "source_methods": ["bind(JTextComponent, ModelProperties)", "bind(JRadioButton, ModelProperties)", "initializeBindings()"],
+      "priority": "Medium",
+      "business_domain": "Form Data Collection"
+    },
+    {
+      "rule_id": "BR-008",
+      "rule_name": "Event-Driven Form Reset on API Response",
+      "rule_type": "Process",
+      "description": "When the MVP Swing client receives a non-empty response from the REST API via EventEmitter, the PocPresenter lambda: (1) displays the response body in the textArea, (2) clears all text fields (firstName, name, dateOfBirth, zip, ort, street, iban, bic, validFrom) to empty string, (3) resets gender selection to female=true, male=false, diverse=false. If the response is empty, the EventEmitter emits 'Failed operation' and the same reset occurs.",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java", "swing/src/main/java/com/poc/model/PocModel.java"],
+      "source_methods": ["PocModel.action()", "EventEmitter.emit(String)", "PocPresenter lambda subscriber"],
+      "priority": "Medium",
+      "business_domain": "Form Data Submission"
+    }
+  ],
+  "workflows": [
+    {
+      "workflow_id": "WF-001",
+      "name": "Person Search and Selection",
+      "description": "User enters search criteria in the Vue.js form and clicks Suchen. The searchPerson() method filters the in-memory search_space against the entered criteria. Matching customers appear in the results table. User clicks a row to select a customer. The customer's Zahlungsempfaenger appear in the second table. User optionally selects a payment recipient.",
+      "steps": [
+        "Enter at least one search criterion (name, first, zip, ort, street, hausnr)",
+        "Click Suchen button",
+        "searchPerson() filters search_space[]",
+        "Results displayed in Kdn.-nr / Name / Vorname / Geburtsdatum / PLZ / Strasse / Ort table",
+        "Click a result row to select customer",
+        "Zahlungsempfaenger table populates with customer's IBAN/BIC records",
+        "Optionally click a payment recipient row"
+      ],
+      "participants": ["Browser User", "Search.vue"]
+    },
+    {
+      "workflow_id": "WF-002",
+      "name": "Data Transfer to Allegro ERP",
+      "description": "After selecting a customer (and optionally a payment recipient), the user clicks 'Nach ALLEGRO uebernehmen'. The Vue.js client sends a WebSocket message to the relay server, which broadcasts it to all clients including the Allegro Swing client. The Swing client parses the JSON and populates all form fields.",
+      "steps": [
+        "User selects customer from search results (WF-001 prerequisite)",
+        "Optionally select a Zahlungsempfaenger row",
+        "Click 'Nach ALLEGRO uebernehmen'",
+        "sendMessage() builds JSON {target:'textfield', content:{...customer+ze data}}",
+        "WebSocket.send() transmits to ws://localhost:1337",
+        "Node.js server broadcasts to all clients",
+        "Swing @OnMessage receives JSON",
+        "extract() parses target and content",
+        "toSearchResult() parses all person fields",
+        "Form fields tf_name, tf_first, tf_dob, tf_zip, tf_ort, tf_street, tf_hausnr, tf_ze_iban, tf_ze_bic, tf_ze_valid_from populated"
+      ],
+      "participants": ["Browser User", "Search.vue", "WebsocketServer.js", "websocket.Main"]
+    },
+    {
+      "workflow_id": "WF-003",
+      "name": "Form Data Submission via REST API (MVP Swing Client)",
+      "description": "The MVP Swing client (com.poc) allows users to fill in form fields and click 'Anordnen' to submit data to the HTTPBin REST API. The response is displayed in the text area and all form fields are cleared.",
+      "steps": [
+        "User opens com.Main (MVP Swing client)",
+        "PocPresenter.initializeBindings() wires all DocumentListeners",
+        "User types into form fields",
+        "DocumentListeners update PocModel ValueModels in real-time",
+        "User clicks 'Anordnen' button",
+        "ActionListener calls PocModel.action()",
+        "PocModel collects all field values into HashMap",
+        "HttpBinService.post() sends HTTP POST to localhost:8080/post",
+        "HTTPBin echoes the request body as response",
+        "EventEmitter.emit(responseBody) fires",
+        "PocPresenter lambda: textArea shows response, all fields cleared, gender reset to female"
+      ],
+      "participants": ["Desktop User", "PocView", "PocPresenter", "PocModel", "HttpBinService", "HTTPBin (Docker)"]
+    }
+  ],
+  "business_capabilities": [
+    {
+      "capability_id": "CAP-001",
+      "name": "Customer/Person Search",
+      "description": "Search and retrieve customer records by multiple demographic criteria",
+      "files": ["node-vue-client/src/components/Search.vue"]
+    },
+    {
+      "capability_id": "CAP-002",
+      "name": "Payment Data Management",
+      "description": "View and select customer bank account records (IBAN/BIC/valid from)",
+      "files": ["node-vue-client/src/components/Search.vue", "api.yml"]
+    },
+    {
+      "capability_id": "CAP-003",
+      "name": "Real-Time ERP Data Integration",
+      "description": "Transfer customer data from web UI to legacy ERP desktop application in real time",
+      "files": ["node-server/src/WebsocketServer.js", "node-vue-client/src/components/Search.vue", "swing/src/main/java/websocket/Main.java"]
+    },
+    {
+      "capability_id": "CAP-004",
+      "name": "ERP Form Data Collection",
+      "description": "Collect and bind ERP form field data using reactive bindings",
+      "files": ["swing/src/main/java/com/poc/presentation/PocPresenter.java", "swing/src/main/java/com/poc/model/PocModel.java", "swing/src/main/java/com/poc/presentation/PocView.java"]
+    },
+    {
+      "capability_id": "CAP-005",
+      "name": "REST API Integration",
+      "description": "Submit collected ERP form data to a REST backend for processing",
+      "files": ["swing/src/main/java/com/poc/model/HttpBinService.java", "api.yml"]
+    }
+  ]
+}
