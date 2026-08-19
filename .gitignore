@@ -1,0 +1,5 @@
+node_modules/
+target/
+dist/
+*.class
+node-vue-client/package-lock.json

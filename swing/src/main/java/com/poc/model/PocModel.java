@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class PocModel {
 
-    public Map<ModelProperties, ValueModel<?>> model = new EnumMap<>(ModelProperties.class);
+    private Map<ModelProperties, ValueModel<?>> model = new EnumMap<>(ModelProperties.class);
     private HttpBinService httpBinService = new HttpBinService();
     private EventEmitter eventEmitter;
 
@@ -30,13 +30,18 @@ public class PocModel {
         this.eventEmitter = eventEmitter;
     }
 
+    public ValueModel<?> getValueModel(ModelProperties property) {
+        return model.get(property);
+    }
+
     public void action() throws IOException, InterruptedException {
         for(var val : ModelProperties.values()) {
             System.out.println(val.toString() + ": " + model.get(val).getField());
         }
         var data = new HashMap<String, String>();
         for(var val : ModelProperties.values()) {
-            data.put(val.toString(), model.get(val).getField().toString());
+            var field = model.get(val).getField();
+            data.put(val.toString(), field != null ? field.toString() : "");
         }
         var responseBody = httpBinService.post(data);
         if(!responseBody.isEmpty()) {

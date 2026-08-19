@@ -1,0 +1,194 @@
+{
+  "analysis_timestamp": "2025-01-01T00:00:00Z",
+  "repository_name": "test-custom-agents-2",
+  "total_files_analyzed": 14,
+  "files": [
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "language": "JavaScript (ES5)",
+      "category": "Technical",
+      "summary": "Node.js WebSocket relay server. Listens on port 1337, accepts all connections without origin validation, and broadcasts every received UTF-8 message to all connected clients. Uses the legacy 'websocket' npm package with ES5 var syntax throughout.",
+      "business_rules": ["Broadcast all messages to all connected clients"],
+      "method_breakdown": [
+        { "name": "http.createServer callback", "purpose": "Empty HTTP handler — no functionality" },
+        { "name": "wsServer.on('request')", "purpose": "Accept incoming WebSocket connections; add to clients array" },
+        { "name": "connection.on('message')", "purpose": "Receive and broadcast UTF-8 messages to all clients" },
+        { "name": "connection.on('close')", "purpose": "Remove client from clients array on disconnect" }
+      ]
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "language": "Vue 2.x SFC",
+      "category": "Business",
+      "summary": "Main search form component. Contains hardcoded mock person and payment data (IBANs, BICs, addresses). Implements local client-side filtering, result selection, and sends selected records over WebSocket to the Swing client. Also relays textarea content over WebSocket.",
+      "business_rules": [
+        "Search persons by: last name, first name, ZIP, city, street, house number (OR logic)",
+        "One payment recipient (Zahlungsempfaenger) selectable per person",
+        "Selected person + payment data transmitted to Swing desktop application via WebSocket"
+      ],
+      "method_breakdown": [
+        { "name": "connect()", "purpose": "Establish WebSocket connection to ws://localhost:1337" },
+        { "name": "disconnect()", "purpose": "Close WebSocket connection" },
+        { "name": "searchPerson()", "purpose": "Filter search_space array against form inputs" },
+        { "name": "sendMessage(e, target)", "purpose": "Serialize and send object over WebSocket with target discriminator" },
+        { "name": "selectResult(item)", "purpose": "Set selected person result" },
+        { "name": "zahlungsempfaengerSelected(item)", "purpose": "Set selected payment recipient" }
+      ]
+    },
+    {
+      "file_path": "node-vue-client/src/App.vue",
+      "file_name": "App.vue",
+      "language": "Vue 2.x SFC",
+      "category": "Technical",
+      "summary": "Root Vue application component. Renders the header bar and embeds the Search component. Minimal logic.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "node-vue-client/src/main.js",
+      "file_name": "main.js",
+      "language": "JavaScript ES6",
+      "category": "Technical",
+      "summary": "Vue 2 application bootstrap. Creates and mounts the root Vue instance.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java (websocket package)",
+      "language": "Java 22",
+      "category": "Mixed",
+      "summary": "Legacy monolithic Swing entry point. Builds the entire UI statically, connects to WebSocket server, and manually parses incoming JSON using low-level streaming API. Contains static inner classes for WebSocket endpoint, Message, and SearchResult. Duplicates UI structure found in PocView.",
+      "business_rules": [
+        "Route incoming WebSocket message to textarea or text fields based on 'target' discriminator",
+        "Display person fields: name, first name, DOB, ZIP, city, street, house number",
+        "Display payment fields: IBAN, BIC, valid_from"
+      ],
+      "method_breakdown": [
+        { "name": "main()", "purpose": "Initialize UI and connect WebSocket" },
+        { "name": "initUI()", "purpose": "Build Swing form layout with GridBagLayout" },
+        { "name": "onMessage()", "purpose": "Parse JSON and populate UI fields" },
+        { "name": "extract(String json)", "purpose": "Manual low-level JSON parsing for Message envelope" },
+        { "name": "toSearchResult(String json)", "purpose": "Manual low-level JSON parsing for person/payment data" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java (com package)",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Entry point for MVP-structured Swing application. Wires PocView, EventEmitter, PocModel, and PocPresenter together. Uses Java 22 unnamed variable pattern.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "main()", "purpose": "Bootstrap MVP components and block on CountDownLatch (never released)" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "HTTP service that POSTs a map of key/value pairs as JSON to a hardcoded localhost:8080 endpoint using the legacy HttpURLConnection API.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "post(Map)", "purpose": "Serialize map to JSON, POST to /post endpoint, return response body" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "Java 22",
+      "category": "Business",
+      "summary": "Model layer holding all form field values as a typed EnumMap. Triggers HTTP POST via HttpBinService and emits result via EventEmitter.",
+      "business_rules": [
+        "All form fields collected before submission",
+        "Non-empty response triggers event emission; empty response emits failure message"
+      ],
+      "method_breakdown": [
+        { "name": "PocModel(EventEmitter)", "purpose": "Initialize all ValueModel entries in the EnumMap" },
+        { "name": "action()", "purpose": "Collect field values, POST to backend, emit result" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Simple publish-subscribe event bus. Fans out string event data to all registered EventListener instances.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "subscribe(EventListener)", "purpose": "Register a listener" },
+        { "name": "emit(String)", "purpose": "Notify all registered listeners" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "Java 22",
+      "category": "Business",
+      "summary": "Enum defining all form field identifiers used as keys in PocModel's EnumMap.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Empty placeholder class — never implemented or used. Dead code.",
+      "business_rules": [],
+      "method_breakdown": []
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "View layer of MVP pattern. Constructs and displays the Swing form. All UI components exposed as protected fields — violates encapsulation. Adds textArea to panel twice. Does not initialize on the Event Dispatch Thread.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "PocView()", "purpose": "Constructor — calls initUI()" },
+        { "name": "initUI()", "purpose": "Build Swing layout; expose components as protected fields" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "Java 22",
+      "category": "Business",
+      "summary": "Presenter layer. Wires DocumentListeners and ChangeListeners to sync UI fields to model. Directly accesses protected view fields — breaks MVP contract.",
+      "business_rules": [
+        "Form fields kept in sync with model on every keystroke",
+        "After action completes, all form fields cleared and female gender radio reset"
+      ],
+      "method_breakdown": [
+        { "name": "PocPresenter(PocView, PocModel, EventEmitter)", "purpose": "Wire event handlers and bindings" },
+        { "name": "bind(JTextComponent, ModelProperties)", "purpose": "Sync text component changes to model" },
+        { "name": "bind(JRadioButton, ModelProperties)", "purpose": "Sync radio button changes to model" },
+        { "name": "initializeBindings()", "purpose": "Call bind() for all form fields" }
+      ]
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "Java 22",
+      "category": "Technical",
+      "summary": "Simple generic value holder with get/set. Used as the typed container for each model property.",
+      "business_rules": [],
+      "method_breakdown": [
+        { "name": "getField()", "purpose": "Return typed value" },
+        { "name": "setField(T)", "purpose": "Set typed value" }
+      ]
+    }
+  ],
+  "summary": {
+    "business_files": 4,
+    "technical_files": 10,
+    "languages_detected": ["JavaScript ES5", "JavaScript ES6", "Vue 2.x SFC", "Java 22"],
+    "frameworks": ["Vue 2.x (EOL Dec 2023)", "Java Swing", "javax.websocket Tyrus 1.15", "websocket npm 1.0.35"],
+    "entry_points": 3,
+    "test_coverage": "None — zero test files found"
+  }
+}

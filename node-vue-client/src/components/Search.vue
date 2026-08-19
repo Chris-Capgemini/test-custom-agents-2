@@ -88,10 +88,11 @@
 </template>
 
 <script>
+const WS_URL = process.env.VUE_APP_WS_URL || "ws://localhost:1337/";
+
 export default {
   name: 'Search',
   props: {
-    result_selected: String,
     content_textarea: String
   },
   data: function() {
@@ -100,7 +101,7 @@ export default {
       formdata: {},
       search_result: [],
       selected_result: {},
-      zahlungsempfaenger_selected : "",
+      zahlungsempfaenger_selected: {},
       search_space: [{first:'Hans', name:'Mayer', dob:'1981-01-08', zip:'95183', ort:'Trogen', street:'Isaaer Str.', hausnr:'23', knr:'79423984', zahlungsempfaenger:[
           {iban:'DE27100777770209299700', bic:'ERFBDE8E759', valid_from:'2020-01-04', valid_until:'', type:''},
           {iban:'DE11520513735120710131', bic:'DRESDEFE152', valid_from:'2019-03-12', valid_until:'', type:''}
@@ -129,16 +130,28 @@ export default {
   },
   methods: {
     connect() {
-      this.socket = new WebSocket("ws://localhost:1337/");
+      this.socket = new WebSocket(WS_URL);
       this.socket.onopen = () => {
-        this.status = "connected";   
-        //this.socket.onmessage = ({data}) => {};
+        this.status = "connected";
+      };
+      this.socket.onerror = () => {
+        this.status = "error";
+      };
+      this.socket.onclose = (evt) => {
+        this.status = "disconnected";
+        if (evt.code !== 1000) {
+          setTimeout(() => this.connect(), 3000);
+        }
       };
     },
     disconnect() {
-      this.socket.close();
+      this.socket.close(1000);
       this.status = "disconnected";
-      this.logs = [];
+    },
+    safeSend(payload) {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify(payload));
+      }
     },
     searchPerson() {
       this.search_result = [];
@@ -160,7 +173,7 @@ export default {
       if (target == "textfield") {
         obj_to_send.zahlungsempfaenger = this.zahlungsempfaenger_selected;
       }
-      this.socket.send(JSON.stringify({ target: target, content: obj_to_send }));
+      this.safeSend({ target: target, content: obj_to_send });
     },
     selectResult(item) {
       this.selected_result = item;

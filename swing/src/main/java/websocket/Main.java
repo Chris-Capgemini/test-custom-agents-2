@@ -48,7 +48,7 @@ public class Main {
 	private static JsonParserFactory jsonParserFactory = Json.createParserFactory(null);
 
 	public static void main(String[] args) throws IOException, DeploymentException {
-		initUI();
+		SwingUtilities.invokeLater(() -> initUI());
 
 		latch = new CountDownLatch(1);
 
@@ -218,7 +218,6 @@ public class Main {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		textArea.setPreferredSize(new Dimension(200, 400));
 		textArea.setBorder(BorderFactory.createEtchedBorder());
-		panel.add(textArea);
 		panel.add(textArea, c);
 
 		c.gridx = 1;
@@ -287,20 +286,23 @@ public class Main {
 			Message message = extract(json);
 			switch (message.target) {
 			case "textarea":
-				textArea.setText(message.content);
+				final String text = message.content;
+				SwingUtilities.invokeLater(() -> textArea.setText(text));
 				return;
 			case "textfield":
 				SearchResult searchResult = toSearchResult(message.content);
-				tf_name.setText(searchResult.name);
-				tf_first.setText(searchResult.first);
-				tf_dob.setText(searchResult.dob);
-				tf_zip.setText(searchResult.zip);
-				tf_ort.setText(searchResult.ort);
-				tf_street.setText(searchResult.street);
-				tf_hausnr.setText(searchResult.hausnr);
-				tf_ze_iban.setText(searchResult.ze_iban);
-				tf_ze_bic.setText(searchResult.ze_bic);
-				tf_ze_valid_from.setText(searchResult.ze_valid_from);
+				SwingUtilities.invokeLater(() -> {
+					tf_name.setText(searchResult.name);
+					tf_first.setText(searchResult.first);
+					tf_dob.setText(searchResult.dob);
+					tf_zip.setText(searchResult.zip);
+					tf_ort.setText(searchResult.ort);
+					tf_street.setText(searchResult.street);
+					tf_hausnr.setText(searchResult.hausnr);
+					tf_ze_iban.setText(searchResult.ze_iban);
+					tf_ze_bic.setText(searchResult.ze_bic);
+					tf_ze_valid_from.setText(searchResult.ze_valid_from);
+				});
 				return;
 			}
 		}
@@ -310,31 +312,32 @@ public class Main {
 		}
 
 		public static Message extract(String json) {
-			JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
 			boolean target = false;
 			String strTarget = "";
 			boolean content = false;
 			String strContent = "";
-			while (jsonParser.hasNext()) {
-				Event e = jsonParser.next();
-				if (Event.KEY_NAME.equals(e) && "target".equals(jsonParser.getString())) {
-					target = true;
-				}
-				if (target && Event.VALUE_STRING.equals(e)) {
-					strTarget = jsonParser.getString();
-					target = false;
-				}
-
-				if (Event.KEY_NAME.equals(e) && "content".equals(jsonParser.getString())) {
-					content = true;
-				}
-				if (content && Event.VALUE_STRING.equals(e)) {
-					if ("textarea".equals(strTarget)) {
-						strContent = jsonParser.getString();
-					} else {
-						strContent = json;
+			try (JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json))) {
+				while (jsonParser.hasNext()) {
+					Event e = jsonParser.next();
+					if (Event.KEY_NAME.equals(e) && "target".equals(jsonParser.getString())) {
+						target = true;
 					}
-					content = false;
+					if (target && Event.VALUE_STRING.equals(e)) {
+						strTarget = jsonParser.getString();
+						target = false;
+					}
+
+					if (Event.KEY_NAME.equals(e) && "content".equals(jsonParser.getString())) {
+						content = true;
+					}
+					if (content && Event.VALUE_STRING.equals(e)) {
+						if ("textarea".equals(strTarget)) {
+							strContent = jsonParser.getString();
+						} else {
+							strContent = json;
+						}
+						content = false;
+					}
 				}
 			}
 			return new Message(strTarget, strContent);
@@ -355,7 +358,6 @@ public class Main {
 	public static SearchResult toSearchResult(String json) {
 		SearchResult searchResult = new SearchResult();
 		
-		JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json));
 		boolean name = false;
 		boolean first = false;
 		boolean dob = false;
@@ -366,77 +368,79 @@ public class Main {
 		boolean ze_iban = false;
 		boolean ze_bic = false;
 		boolean ze_Valid_from = false;
-		while (jsonParser.hasNext()) {
-			Event e = jsonParser.next();
-			if (Event.KEY_NAME.equals(e) && "name".equals(jsonParser.getString())) {
-				name = true;
-			}
-			if (name && Event.VALUE_STRING.equals(e)) {
-				searchResult.name = jsonParser.getString();
-				name = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "first".equals(jsonParser.getString())) {
-				first = true;
-			}
-			if (first && Event.VALUE_STRING.equals(e)) {
-				searchResult.first = jsonParser.getString();
-				first = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "dob".equals(jsonParser.getString())) {
-				dob = true;
-			}
-			if (dob && Event.VALUE_STRING.equals(e)) {
-				searchResult.dob = jsonParser.getString();
-				dob = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "zip".equals(jsonParser.getString())) {
-				zip = true;
-			}
-			if (zip && Event.VALUE_STRING.equals(e)) {
-				searchResult.zip = jsonParser.getString();
-				zip = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "ort".equals(jsonParser.getString())) {
-				ort = true;
-			}
-			if (ort && Event.VALUE_STRING.equals(e)) {
-				searchResult.ort = jsonParser.getString();
-				ort = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "street".equals(jsonParser.getString())) {
-				street = true;
-			}
-			if (street && Event.VALUE_STRING.equals(e)) {
-				searchResult.street = jsonParser.getString();
-				street = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "hausnr".equals(jsonParser.getString())) {
-				hausnr = true;
-			}
-			if (hausnr && Event.VALUE_STRING.equals(e)) {
-				searchResult.hausnr = jsonParser.getString();
-				hausnr = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "iban".equals(jsonParser.getString())) {
-				ze_iban = true;
-			}
-			if (ze_iban && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_iban = jsonParser.getString();
-				ze_iban = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "bic".equals(jsonParser.getString())) {
-				ze_bic = true;
-			}
-			if (ze_bic && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_bic = jsonParser.getString();
-				ze_bic = false;
-			}
-			if (Event.KEY_NAME.equals(e) && "valid_from".equals(jsonParser.getString())) {
-				ze_Valid_from = true;
-			}
-			if (ze_Valid_from && Event.VALUE_STRING.equals(e)) {
-				searchResult.ze_valid_from = jsonParser.getString();
-				ze_Valid_from = false;
+		try (JsonParser jsonParser = jsonParserFactory.createParser(new StringReader(json))) {
+			while (jsonParser.hasNext()) {
+				Event e = jsonParser.next();
+				if (Event.KEY_NAME.equals(e) && "name".equals(jsonParser.getString())) {
+					name = true;
+				}
+				if (name && Event.VALUE_STRING.equals(e)) {
+					searchResult.name = jsonParser.getString();
+					name = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "first".equals(jsonParser.getString())) {
+					first = true;
+				}
+				if (first && Event.VALUE_STRING.equals(e)) {
+					searchResult.first = jsonParser.getString();
+					first = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "dob".equals(jsonParser.getString())) {
+					dob = true;
+				}
+				if (dob && Event.VALUE_STRING.equals(e)) {
+					searchResult.dob = jsonParser.getString();
+					dob = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "zip".equals(jsonParser.getString())) {
+					zip = true;
+				}
+				if (zip && Event.VALUE_STRING.equals(e)) {
+					searchResult.zip = jsonParser.getString();
+					zip = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "ort".equals(jsonParser.getString())) {
+					ort = true;
+				}
+				if (ort && Event.VALUE_STRING.equals(e)) {
+					searchResult.ort = jsonParser.getString();
+					ort = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "street".equals(jsonParser.getString())) {
+					street = true;
+				}
+				if (street && Event.VALUE_STRING.equals(e)) {
+					searchResult.street = jsonParser.getString();
+					street = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "hausnr".equals(jsonParser.getString())) {
+					hausnr = true;
+				}
+				if (hausnr && Event.VALUE_STRING.equals(e)) {
+					searchResult.hausnr = jsonParser.getString();
+					hausnr = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "iban".equals(jsonParser.getString())) {
+					ze_iban = true;
+				}
+				if (ze_iban && Event.VALUE_STRING.equals(e)) {
+					searchResult.ze_iban = jsonParser.getString();
+					ze_iban = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "bic".equals(jsonParser.getString())) {
+					ze_bic = true;
+				}
+				if (ze_bic && Event.VALUE_STRING.equals(e)) {
+					searchResult.ze_bic = jsonParser.getString();
+					ze_bic = false;
+				}
+				if (Event.KEY_NAME.equals(e) && "valid_from".equals(jsonParser.getString())) {
+					ze_Valid_from = true;
+				}
+				if (ze_Valid_from && Event.VALUE_STRING.equals(e)) {
+					searchResult.ze_valid_from = jsonParser.getString();
+					ze_Valid_from = false;
+				}
 			}
 		}
 		return searchResult;

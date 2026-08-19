@@ -22,28 +22,35 @@ public class PocPresenter {
 
         eventEmitter.subscribe(eventData -> {
             System.out.println("Event data is : " + eventData);
-            view.textArea.setText(eventData);
-            view.firstName.setText("");
-            view.name.setText("");
-            view.dateOfBirth.setText("");
-            view.zip.setText("");
-            view.ort.setText("");
-            view.street.setText("");
-            view.iban.setText("");
-            view.bic.setText("");
-            view.validFrom.setText("");
-            view.female.setSelected(true);
-            view.male.setSelected(false);
-            view.diverse.setSelected(false);
+            SwingUtilities.invokeLater(() -> {
+                view.textArea.setText(eventData);
+                view.firstName.setText("");
+                view.name.setText("");
+                view.dateOfBirth.setText("");
+                view.zip.setText("");
+                view.ort.setText("");
+                view.street.setText("");
+                view.iban.setText("");
+                view.bic.setText("");
+                view.validFrom.setText("");
+                view.female.setSelected(true);
+                view.male.setSelected(false);
+                view.diverse.setSelected(false);
+            });
         });
 
         this.view.button.addActionListener(_ -> {
             try {
                 model.action();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                JOptionPane.showMessageDialog(view.frame,
+                    "Connection error: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.currentThread().interrupt();
+                JOptionPane.showMessageDialog(view.frame,
+                    "Operation interrupted",
+                    "Warning", JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -51,7 +58,7 @@ public class PocPresenter {
     }
 
     private void bind(JTextComponent source, ModelProperties prop) {
-        var model = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
+        var model = (ValueModel<String>) PocPresenter.this.model.getValueModel(prop);
         model.setField(source.getText());
         source.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -69,7 +76,7 @@ public class PocPresenter {
             public void removeUpdate(DocumentEvent e) {
                 try {
                     var content = e.getDocument().getText(0, e.getDocument().getLength());
-                    var model = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
+                    var model = (ValueModel<String>) PocPresenter.this.model.getValueModel(prop);
                     model.setField(content);
                     System.out.println("I am in remove update. " + e.getDocument().getText(0, e.getDocument().getLength()));
                 } catch (BadLocationException ex) {
@@ -86,7 +93,7 @@ public class PocPresenter {
 
 
     private void bind(JRadioButton source, ModelProperties prop) {
-        var model = (ValueModel<Boolean>) PocPresenter.this.model.model.get(prop);
+        var model = (ValueModel<Boolean>) PocPresenter.this.model.getValueModel(prop);
         model.setField(source.isSelected());
         source.addChangeListener(evt -> {
             model.setField(source.isSelected());
