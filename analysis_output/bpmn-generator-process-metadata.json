@@ -1,0 +1,107 @@
+{
+  "generator": "bpmn-generator",
+  "generated_at": "2025-01-01T00:10:00Z",
+  "repository": "Chris-Capgemini/test-custom-agents-2",
+  "application": "Allegro PoC",
+  "note": "output/ directory did not exist; all artefacts saved to analysis_output/ instead",
+  "source_inputs": [
+    "analysis_output/business_rules_extractor_analysis.json",
+    "analysis_output/ast-Search.json",
+    "analysis_output/ast-PocPresenter.json",
+    "analysis_output/ast-PocModel.json",
+    "analysis_output/ast-PocView.json",
+    "analysis_output/ast-WebsocketServer.json"
+  ],
+  "processes": [
+    {
+      "process_id": "PROC-001",
+      "name": "Person Search and Allegro Data Transfer",
+      "primary_component": "node-vue-client/src/components/Search.vue",
+      "participants": [
+        "Operator (Vue Browser Client)",
+        "Node.js WebSocket Relay",
+        "Java Swing (Allegro)"
+      ],
+      "elements": {
+        "start_events": 1,
+        "end_events": 3,
+        "user_tasks": 5,
+        "service_tasks": 3,
+        "gateways": 5,
+        "sequence_flows": 18
+      },
+      "key_business_rules": [
+        "SRC-001 — 6 search criteria",
+        "SRC-002 — OR logic",
+        "SRC-003 — case-insensitive substring match",
+        "SRC-004 — ZIP exact match",
+        "PAY-003 — single Zahlungsempfaenger selection",
+        "PAY-005 — array replaced with single entry on send",
+        "LSI-001 — transfer triggered by Nach ALLEGRO button",
+        "LSI-002 — data transformation before send",
+        "LSI-003 — WebSocket message envelope",
+        "LSI-004 — server broadcasts to all clients"
+      ]
+    },
+    {
+      "process_id": "PROC-002",
+      "name": "Swing Form Data Entry and HTTP Submission",
+      "primary_component": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "participants": [
+        "Operator (Swing Desktop)",
+        "PocPresenter (MVP Presenter)",
+        "PocModel (Domain Model)",
+        "HttpBinService (HTTP Client)",
+        "Backend API (localhost:8080)"
+      ],
+      "elements": {
+        "start_events": 2,
+        "end_events": 3,
+        "user_tasks": 4,
+        "service_tasks": 4,
+        "gateways": 4,
+        "sequence_flows": 20
+      },
+      "key_business_rules": [
+        "PDM-002 — all fields null-initialized",
+        "PDM-003 — real-time binding on every keystroke",
+        "GND-001 — 3 gender options",
+        "GND-002 — mutual exclusivity via ButtonGroup",
+        "GND-003 — Weiblich is default",
+        "FSH-001 — Anordnen button triggers submission",
+        "FSH-002 — all 13 fields submitted regardless of fill state",
+        "FSH-003 — endpoint POST http://localhost:8080/post",
+        "FSH-005 — non-empty response = success",
+        "FSH-006 — empty response = 'Failed operation'",
+        "FSH-007 — full form reset on success",
+        "FSH-008 — IOException/InterruptedException wrapped in RuntimeException"
+      ]
+    },
+    {
+      "process_id": "PROC-003",
+      "name": "Real-Time Textarea Synchronisation",
+      "primary_component": "Search.vue watch block + WebsocketServer.js",
+      "participants": [
+        "Any Vue Client (Sender)",
+        "Node.js WebSocket Relay",
+        "All Connected Clients (Receivers)"
+      ],
+      "elements": {
+        "start_events": 1,
+        "end_events": 1,
+        "service_tasks": 4,
+        "gateways": 1,
+        "sequence_flows": 7
+      },
+      "key_business_rules": [
+        "LSI-006 — watcher fires on every keystroke",
+        "LSI-003 — message envelope {target, content}",
+        "LSI-004 — broadcast to ALL clients including sender",
+        "LSI-007 — null origin accepted (PoC only)"
+      ]
+    }
+  ],
+  "output_files": [
+    "analysis_output/bpmn-diagrams.md"
+  ]
+}

@@ -1,0 +1,275 @@
+{
+  "file_path": "node-vue-client/src/components/Search.vue",
+  "language": "vue",
+  "ast_version": "1.0",
+  "moduleType": "ESModule",
+  "template": {
+    "rootElement": "div#step_form",
+    "sections": [
+      {
+        "id": "person",
+        "tag": "div",
+        "children": [
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.last",        "placeholder": "Name" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.knr",         "placeholder": "Kundennummer", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.iban",        "placeholder": "IBAN", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.first",       "placeholder": "Vorname" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.betriebsbez", "placeholder": "Betriebsbez.", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.bic",         "placeholder": "BIC", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.dob",         "placeholder": "Gebohren" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.rvnr",        "placeholder": "RV-Nummer", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.nationality", "placeholder": "Nationalität" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.zip",         "placeholder": "PLZ" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.postfach",    "placeholder": "Postfach" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.bgnr",        "placeholder": "BG-Nummer", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.ort",         "placeholder": "Ort" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.vorsatzwort", "placeholder": "Vorsatzwort" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.leistung",    "placeholder": "Leistung" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.street",      "placeholder": "Strasse" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.title",       "placeholder": "Titel" },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.traegernr",   "placeholder": "Träger-Nr.", "disabled": true },
+          { "tag": "input", "directive": "v-model", "modelBinding": "formdata.hausnr",      "placeholder": "Hausnummer" },
+          { "tag": "button", "event": "v-on:click", "handler": "searchPerson()", "text": "Suchen" }
+        ]
+      },
+      {
+        "id": "search_result",
+        "tag": "div",
+        "children": [
+          {
+            "tag": "table",
+            "headers": ["Kdn.-nr", "Name", "Vorname", "Geburtsdatum", "PLZ", "Strasse", "Ort"],
+            "tbody": {
+              "directive": "v-for",
+              "item": "item",
+              "index": "index",
+              "source": "search_result",
+              "key": "index",
+              "clickHandler": "selectResult(item)",
+              "conditionalClass": "highlight when item.knr == selected_result.knr",
+              "columns": ["item.knr", "item.name", "item.first", "item.dob", "item.zip", "item.street + item.hausnr", "item.ort"]
+            }
+          }
+        ]
+      },
+      {
+        "id": "search_result_zahlungsempfänger",
+        "tag": "div",
+        "children": [
+          {
+            "tag": "table",
+            "headers": ["IBAN", "BIC", "Gültig ab"],
+            "tbody": {
+              "directive": "v-for",
+              "item": "item",
+              "index": "index",
+              "source": "selected_result.zahlungsempfaenger",
+              "key": "index",
+              "clickHandler": "zahlungsempfaengerSelected(item)",
+              "conditionalClass": "highlight when item.iban == zahlungsempfaenger_selected.iban",
+              "columns": ["item.iban", "item.bic", "item.valid_from"]
+            }
+          }
+        ]
+      },
+      {
+        "id": "send_to_allegro",
+        "tag": "div",
+        "children": [
+          { "tag": "button", "event": "v-on:click", "handler": "sendMessage(selected_result, 'textfield')", "text": "Nach ALLEGRO übernehmen" }
+        ]
+      },
+      {
+        "id": "textarea",
+        "tag": "div",
+        "children": [
+          { "tag": "textarea", "directive": "v-model", "modelBinding": "internal_content_textarea", "rows": 4 }
+        ]
+      }
+    ]
+  },
+  "script": {
+    "imports": [],
+    "componentOptions": {
+      "name": "Search",
+      "props": {
+        "result_selected":    { "type": "String" },
+        "content_textarea":   { "type": "String" }
+      },
+      "data": {
+        "type": "FunctionDeclaration",
+        "returnValue": {
+          "internal_content_textarea": { "type": "PropReference", "prop": "content_textarea" },
+          "formdata": { "type": "ObjectLiteral", "value": {} },
+          "search_result": { "type": "ArrayLiteral", "value": [] },
+          "selected_result": { "type": "ObjectLiteral", "value": {} },
+          "zahlungsempfaenger_selected": { "type": "Literal", "value": "\"\"" },
+          "search_space": {
+            "type": "ArrayLiteral",
+            "description": "Static in-memory dataset of 5 persons with zahlungsempfaenger sub-arrays",
+            "length": 5,
+            "fields": ["first", "name", "dob", "zip", "ort", "street", "hausnr", "knr", "zahlungsempfaenger"],
+            "zahlungsempfaenger_fields": ["iban", "bic", "valid_from", "valid_until", "type"]
+          }
+        }
+      },
+      "mounted": {
+        "type": "LifecycleHook",
+        "hook": "mounted",
+        "body": [
+          { "type": "MethodInvocation", "target": "this", "methodName": "connect", "arguments": [] }
+        ]
+      },
+      "methods": [
+        {
+          "name": "connect",
+          "returnType": "void",
+          "parameters": [],
+          "body": [
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "this", "field": "socket" },
+              "value": { "type": "ObjectCreation", "className": "WebSocket", "arguments": [{ "type": "Literal", "value": "\"ws://localhost:1337/\"" }] }
+            },
+            {
+              "type": "Assignment",
+              "target": { "type": "FieldAccess", "object": "this.socket", "field": "onopen" },
+              "value": {
+                "type": "ArrowFunctionExpression",
+                "parameters": [],
+                "body": [
+                  { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "status" }, "value": { "type": "Literal", "value": "\"connected\"" } }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "disconnect",
+          "returnType": "void",
+          "parameters": [],
+          "body": [
+            { "type": "MethodInvocation", "target": "this.socket", "methodName": "close",   "arguments": [] },
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "status" }, "value": { "type": "Literal", "value": "\"disconnected\"" } },
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "logs" },   "value": { "type": "ArrayLiteral", "value": [] } }
+          ]
+        },
+        {
+          "name": "searchPerson",
+          "returnType": "void",
+          "parameters": [],
+          "body": [
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "search_result" }, "value": { "type": "ArrayLiteral", "value": [] } },
+            {
+              "type": "ForStatement",
+              "init": { "type": "VariableDeclaration", "name": "i", "variableType": "number", "value": { "type": "Literal", "value": "0" } },
+              "condition": { "type": "BinaryExpression", "operator": "<", "left": { "type": "VariableReference", "name": "i" }, "right": { "type": "FieldAccess", "object": "this.search_space", "field": "length" } },
+              "update": { "type": "UnaryExpression", "operator": "++", "operand": { "type": "VariableReference", "name": "i" } },
+              "body": [
+                { "type": "VariableDeclaration", "name": "element", "variableType": "Object", "modifiers": ["let"], "value": { "type": "IndexAccess", "object": "this.search_space", "index": { "type": "VariableReference", "name": "i" } } },
+                {
+                  "type": "IfStatement",
+                  "condition": {
+                    "type": "BinaryExpression",
+                    "operator": "||",
+                    "operands": [
+                      { "type": "BinaryExpression", "operator": "&&", "left": "this.formdata.last",   "right": "element.name.toLowerCase().indexOf(this.formdata.last.toLowerCase()) >= 0" },
+                      { "type": "BinaryExpression", "operator": "&&", "left": "this.formdata.first",  "right": "element.first.toLowerCase().indexOf(this.formdata.first.toLowerCase()) >= 0" },
+                      { "type": "BinaryExpression", "operator": "&&", "left": "this.formdata.zip",    "right": "element.zip == this.formdata.zip" },
+                      { "type": "BinaryExpression", "operator": "&&", "left": "this.formdata.ort",    "right": "element.ort.toLowerCase().indexOf(this.formdata.ort.toLowerCase()) >= 0" },
+                      { "type": "BinaryExpression", "operator": "&&", "left": "this.formdata.street", "right": "element.street.toLowerCase().indexOf(this.formdata.street.toLowerCase()) >= 0" },
+                      { "type": "BinaryExpression", "operator": "&&", "left": "this.formdata.hausnr", "right": "element.hausnr.toLowerCase().indexOf(this.formdata.hausnr.toLowerCase()) >= 0" }
+                    ]
+                  },
+                  "thenBlock": [
+                    { "type": "MethodInvocation", "target": "this.search_result", "methodName": "push", "arguments": [{ "type": "VariableReference", "name": "element" }] }
+                  ],
+                  "elseBlock": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "sendMessage",
+          "returnType": "void",
+          "parameters": [
+            { "name": "e",      "type": "Object" },
+            { "name": "target", "type": "string" }
+          ],
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "name": "obj_to_send",
+              "variableType": "Object",
+              "modifiers": ["let"],
+              "value": {
+                "type": "MethodInvocation",
+                "target": "JSON",
+                "methodName": "parse",
+                "arguments": [{ "type": "MethodInvocation", "target": "JSON", "methodName": "stringify", "arguments": [{ "type": "VariableReference", "name": "e" }] }]
+              }
+            },
+            {
+              "type": "IfStatement",
+              "condition": { "type": "BinaryExpression", "operator": "==", "left": { "type": "VariableReference", "name": "target" }, "right": { "type": "Literal", "value": "\"textfield\"" } },
+              "thenBlock": [
+                { "type": "Assignment", "target": "obj_to_send.zahlungsempfaenger", "value": { "type": "FieldAccess", "object": "this", "field": "zahlungsempfaenger_selected" } }
+              ],
+              "elseBlock": null
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "this.socket",
+              "methodName": "send",
+              "arguments": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "JSON",
+                  "methodName": "stringify",
+                  "arguments": [
+                    { "type": "ObjectLiteral", "properties": [
+                        { "key": "target",  "value": { "type": "VariableReference", "name": "target" } },
+                        { "key": "content", "value": { "type": "VariableReference", "name": "obj_to_send" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "selectResult",
+          "returnType": "void",
+          "parameters": [{ "name": "item", "type": "Object" }],
+          "body": [
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "selected_result" }, "value": { "type": "VariableReference", "name": "item" } }
+          ]
+        },
+        {
+          "name": "zahlungsempfaengerSelected",
+          "returnType": "void",
+          "parameters": [{ "name": "zahlungsempfaenger", "type": "Object" }],
+          "body": [
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "zahlungsempfaenger_selected" }, "value": { "type": "VariableReference", "name": "zahlungsempfaenger" } }
+          ]
+        }
+      ],
+      "watch": [
+        {
+          "watchedProperty": "internal_content_textarea",
+          "handler": {
+            "type": "FunctionDeclaration",
+            "parameters": [{ "name": "val", "type": "string" }],
+            "body": [
+              { "type": "MethodInvocation", "target": "this", "methodName": "sendMessage", "arguments": [{ "type": "VariableReference", "name": "val" }, { "type": "Literal", "value": "\"textarea\"" }] }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "dependencies": ["WebSocket (native browser API)", "ws://localhost:1337/"],
+  "complexity_metrics": { "total_methods": 6, "total_props": 2, "total_data_fields": 6, "total_watchers": 1, "cyclomatic_complexity": 12, "lines_of_code": 178 }
+}

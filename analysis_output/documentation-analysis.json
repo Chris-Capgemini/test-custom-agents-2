@@ -1,0 +1,354 @@
+{
+  "analysis_type": "documents_summary_and_comparison",
+  "project_name": "Allegro PoC",
+  "repository": "Chris-Capgemini/test-custom-agents-2",
+  "analysis_date": "2025-01-27",
+  "analyst_agent": "documentation-analyzer",
+  "overall_score": 2.5,
+  "quality_scores": {
+    "completeness": 2,
+    "clarity": 3,
+    "accuracy": 4,
+    "structure": 2,
+    "accessibility": 2,
+    "maintainability": 2,
+    "examples": 1,
+    "consistency": 2
+  },
+  "documents_analyzed": [
+    {
+      "document": "README.md",
+      "path": "README.md",
+      "type": "readme",
+      "scope": "Java Swing component only",
+      "score": 3,
+      "word_count": "~120",
+      "strengths": [
+        "Clearly lists Java SDK version requirement (>= 22.0.1)",
+        "Provides the correct Docker command to start httpbin mock",
+        "Step-by-step numbered structure is easy to follow",
+        "Emoji icons aid scanability"
+      ],
+      "weaknesses": [
+        "Only documents 1 of 3 system components — no mention of Node.js relay or Vue.js client",
+        "IntelliJ-specific instructions exclude users of other IDEs or CLI-only environments",
+        "No project overview or purpose statement anywhere in the file",
+        "No architecture description or component relationship explanation",
+        "Does not mention Maven as a build tool",
+        "No dependency versions for GlassFish Tyrus, javax.json, or any other Java library",
+        "Content Root path references 'websocket_swing/swing/src/main/java' with a leading prefix not matching the actual repo structure",
+        "No troubleshooting section",
+        "No link to Node server or Vue client documentation",
+        "Missing: what the application actually does"
+      ]
+    },
+    {
+      "document": "swing/src/main/java/com/README.md",
+      "path": "swing/src/main/java/com/README.md",
+      "type": "component_readme",
+      "scope": "Docker dependency hint",
+      "score": 1,
+      "word_count": "~18",
+      "strengths": [
+        "Provides the correct docker run command"
+      ],
+      "weaknesses": [
+        "Placed deep in the source tree — not discoverable",
+        "Contains 'don't ask why' — removes learning opportunity and signals undocumented dependency",
+        "Duplicates the Docker command already in root README without adding context",
+        "No explanation of WHY this container is needed (httpbin mock backend for HTTP POST)",
+        "No mention of port mapping rationale or what happens if httpbin is unavailable",
+        "Not linked from root README"
+      ]
+    },
+    {
+      "document": "node-vue-client/README.md",
+      "path": "node-vue-client/README.md",
+      "type": "readme",
+      "scope": "Vue CLI boilerplate only",
+      "score": 2,
+      "word_count": "~50",
+      "strengths": [
+        "Lists standard yarn commands for development workflow",
+        "Links to Vue CLI configuration reference"
+      ],
+      "weaknesses": [
+        "100% auto-generated Vue CLI boilerplate — no project-specific content added",
+        "Does not describe what this component does",
+        "Does not mention WebSocket connection to Node.js relay",
+        "No mention of port used by dev server",
+        "No description of the Search component or the person-transfer feature",
+        "No Node.js or yarn version requirements",
+        "yarn run test command does not work (no test suite configured)",
+        "No mention of Vue 2 (EOL December 2023)"
+      ]
+    },
+    {
+      "document": "node-vue-client/doc/Readme.txt",
+      "path": "node-vue-client/doc/Readme.txt",
+      "type": "developer_notes",
+      "scope": "Personal setup notes",
+      "score": 1,
+      "word_count": "~30",
+      "strengths": [
+        "Shows the command to serve the Vue client locally"
+      ],
+      "weaknesses": [
+        "Contains a hardcoded personal Windows path (C:/Users/esultano/...) — not portable",
+        "Vuetify install/uninstall instructions are commented-out history, not instructions",
+        "Plain .txt format — lacks any structure",
+        "Hidden in doc/ subfolder — not discoverable via root navigation",
+        "Global @vue/cli install instruction may conflict with project's local CLI version",
+        "No description of what the client does or how it connects to the backend"
+      ]
+    },
+    {
+      "document": "node-server/doc/Readme.txt",
+      "path": "node-server/doc/Readme.txt",
+      "type": "developer_notes",
+      "scope": "Personal setup notes",
+      "score": 1,
+      "word_count": "~20",
+      "strengths": [
+        "Shows the correct node command to start the WebSocket server"
+      ],
+      "weaknesses": [
+        "Contains a hardcoded personal Windows path (C:/Users/esultano/...) — not portable",
+        "export NODE_PATH instruction is a Windows Bash (Git Bash) hack — not cross-platform",
+        "npm install -g websocket suggests global install; actual dependency is local (node-server/package.json)",
+        "No description of what the WebSocket server does",
+        "No mention of port 1337 or how clients connect to it",
+        "Plain .txt format — no structure",
+        "Not linked from root README"
+      ]
+    },
+    {
+      "document": "api.yml",
+      "path": "api.yml",
+      "type": "openapi_spec",
+      "scope": "HTTP POST endpoint only",
+      "score": 4,
+      "word_count": "~90 lines",
+      "strengths": [
+        "Uses OpenAPI 3.0.1 — a standard machine-readable format",
+        "Correctly identifies server as localhost:8080",
+        "Documents all 13 PostObject field names matching ModelProperties enum",
+        "Provides request body and response schemas",
+        "Includes operationId and tags"
+      ],
+      "weaknesses": [
+        "Only documents the httpbin mock /post endpoint — not the actual system API",
+        "Endpoint is a mock echo service, not a real business endpoint; spec does not clarify this",
+        "Response schema wraps PostObject in a 'postObject' property, but actual httpbin response returns it in 'json' field — schema mismatch",
+        "All field types are 'string' — IBAN, BIC, DATE_OF_BIRTH, ZIP should have format constraints",
+        "No field descriptions — FEMALE, MALE, DIVERSE, ORT, IBAN provide no context to readers unfamiliar with German",
+        "WebSocket endpoint (ws://localhost:1337) not documented at all",
+        "No error response schemas (4xx, 5xx)",
+        "No authentication documentation",
+        "No example values for any field",
+        "description field in info object is minimal",
+        "No contact, license, or termsOfService fields"
+      ]
+    }
+  ],
+  "critical_gaps": [
+    {
+      "id": "CG-01",
+      "gap": "No system overview or project purpose documentation",
+      "impact": "A new developer has no starting point — the repository looks like a Java Swing project with unknown purpose",
+      "affected_documents": "All documentation",
+      "recommendation": "Add a project overview section to README.md explaining: what Allegro is, what the PoC demonstrates, the 3-component architecture, and the German business context"
+    },
+    {
+      "id": "CG-02",
+      "gap": "Node.js WebSocket relay server has zero user-facing documentation",
+      "impact": "The central middleware component is invisible to anyone reading the documentation; the system cannot be started without it",
+      "affected_documents": "README.md, node-server/doc/Readme.txt",
+      "recommendation": "Create node-server/README.md documenting: purpose, port (1337), start command, WebSocket message format {target, content}, client connection URL, and the broadcast relay behaviour"
+    },
+    {
+      "id": "CG-03",
+      "gap": "WebSocket API (ws://localhost:1337) is completely undocumented",
+      "impact": "Integration with any client is impossible without reading the source code; the main real-time synchronisation feature is invisible",
+      "affected_documents": "api.yml",
+      "recommendation": "Document WebSocket API: connection endpoint, message schema {target: string, content: string}, broadcast semantics, and client lifecycle events"
+    },
+    {
+      "id": "CG-04",
+      "gap": "No end-to-end startup guide covering all three components",
+      "impact": "A developer must piece together startup instructions from 4 separate files, two of which contain personal file paths",
+      "affected_documents": "README.md",
+      "recommendation": "Add a Quick Start section to README.md with ordered steps: (1) start httpbin, (2) start Node WebSocket server, (3) start Vue client, (4) run Java Swing app, with all required ports listed"
+    },
+    {
+      "id": "CG-05",
+      "gap": "Vue.js person search and Allegro transfer feature is not documented anywhere",
+      "impact": "The primary user-facing workflow — searching for a person in the browser and transferring to the Allegro desktop application — is completely undocumented",
+      "affected_documents": "node-vue-client/README.md",
+      "recommendation": "Document the Search component: purpose, how to search persons, what Transfer to Allegro does, and the real-time sync effect on the Swing application"
+    }
+  ],
+  "major_gaps": [
+    {
+      "id": "MG-01",
+      "gap": "No architecture documentation — how the three components communicate is undocumented",
+      "impact": "Developers cannot understand data flow or system design without reading 15 source files",
+      "recommendation": "Add architecture section to README.md with component diagram, protocol details (HTTP vs WebSocket), and port reference table"
+    },
+    {
+      "id": "MG-02",
+      "gap": "German field names (ORT, PLZ, Vorname, etc.) have no English translations or explanations",
+      "impact": "Non-German-speaking developers cannot understand the domain model fields in api.yml or the UI",
+      "recommendation": "Add field descriptions to api.yml for all 13 fields with English translations and domain context"
+    },
+    {
+      "id": "MG-03",
+      "gap": "Real-time textarea synchronisation feature is not documented",
+      "impact": "One of the 3 major workflows is invisible in the documentation",
+      "recommendation": "Document in README.md: how the Vue textarea syncs in real-time to the Swing form via WebSocket broadcast"
+    },
+    {
+      "id": "MG-04",
+      "gap": "Java dependency versions not documented (GlassFish Tyrus, javax.json, WebSocket API)",
+      "impact": "Developers cannot verify their environment or troubleshoot classpath issues",
+      "recommendation": "Add a dependencies section or table to README.md listing all pom.xml dependencies with versions"
+    },
+    {
+      "id": "MG-05",
+      "gap": "api.yml response schema does not match actual httpbin response structure",
+      "impact": "Developers relying on the OpenAPI spec will write incorrect response parsing code",
+      "affected_field": "PostResponseObject.json vs actual httpbin json field wrapping",
+      "recommendation": "Update PostResponseObject to accurately reflect the httpbin echo response, including the 'json' property wrapping"
+    },
+    {
+      "id": "MG-06",
+      "gap": "No contributing guidelines or development workflow documentation",
+      "impact": "New contributors have no guidance on branching, testing (or lack thereof), or PR process",
+      "recommendation": "Add CONTRIBUTING.md or a Contributing section to README.md"
+    },
+    {
+      "id": "MG-07",
+      "gap": "Vue 2 End-of-Life status not communicated",
+      "impact": "Teams may plan extensions on an unsupported framework without realising the risk",
+      "recommendation": "Add a note in node-vue-client/README.md: Vue 2 reached EOL December 2023; migration to Vue 3 is recommended for production"
+    }
+  ],
+  "minor_gaps": [
+    {
+      "id": "MIN-01",
+      "gap": "No troubleshooting section",
+      "recommendation": "Add common issues: Java version mismatch, Docker not running, port conflicts on 1337/8080, WebSocket connection failures"
+    },
+    {
+      "id": "MIN-02",
+      "gap": "No license file or license statement",
+      "recommendation": "Add LICENSE file or license declaration to README.md"
+    },
+    {
+      "id": "MIN-03",
+      "gap": "No Node.js version requirement documented",
+      "recommendation": "Document minimum Node.js version in node-server/README.md and node-vue-client/README.md"
+    },
+    {
+      "id": "MIN-04",
+      "gap": "yarn vs npm inconsistency across components",
+      "recommendation": "Standardise on one package manager and document it"
+    },
+    {
+      "id": "MIN-05",
+      "gap": "No CHANGELOG or version history",
+      "recommendation": "Add CHANGELOG.md noting this is a PoC at version 0.0.1-SNAPSHOT"
+    },
+    {
+      "id": "MIN-06",
+      "gap": "WebsocketSwingClient.launch file not explained",
+      "recommendation": "Document in README.md what the .launch file is (IntelliJ run configuration) and how to use it"
+    },
+    {
+      "id": "MIN-07",
+      "gap": "No inline code documentation (Javadoc, JSDoc) in any source file",
+      "recommendation": "Add at minimum public API Javadoc to PocPresenter, PocModel, EventEmitter, HttpBinService"
+    }
+  ],
+  "comparison_report": {
+    "comparison_summary": {
+      "total_discrepancies": 18,
+      "critical_discrepancies": 5,
+      "major_discrepancies": 8,
+      "minor_discrepancies": 5
+    },
+    "api_comparison": {
+      "documented_endpoints": ["POST /post (http://localhost:8080)"],
+      "implemented_endpoints": [
+        "POST /post (http://localhost:8080) — httpbin mock",
+        "WebSocket ws://localhost:1337 — Node.js relay (CONNECT)",
+        "WebSocket message {target, content} — inbound from Vue client",
+        "WebSocket broadcast — outbound to all connected clients"
+      ],
+      "missing_in_docs": [
+        "WebSocket ws://localhost:1337",
+        "WebSocket message protocol {target: string, content: string}",
+        "WebSocket broadcast semantics"
+      ],
+      "schema_discrepancies": [
+        {
+          "location": "api.yml PostResponseObject",
+          "documented": "postObject: {$ref PostObject}",
+          "actual": "httpbin returns {json: {FIRST_NAME, LAST_NAME, ...}} — 'json' key, not 'postObject'",
+          "severity": "major"
+        }
+      ]
+    },
+    "configuration_comparison": {
+      "documented_configs": [
+        "Java SDK >= 22.0.1 (README.md)",
+        "Docker (README.md)",
+        "Port 8080 (README.md via docker command, api.yml server URL)"
+      ],
+      "undocumented_configs": [
+        {"config": "Port 1337 (WebSocket server)", "severity": "critical"},
+        {"config": "ws://localhost:1337 (client connection URL)", "severity": "critical"},
+        {"config": "http://localhost:8080/post (hardcoded HTTP endpoint)", "severity": "major"},
+        {"config": "NODE_PATH environment variable", "severity": "minor"}
+      ]
+    },
+    "dependency_comparison": {
+      "undocumented_dependencies": [
+        {"dependency": "Maven (build tool)", "severity": "major"},
+        {"dependency": "GlassFish Tyrus tyrus-standalone-client:1.15", "severity": "minor"},
+        {"dependency": "javax.json JSON-P 1.1.4", "severity": "minor"},
+        {"dependency": "Node.js runtime (no version specified)", "severity": "major"},
+        {"dependency": "core-js ^3.1.2 (Vue client polyfills)", "severity": "minor"}
+      ],
+      "version_mismatches": []
+    },
+    "feature_comparison": {
+      "undocumented_features": [
+        {"feature": "Node.js WebSocket relay server", "severity": "critical"},
+        {"feature": "Vue.js person search UI", "severity": "critical"},
+        {"feature": "Real-time textarea synchronisation", "severity": "critical"},
+        {"feature": "Transfer to Allegro workflow via WebSocket", "severity": "critical"},
+        {"feature": "MVP pattern in Java Swing layer", "severity": "major"},
+        {"feature": "Mock person dataset (5 hardcoded persons in Search.vue)", "severity": "major"},
+        {"feature": "German-language UI and business context", "severity": "major"},
+        {"feature": "EventEmitter observer pattern", "severity": "minor"},
+        {"feature": "Generic ValueModel<T> container", "severity": "minor"}
+      ],
+      "documented_but_broken": [
+        {
+          "feature": "yarn run test",
+          "documented_location": "node-vue-client/README.md",
+          "issue": "No test suite configured in package.json — command will fail",
+          "severity": "minor"
+        }
+      ]
+    },
+    "architecture_comparison": {
+      "documented_architecture": "Single-component — only Java Swing setup described. No system architecture documented.",
+      "actual_architecture": "Three-component MVP polyglot system: Java Swing desktop (MVP) + Node.js WebSocket relay (port 1337) + Vue.js SPA browser client, communicating via HTTP (port 8080) and WebSocket (port 1337)",
+      "discrepancy": true,
+      "severity": "critical"
+    }
+  },
+  "summary": "The Allegro PoC has critically insufficient documentation for a multi-component system. Of the 6 documentation artifacts present, only the OpenAPI spec (api.yml) provides structured technical value — and even it has a schema mismatch and is missing WebSocket API coverage entirely. The root README documents just one of three components. The Node.js WebSocket relay server — the architectural centrepiece connecting browser and desktop — has zero user-facing documentation. Two doc files contain personal Windows file paths from the original developer, making them actively harmful for other users. The core features (person search, Allegro transfer, real-time sync) are never mentioned in any documentation file. Overall documentation score: 2.5/10 — Inadequate. An estimated 14 hours of documentation work would raise this to Adequate (6/10)."
+}

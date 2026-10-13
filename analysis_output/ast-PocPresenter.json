@@ -1,0 +1,272 @@
+{
+  "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.presentation",
+  "imports": [
+    "com.poc.ValueModel",
+    "com.poc.model.EventEmitter",
+    "com.poc.model.ModelProperties",
+    "com.poc.model.PocModel",
+    "javax.swing.*",
+    "javax.swing.event.DocumentEvent",
+    "javax.swing.event.DocumentListener",
+    "javax.swing.text.BadLocationException",
+    "javax.swing.text.JTextComponent",
+    "java.io.IOException"
+  ],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "PocPresenter",
+      "modifiers": ["public"],
+      "annotations": [],
+      "extends": null,
+      "implements": [],
+      "fields": [
+        { "name": "view",  "type": "PocView",  "modifiers": ["private"], "annotations": [], "initialValue": null },
+        { "name": "model", "type": "PocModel", "modifiers": ["private"], "annotations": [], "initialValue": null }
+      ],
+      "constructors": [
+        {
+          "name": "PocPresenter",
+          "modifiers": ["public"],
+          "parameters": [
+            { "name": "view",         "type": "PocView" },
+            { "name": "model",        "type": "PocModel" },
+            { "name": "eventEmitter", "type": "EventEmitter" }
+          ],
+          "body": [
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "view" },  "value": { "type": "VariableReference", "name": "view" } },
+            { "type": "Assignment", "target": { "type": "FieldAccess", "object": "this", "field": "model" }, "value": { "type": "VariableReference", "name": "model" } },
+            {
+              "type": "MethodInvocation",
+              "target": "eventEmitter",
+              "methodName": "subscribe",
+              "arguments": [
+                {
+                  "type": "LambdaExpression",
+                  "parameters": [{ "name": "eventData", "type": "String" }],
+                  "body": [
+                    { "type": "MethodInvocation", "target": "System.out", "methodName": "println", "arguments": [{ "type": "BinaryExpression", "operator": "+", "left": { "type": "Literal", "value": "\"Event data is : \"" }, "right": { "type": "VariableReference", "name": "eventData" } }] },
+                    { "type": "MethodInvocation", "target": "view.textArea",    "methodName": "setText",       "arguments": [{ "type": "VariableReference", "name": "eventData" }] },
+                    { "type": "MethodInvocation", "target": "view.firstName",   "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.name",        "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.dateOfBirth", "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.zip",         "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.ort",         "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.street",      "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.iban",        "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.bic",         "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.validFrom",   "methodName": "setText",       "arguments": [{ "type": "Literal", "value": "\"\"" }] },
+                    { "type": "MethodInvocation", "target": "view.female",      "methodName": "setSelected",   "arguments": [{ "type": "Literal", "value": "true" }] },
+                    { "type": "MethodInvocation", "target": "view.male",        "methodName": "setSelected",   "arguments": [{ "type": "Literal", "value": "false" }] },
+                    { "type": "MethodInvocation", "target": "view.diverse",     "methodName": "setSelected",   "arguments": [{ "type": "Literal", "value": "false" }] }
+                  ],
+                  "capturedVariables": ["view", "eventData"]
+                }
+              ]
+            },
+            {
+              "type": "MethodInvocation",
+              "target": "view.button",
+              "methodName": "addActionListener",
+              "arguments": [
+                {
+                  "type": "LambdaExpression",
+                  "parameters": [{ "name": "_", "type": "ActionEvent" }],
+                  "body": [
+                    {
+                      "type": "TryCatchStatement",
+                      "tryBlock": [
+                        { "type": "MethodInvocation", "target": "model", "methodName": "action", "arguments": [] }
+                      ],
+                      "catchClauses": [
+                        {
+                          "exceptionType": "IOException",
+                          "variable": "e",
+                          "body": [{ "type": "ThrowStatement", "value": { "type": "ObjectCreation", "className": "RuntimeException", "arguments": [{ "type": "VariableReference", "name": "e" }] } }]
+                        },
+                        {
+                          "exceptionType": "InterruptedException",
+                          "variable": "e",
+                          "body": [{ "type": "ThrowStatement", "value": { "type": "ObjectCreation", "className": "RuntimeException", "arguments": [{ "type": "VariableReference", "name": "e" }] } }]
+                        }
+                      ],
+                      "finallyBlock": null
+                    }
+                  ],
+                  "capturedVariables": ["model"]
+                }
+              ]
+            },
+            { "type": "MethodInvocation", "target": "this", "methodName": "initializeBindings", "arguments": [] }
+          ]
+        }
+      ],
+      "methods": [
+        {
+          "name": "bind",
+          "modifiers": ["private"],
+          "returnType": "void",
+          "parameters": [
+            { "name": "source", "type": "JTextComponent" },
+            { "name": "prop",   "type": "ModelProperties" }
+          ],
+          "throws": [],
+          "annotations": [],
+          "overloads": "bind(JRadioButton, ModelProperties)",
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "name": "model",
+              "variableType": "ValueModel<String>",
+              "value": {
+                "type": "CastExpression",
+                "targetType": "ValueModel<String>",
+                "expression": {
+                  "type": "MethodInvocation",
+                  "target": { "type": "FieldAccess", "object": "PocPresenter.this.model.model", "field": "" },
+                  "methodName": "get",
+                  "arguments": [{ "type": "VariableReference", "name": "prop" }]
+                }
+              }
+            },
+            { "type": "MethodInvocation", "target": "model", "methodName": "setField", "arguments": [{ "type": "MethodInvocation", "target": "source", "methodName": "getText", "arguments": [] }] },
+            {
+              "type": "MethodInvocation",
+              "target": { "type": "MethodInvocation", "target": "source", "methodName": "getDocument", "arguments": [] },
+              "methodName": "addDocumentListener",
+              "arguments": [
+                {
+                  "type": "AnonymousClassCreation",
+                  "interfaceType": "DocumentListener",
+                  "methods": [
+                    {
+                      "name": "insertUpdate",
+                      "modifiers": ["public"],
+                      "annotations": ["@Override"],
+                      "parameters": [{ "name": "e", "type": "DocumentEvent" }],
+                      "body": [
+                        {
+                          "type": "TryCatchStatement",
+                          "tryBlock": [
+                            {
+                              "type": "VariableDeclaration",
+                              "name": "content",
+                              "variableType": "String",
+                              "value": { "type": "MethodInvocation", "target": { "type": "MethodInvocation", "target": "e", "methodName": "getDocument", "arguments": [] }, "methodName": "getText", "arguments": [{ "type": "Literal", "value": "0" }, { "type": "MethodInvocation", "target": { "type": "MethodInvocation", "target": "e", "methodName": "getDocument", "arguments": [] }, "methodName": "getLength", "arguments": [] }] }
+                            },
+                            { "type": "MethodInvocation", "target": "model", "methodName": "setField", "arguments": [{ "type": "VariableReference", "name": "content" }] }
+                          ],
+                          "catchClauses": [{ "exceptionType": "BadLocationException", "variable": "ex", "body": [{ "type": "ThrowStatement", "value": { "type": "ObjectCreation", "className": "RuntimeException", "arguments": [{ "type": "VariableReference", "name": "ex" }] } }] }],
+                          "finallyBlock": null
+                        }
+                      ]
+                    },
+                    {
+                      "name": "removeUpdate",
+                      "modifiers": ["public"],
+                      "annotations": ["@Override"],
+                      "parameters": [{ "name": "e", "type": "DocumentEvent" }],
+                      "body": [
+                        {
+                          "type": "TryCatchStatement",
+                          "tryBlock": [
+                            { "type": "VariableDeclaration", "name": "content", "variableType": "String", "value": { "type": "MethodInvocation", "target": { "type": "MethodInvocation", "target": "e", "methodName": "getDocument", "arguments": [] }, "methodName": "getText", "arguments": [] } },
+                            {
+                              "type": "VariableDeclaration",
+                              "name": "model",
+                              "variableType": "ValueModel<String>",
+                              "value": { "type": "CastExpression", "targetType": "ValueModel<String>", "expression": { "type": "MethodInvocation", "target": "PocPresenter.this.model.model", "methodName": "get", "arguments": [{ "type": "VariableReference", "name": "prop" }] } }
+                            },
+                            { "type": "MethodInvocation", "target": "model", "methodName": "setField", "arguments": [{ "type": "VariableReference", "name": "content" }] }
+                          ],
+                          "catchClauses": [{ "exceptionType": "BadLocationException", "variable": "ex", "body": [{ "type": "ThrowStatement", "value": { "type": "ObjectCreation", "className": "RuntimeException", "arguments": [{ "type": "VariableReference", "name": "ex" }] } }] }],
+                          "finallyBlock": null
+                        }
+                      ]
+                    },
+                    {
+                      "name": "changedUpdate",
+                      "modifiers": ["public"],
+                      "annotations": ["@Override"],
+                      "parameters": [{ "name": "e", "type": "DocumentEvent" }],
+                      "body": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "bind",
+          "modifiers": ["private"],
+          "returnType": "void",
+          "parameters": [
+            { "name": "source", "type": "JRadioButton" },
+            { "name": "prop",   "type": "ModelProperties" }
+          ],
+          "throws": [],
+          "annotations": [],
+          "overloads": "bind(JTextComponent, ModelProperties)",
+          "body": [
+            {
+              "type": "VariableDeclaration",
+              "name": "model",
+              "variableType": "ValueModel<Boolean>",
+              "value": {
+                "type": "CastExpression",
+                "targetType": "ValueModel<Boolean>",
+                "expression": { "type": "MethodInvocation", "target": "PocPresenter.this.model.model", "methodName": "get", "arguments": [{ "type": "VariableReference", "name": "prop" }] }
+              }
+            },
+            { "type": "MethodInvocation", "target": "model", "methodName": "setField", "arguments": [{ "type": "MethodInvocation", "target": "source", "methodName": "isSelected", "arguments": [] }] },
+            {
+              "type": "MethodInvocation",
+              "target": "source",
+              "methodName": "addChangeListener",
+              "arguments": [
+                {
+                  "type": "LambdaExpression",
+                  "parameters": [{ "name": "evt", "type": "ChangeEvent" }],
+                  "body": [
+                    { "type": "MethodInvocation", "target": "model", "methodName": "setField", "arguments": [{ "type": "MethodInvocation", "target": "source", "methodName": "isSelected", "arguments": [] }] },
+                    { "type": "MethodInvocation", "target": "System.out", "methodName": "println", "arguments": [{ "type": "MethodInvocation", "target": "source", "methodName": "isSelected", "arguments": [] }] }
+                  ],
+                  "capturedVariables": ["model", "source"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "initializeBindings",
+          "modifiers": ["private"],
+          "returnType": "void",
+          "parameters": [],
+          "throws": [],
+          "annotations": [],
+          "body": [
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "textArea" },    { "type": "EnumLiteral", "value": "ModelProperties.TEXT_AREA" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "firstName" },   { "type": "EnumLiteral", "value": "ModelProperties.FIRST_NAME" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "name" },        { "type": "EnumLiteral", "value": "ModelProperties.LAST_NAME" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "dateOfBirth" }, { "type": "EnumLiteral", "value": "ModelProperties.DATE_OF_BIRTH" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "zip" },         { "type": "EnumLiteral", "value": "ModelProperties.ZIP" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "ort" },         { "type": "EnumLiteral", "value": "ModelProperties.ORT" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "street" },      { "type": "EnumLiteral", "value": "ModelProperties.STREET" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "iban" },        { "type": "EnumLiteral", "value": "ModelProperties.IBAN" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "bic" },         { "type": "EnumLiteral", "value": "ModelProperties.BIC" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "validFrom" },   { "type": "EnumLiteral", "value": "ModelProperties.VALID_FROM" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "male" },        { "type": "EnumLiteral", "value": "ModelProperties.MALE" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "female" },      { "type": "EnumLiteral", "value": "ModelProperties.FEMALE" }] },
+            { "type": "MethodInvocation", "target": "this", "methodName": "bind", "arguments": [{ "type": "FieldAccess", "object": "view", "field": "diverse" },     { "type": "EnumLiteral", "value": "ModelProperties.DIVERSE" }] }
+          ]
+        }
+      ]
+    }
+  ],
+  "dependencies": ["PocView", "PocModel", "EventEmitter", "ValueModel", "ModelProperties", "DocumentListener", "DocumentEvent"],
+  "complexity_metrics": { "total_methods": 3, "total_fields": 2, "cyclomatic_complexity": 7, "lines_of_code": 113 }
+}

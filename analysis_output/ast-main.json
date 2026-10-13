@@ -1,0 +1,45 @@
+{
+  "file_path": "node-vue-client/src/main.js",
+  "language": "javascript",
+  "ast_version": "1.0",
+  "moduleType": "ESModule",
+  "imports": [
+    { "name": "Vue", "from": "vue",       "default": true },
+    { "name": "App", "from": "./App.vue", "default": true }
+  ],
+  "statements": [
+    {
+      "type": "Assignment",
+      "target": { "type": "FieldAccess", "object": "Vue.config", "field": "productionTip" },
+      "value": { "type": "Literal", "value": "false" }
+    },
+    {
+      "type": "MethodInvocation",
+      "target": {
+        "type": "ObjectCreation",
+        "className": "Vue",
+        "arguments": [
+          {
+            "type": "ObjectLiteral",
+            "properties": [
+              {
+                "key": "render",
+                "value": {
+                  "type": "ArrowFunctionExpression",
+                  "parameters": [{ "name": "h", "type": "Function" }],
+                  "body": [
+                    { "type": "ReturnStatement", "value": { "type": "MethodInvocation", "target": null, "methodName": "h", "arguments": [{ "type": "VariableReference", "name": "App" }] } }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "methodName": "$mount",
+      "arguments": [{ "type": "Literal", "value": "\"#app\"" }]
+    }
+  ],
+  "dependencies": ["vue", "App.vue"],
+  "complexity_metrics": { "total_functions": 1, "cyclomatic_complexity": 1, "lines_of_code": 8 }
+}
