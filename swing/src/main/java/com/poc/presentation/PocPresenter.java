@@ -13,8 +13,8 @@ import javax.swing.text.JTextComponent;
 import java.io.IOException;
 
 public class PocPresenter {
-    private PocView view;
-    private PocModel model;
+    private final PocView view;
+    private final PocModel model;
 
     public PocPresenter(PocView view, PocModel model, EventEmitter eventEmitter) {
         this.view = view;
@@ -40,9 +40,7 @@ public class PocPresenter {
         this.view.button.addActionListener(_ -> {
             try {
                 model.action();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -50,50 +48,48 @@ public class PocPresenter {
         initializeBindings();
     }
 
+    private void updateTextModel(DocumentEvent e, ModelProperties prop) {
+        try {
+            var content = e.getDocument().getText(0, e.getDocument().getLength());
+            @SuppressWarnings("unchecked")
+            var fieldModel = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
+            fieldModel.setField(content);
+        } catch (BadLocationException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     private void bind(JTextComponent source, ModelProperties prop) {
-        var model = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
-        model.setField(source.getText());
+        @SuppressWarnings("unchecked")
+        var fieldModel = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
+        fieldModel.setField(source.getText());
         source.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                try {
-                    var content = e.getDocument().getText(0, e.getDocument().getLength());
-                    model.setField(content);
-                    System.out.println("I am in insert update. " + e.getDocument().getText(0, e.getDocument().getLength()));
-                } catch (BadLocationException ex) {
-                    throw new RuntimeException(ex);
-                }
+                System.out.println("I am in insert update. " + e.getDocument().getLength() + " chars");
+                updateTextModel(e, prop);
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                try {
-                    var content = e.getDocument().getText(0, e.getDocument().getLength());
-                    var model = (ValueModel<String>) PocPresenter.this.model.model.get(prop);
-                    model.setField(content);
-                    System.out.println("I am in remove update. " + e.getDocument().getText(0, e.getDocument().getLength()));
-                } catch (BadLocationException ex) {
-                    throw new RuntimeException(ex);
-                }
+                System.out.println("I am in remove update. " + e.getDocument().getLength() + " chars");
+                updateTextModel(e, prop);
             }
 
             @Override
-            public void changedUpdate(DocumentEvent e) {
-
-            }
+            public void changedUpdate(DocumentEvent e) { }
         });
     }
 
-
     private void bind(JRadioButton source, ModelProperties prop) {
-        var model = (ValueModel<Boolean>) PocPresenter.this.model.model.get(prop);
-        model.setField(source.isSelected());
-        source.addChangeListener(evt -> {
-            model.setField(source.isSelected());
+        @SuppressWarnings("unchecked")
+        var fieldModel = (ValueModel<Boolean>) PocPresenter.this.model.model.get(prop);
+        fieldModel.setField(source.isSelected());
+        source.addChangeListener(_ -> {
+            fieldModel.setField(source.isSelected());
             System.out.println(source.isSelected());
         });
     }
-
 
     private void initializeBindings() {
         bind(view.textArea, ModelProperties.TEXT_AREA);
@@ -111,3 +107,4 @@ public class PocPresenter {
         bind(view.diverse, ModelProperties.DIVERSE);
     }
 }
+
