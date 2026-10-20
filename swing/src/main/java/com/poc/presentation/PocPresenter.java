@@ -40,9 +40,7 @@ public class PocPresenter {
         this.view.button.addActionListener(_ -> {
             try {
                 model.action();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
