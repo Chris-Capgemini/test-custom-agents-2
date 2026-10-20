@@ -1,0 +1,156 @@
+{
+  "analysis_timestamp": "2025-01-01T00:00:00Z",
+  "system_name": "Allegro PoC — Java Swing MVP + WebSocket Client",
+  "architectural_style": "Desktop client application with MVP pattern",
+  "layers": [
+    {
+      "layer_id": "L1",
+      "name": "Presentation Layer",
+      "description": "Swing UI components and Presenter logic handling all user interaction.",
+      "components": ["PocView", "PocPresenter"],
+      "technology": "Java Swing (javax.swing, java.awt)"
+    },
+    {
+      "layer_id": "L2",
+      "name": "Model Layer",
+      "description": "Domain model, business logic orchestration, event management, and data structures.",
+      "components": ["PocModel", "ValueModel", "ModelProperties", "EventEmitter", "EventListener", "ViewData"],
+      "technology": "Plain Java, EnumMap"
+    },
+    {
+      "layer_id": "L3",
+      "name": "Service / Integration Layer",
+      "description": "External system integration — HTTP POST to backend API.",
+      "components": ["HttpBinService"],
+      "technology": "java.net.HttpURLConnection, javax.json"
+    },
+    {
+      "layer_id": "L4",
+      "name": "WebSocket Client Layer",
+      "description": "Standalone WebSocket client application with embedded Swing UI (not integrated with MVP module).",
+      "components": ["websocket.Main", "WebsocketClientEndpoint", "Message", "SearchResult"],
+      "technology": "javax.websocket (Tyrus 1.15), javax.json, Java Swing"
+    }
+  ],
+  "components": [
+    {
+      "component_id": "C1",
+      "name": "PocView",
+      "layer": "L1",
+      "type": "View",
+      "responsibilities": ["Render Allegro form UI", "Provide Swing component references to Presenter"],
+      "dependencies": [],
+      "depended_on_by": ["PocPresenter"]
+    },
+    {
+      "component_id": "C2",
+      "name": "PocPresenter",
+      "layer": "L1",
+      "type": "Presenter",
+      "responsibilities": ["Bind View to Model", "Handle user events", "Subscribe to EventEmitter", "Update View on model events"],
+      "dependencies": ["PocView", "PocModel", "EventEmitter"],
+      "depended_on_by": ["Main (entry point)"]
+    },
+    {
+      "component_id": "C3",
+      "name": "PocModel",
+      "layer": "L2",
+      "type": "Model",
+      "responsibilities": ["Store all form field values", "Orchestrate form submission", "Emit events on operation outcome"],
+      "dependencies": ["ValueModel", "ModelProperties", "HttpBinService", "EventEmitter"],
+      "depended_on_by": ["PocPresenter"]
+    },
+    {
+      "component_id": "C4",
+      "name": "EventEmitter",
+      "layer": "L2",
+      "type": "Infrastructure",
+      "responsibilities": ["Maintain subscriber list", "Broadcast events to all listeners"],
+      "dependencies": ["EventListener"],
+      "depended_on_by": ["PocPresenter", "PocModel", "Main"]
+    },
+    {
+      "component_id": "C5",
+      "name": "HttpBinService",
+      "layer": "L3",
+      "type": "Service",
+      "responsibilities": ["Serialise form data to JSON", "POST to HTTP backend", "Return response body"],
+      "dependencies": ["javax.json", "java.net.HttpURLConnection"],
+      "depended_on_by": ["PocModel"]
+    },
+    {
+      "component_id": "C6",
+      "name": "websocket.Main",
+      "layer": "L4",
+      "type": "Monolithic Client",
+      "responsibilities": ["Render Allegro form UI", "Connect to WebSocket server", "Parse incoming JSON messages", "Update UI from WebSocket data"],
+      "dependencies": ["javax.websocket", "javax.json", "javax.swing"],
+      "depended_on_by": []
+    }
+  ],
+  "external_dependencies": [
+    {
+      "name": "HTTPBin Docker Container",
+      "type": "HTTP Backend",
+      "url": "http://localhost:8080",
+      "protocol": "HTTP/1.1 POST",
+      "purpose": "Echo back form data as JSON response for PoC demonstration"
+    },
+    {
+      "name": "Node.js WebSocket Server",
+      "type": "WebSocket Server",
+      "url": "ws://localhost:1337",
+      "protocol": "WebSocket (RFC 6455)",
+      "purpose": "Broadcast messages to connected Swing WebSocket clients"
+    }
+  ],
+  "design_patterns": [
+    {
+      "pattern": "Model-View-Presenter (MVP)",
+      "components": ["PocModel", "PocView", "PocPresenter"],
+      "description": "Passive View variant where PocPresenter drives all interaction logic. PocView holds no logic."
+    },
+    {
+      "pattern": "Observer / Event Bus",
+      "components": ["EventEmitter", "EventListener"],
+      "description": "Custom synchronous pub-sub implementation for decoupling model outcome notification from presenter."
+    },
+    {
+      "pattern": "Generic Value Object",
+      "components": ["ValueModel<T>"],
+      "description": "Type-safe wrapper used as a data cell for all form fields."
+    },
+    {
+      "pattern": "Enum-keyed Map",
+      "components": ["ModelProperties", "PocModel.model (EnumMap)"],
+      "description": "Using an Enum as map key ensures compile-time safety for field names."
+    },
+    {
+      "pattern": "WebSocket Client Endpoint",
+      "components": ["WebsocketClientEndpoint"],
+      "description": "javax.websocket annotation-driven client endpoint with lifecycle callbacks."
+    }
+  ],
+  "architectural_decisions": [
+    {
+      "decision": "MVP over MVC",
+      "rationale": "MVP provides better testability for Swing applications as the Presenter can be tested without the actual View. The Passive View variant used here maximises this benefit."
+    },
+    {
+      "decision": "Custom EventEmitter over PropertyChangeSupport",
+      "rationale": "A custom EventEmitter provides a simpler, string-based event interface rather than Java's built-in bean event system, more similar to JavaScript EventEmitter style."
+    },
+    {
+      "decision": "HTTPBin as backend",
+      "rationale": "For PoC purposes, HTTPBin echos back any JSON sent to it, allowing form submission round-trip to be demonstrated without a real backend."
+    },
+    {
+      "decision": "Tyrus Standalone Client for WebSocket",
+      "rationale": "Tyrus provides a complete JSR-356 WebSocket client implementation that can run in a standalone Java SE application without a full application server."
+    },
+    {
+      "decision": "Separate WebSocket application (not MVP-structured)",
+      "rationale": "The websocket.Main is a separate, earlier prototype that was not refactored to use MVP. It represents a different development timeline than the com.poc module."
+    }
+  ]
+}
