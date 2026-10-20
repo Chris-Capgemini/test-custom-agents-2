@@ -185,8 +185,7 @@ public class PocView {
         c.fill = GridBagConstraints.HORIZONTAL;
         textArea.setPreferredSize(new Dimension(200, 400));
         textArea.setBorder(BorderFactory.createEtchedBorder());
-        panel.add(textArea);
-        panel.add(textArea, c);
+        panel.add(textArea, c); // single add with GridBagConstraints
 
         c.gridx = 1;
         c.gridy = 5;

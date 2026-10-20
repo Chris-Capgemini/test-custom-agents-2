@@ -5,37 +5,29 @@
 	<groupId>websocket_swing</groupId>
 	<artifactId>websocket_swing</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<properties>
+		<java.version>21</java.version>
+		<maven.compiler.release>${java.version}</maven.compiler.release>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
 
 	<dependencies>
-		<!-- https://mvnrepository.com/artifact/org.glassfish.websocket/websocket-api -->
-		<dependency>
-			<groupId>org.glassfish.websocket</groupId>
-			<artifactId>websocket-api</artifactId>
-			<version>0.2</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/org.glassfish.tyrus.bundles/tyrus-standalone-client -->
+		<!--
+		    Tyrus standalone client (JSR 356 WebSocket 1.1 reference implementation).
+		    This bundle already includes javax.websocket-api, so no separate
+		    websocket-api artifact is needed.
+		    https://mvnrepository.com/artifact/org.glassfish.tyrus.bundles/tyrus-standalone-client
+		-->
 		<dependency>
 			<groupId>org.glassfish.tyrus.bundles</groupId>
 			<artifactId>tyrus-standalone-client</artifactId>
-			<version>1.15</version>
+			<version>1.20</version>
 		</dependency>
 
-
-		<!-- https://mvnrepository.com/artifact/org.glassfish.tyrus/tyrus-websocket-core -->
-		<dependency>
-			<groupId>org.glassfish.tyrus</groupId>
-			<artifactId>tyrus-websocket-core</artifactId>
-			<version>1.2.1</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/org.glassfish.tyrus/tyrus-spi -->
-		<dependency>
-			<groupId>org.glassfish.tyrus</groupId>
-			<artifactId>tyrus-spi</artifactId>
-			<version>1.15</version>
-		</dependency>
-
+		<!-- JSON-P specification API (javax.json namespace) -->
 		<!-- https://mvnrepository.com/artifact/javax.json/javax.json-api -->
 		<dependency>
 			<groupId>javax.json</groupId>
@@ -43,25 +35,25 @@
 			<version>1.1.4</version>
 		</dependency>
 
+		<!-- JSON-P reference implementation (javax.json namespace) -->
 		<!-- https://mvnrepository.com/artifact/org.glassfish/javax.json -->
 		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>javax.json</artifactId>
-			<version>1.0.4</version>
+			<version>1.1.4</version>
 		</dependency>
 
 	</dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>22</source>
-                    <target>22</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
+				<!-- release is set via maven.compiler.release property above -->
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
