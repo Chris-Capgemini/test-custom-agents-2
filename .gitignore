@@ -1,0 +1,15 @@
+# Maven build output
+target/
+
+# IntelliJ IDEA
+*.iml
+.idea/
+*.class
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# macOS
+.DS_Store
