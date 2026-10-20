@@ -7,7 +7,7 @@ Follow these steps to get your Java Swing project up and running:
 
 ## 🔧 Prerequisites
 
-- **Java SDK**: Version **>= 22.0.1**
+- **Java SDK**: Version **>= 25**
 - **IDE**: IntelliJ IDEA (recommended)
 - **Docker**: Docker Desktop or Rancher Desktop
 
@@ -19,7 +19,7 @@ Follow these steps to get your Java Swing project up and running:
 
 > **Path:** `File > Project Structure > Project`
 
-- Set the **Project SDK** to **Java >= 22.0.1**
+- Set the **Project SDK** to **Java >= 25**
 
 ---
 
@@ -54,4 +54,3 @@ websocket_swing/swing/src/main/java
 ```text
 websocket_swing/swing/src/main/java/com
 ```
-
