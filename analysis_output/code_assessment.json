@@ -1,0 +1,304 @@
+{
+  "assessment_metadata": {
+    "application_name": "Allegro — Java Swing MVP POC",
+    "assessment_date": "2025-07-14",
+    "assessor_agent": "code-assessor",
+    "source_root": "swing/src/main/java/com/poc",
+    "language": "Java 22",
+    "pattern": "Model-View-Presenter (MVP)",
+    "total_files_assessed": 9,
+    "total_loc": 445,
+    "prior_outputs_consumed": [
+      "analysis_output/analysis_results.json",
+      "analysis_output/business_rules_extractor_analysis.json",
+      "analysis_output/ast_analysis.md"
+    ]
+  },
+  "scores": {
+    "overall_score": 3.5,
+    "code_complexity": 5,
+    "logic_complexity": 4,
+    "maintainability_score": 3,
+    "testability_score": 2,
+    "security_score": 2
+  },
+  "summary": "The Allegro MVP application contains 2 blocker-level defects (guaranteed NPE on first form submit; sensitive financial data transmitted over plain HTTP), 4 severe issues (EDT blocking, unrecovered thread interruption, HTTP error-stream mishandling, and a double-add UI bug), and 13 further issues spanning encapsulation, configuration, validation, and dead code. Zero tests are configured. Immediate remediation is required before any production use.",
+  "issues": [
+    {
+      "id": "NPE-001",
+      "file": "PocModel.java",
+      "line_number": 39,
+      "issue_type": "Business Logic",
+      "criticality": 5,
+      "message": "NullPointerException guaranteed on first submit: getField().toString() called on null-initialised ValueModel entries",
+      "solution": "Replace the raw toString() call with a null-safe helper. Define a private method safeString(ValueModel<?> vm) that returns vm != null && vm.getField() != null ? vm.getField().toString() : \"\". Call this helper in the loop: data.put(val.toString(), safeString(model.get(val))). Additionally, add a pre-flight validation pass that checks each required field for non-empty/non-null values and throws a descriptive ValidationException before any HTTP call is made. This eliminates the crash and gives the user actionable feedback.",
+      "estimated_time": 1
+    },
+    {
+      "id": "SEC-001",
+      "file": "HttpBinService.java",
+      "line_number": 11,
+      "issue_type": "Security",
+      "criticality": 5,
+      "message": "IBAN and BIC (sensitive financial data) transmitted over plain HTTP — interceptable by any network observer",
+      "solution": "Replace the hardcoded http:// base URL with an https:// endpoint and configure TLS certificate validation. Cast the opened connection to HttpsURLConnection and supply an appropriate SSLSocketFactory. For a local dev server, use a self-signed certificate and add it to a custom TrustStore; never disable certificate verification. Document TLS requirements in a README configuration section. This prevents man-in-the-middle interception of financial data and satisfies basic data-protection obligations (GDPR Art. 32).",
+      "estimated_time": 3
+    },
+    {
+      "id": "EDT-001",
+      "file": "PocPresenter.java",
+      "line_number": 40,
+      "issue_type": "Performance",
+      "criticality": 4,
+      "message": "HTTP POST executed on the Event Dispatch Thread — freezes the entire UI for the duration of the network call",
+      "solution": "Wrap the model.action() call in a SwingWorker<String, Void>. Override doInBackground() to call model.action(). Override done() (which runs on the EDT) to handle success and error states. Disable the submit button before submitting and re-enable it in done() to prevent double-submission. This keeps the UI responsive during network I/O and satisfies Swing's single-threaded model contract.",
+      "estimated_time": 2
+    },
+    {
+      "id": "ERR-001",
+      "file": "PocPresenter.java",
+      "line_number": 43,
+      "issue_type": "Error Handling",
+      "criticality": 4,
+      "message": "InterruptedException wrapped in RuntimeException without restoring the thread's interrupted status; IOException silently rethrown with no user-visible error dialog",
+      "solution": "For InterruptedException: always call Thread.currentThread().interrupt() before re-throwing to restore the interrupt flag. For IOException: show a user-visible error dialog using JOptionPane.showMessageDialog() instead of rethrowing. When combined with the SwingWorker fix (EDT-001), catch both exceptions in SwingWorker.done() via ExecutionException and present them cleanly to the user.",
+      "estimated_time": 1
+    },
+    {
+      "id": "HTTP-001",
+      "file": "HttpBinService.java",
+      "line_number": 28,
+      "issue_type": "Error Handling",
+      "criticality": 4,
+      "message": "responseCode is read but never used for conditional logic; connection.getInputStream() throws IOException for HTTP 4xx/5xx responses, crashing without user feedback",
+      "solution": "After calling connection.getResponseCode(), branch on status: if responseCode >= 200 && responseCode < 300, read from connection.getInputStream(); otherwise read from connection.getErrorStream() (guard with null check). Construct a meaningful exception from error responses, e.g. throw new IOException(\"HTTP \" + responseCode + \": \" + errorBody). This surfaces 4xx/5xx errors as descriptive exceptions rather than silent NPEs.",
+      "estimated_time": 1
+    },
+    {
+      "id": "UI-001",
+      "file": "PocView.java",
+      "line_number": 188,
+      "issue_type": "Code Structure",
+      "criticality": 4,
+      "message": "textArea is added to the panel twice (lines 188 and 189) — the first add with no constraints is a duplicate causing a silent layout anomaly",
+      "solution": "Remove the first bare panel.add(textArea) call on line 188. Keep only the constrained version panel.add(textArea, c) on line 189. A Swing component can only have one parent; the second add() silently re-parents it, so the first call is wasted. Removing the duplicate ensures the intent is clear and eliminates the silent layout side-effect.",
+      "estimated_time": 0.5
+    },
+    {
+      "id": "ENC-001",
+      "file": "PocModel.java",
+      "line_number": 12,
+      "issue_type": "Code Structure",
+      "criticality": 3,
+      "message": "PocModel.model is a public mutable field — any external class can replace or corrupt the entire model map without going through any accessor",
+      "solution": "Change the field declaration to private final Map<ModelProperties, ValueModel<?>> model. Add a controlled accessor: public ValueModel<?> getValue(ModelProperties key) { return model.get(key); } and public void setValue(ModelProperties key, Object value). Update PocPresenter to use these accessors instead of accessing model.model directly. This enforces encapsulation and ensures only controlled mutations are possible.",
+      "estimated_time": 1
+    },
+    {
+      "id": "DES-001",
+      "file": "ModelProperties.java / PocModel.java",
+      "line_number": 1,
+      "issue_type": "Code Structure",
+      "criticality": 3,
+      "message": "TEXT_AREA is a ModelProperties enum constant serialised into the JSON POST payload — it is a view-output display field and should not be a model input property",
+      "solution": "Remove TEXT_AREA from ModelProperties. Declare a separate enum DisplayProperties { TEXT_AREA } for view-only display state, or manage the text area content through a dedicated presenter method. Remove bind(view.textArea, ModelProperties.TEXT_AREA) from initializeBindings() and the corresponding model.put(ModelProperties.TEXT_AREA, ...) in PocModel. This removes the spurious TEXT_AREA key from the HTTP payload and correctly separates input state from display state.",
+      "estimated_time": 1
+    },
+    {
+      "id": "CFG-001",
+      "file": "HttpBinService.java",
+      "line_number": 11,
+      "issue_type": "Maintainability",
+      "criticality": 3,
+      "message": "Base URL http://localhost:8080 and path /post are hardcoded constants — not configurable without recompilation",
+      "solution": "Load the base URL from an external configuration source using System.getProperty(\"allegro.endpoint.url\", \"http://localhost:8080\") or read a config.properties file from the classpath. Pass the configured URL via constructor injection to HttpBinService: public HttpBinService(String baseUrl). Update PocModel to read the configuration and inject it. This enables environment-specific configuration without recompilation.",
+      "estimated_time": 2
+    },
+    {
+      "id": "VAL-001",
+      "file": "PocModel.java",
+      "line_number": 33,
+      "issue_type": "Business Logic",
+      "criticality": 3,
+      "message": "No input validation before HTTP submission — empty fields, invalid IBANs, malformed dates, and invalid ZIP codes are silently transmitted",
+      "solution": "Create a FormValidator class with static validation methods for IBAN checksum, BIC structure, date format, ZIP format, and required-field checks. Call FormValidator.validate(model) at the start of action() and throw a ValidationException listing all failed fields if validation fails. In PocPresenter, catch ValidationException in the button listener and display a JOptionPane listing the errors.",
+      "estimated_time": 3
+    },
+    {
+      "id": "OBS-001",
+      "file": "EventEmitter.java",
+      "line_number": 7,
+      "issue_type": "Maintainability",
+      "criticality": 3,
+      "message": "EventEmitter has no unsubscribe mechanism — listeners accumulate indefinitely; calling subscribe() multiple times causes duplicate event delivery and prevents garbage collection",
+      "solution": "Add an unsubscribe(EventListener listener) method calling listeners.remove(listener). Change the backing list to CopyOnWriteArrayList<EventListener> to avoid ConcurrentModificationException. In PocPresenter, store the listener reference and call eventEmitter.unsubscribe(listener) when the presenter is disposed. This prevents memory leaks, duplicate callbacks, and makes the Observer lifecycle explicit.",
+      "estimated_time": 1
+    },
+    {
+      "id": "CAST-001",
+      "file": "PocPresenter.java",
+      "line_number": 54,
+      "issue_type": "Maintainability",
+      "criticality": 3,
+      "message": "Unchecked casts (ValueModel<String>) and (ValueModel<Boolean>) from the wildcard map — ClassCastException if a property type changes or is mapped incorrectly",
+      "solution": "Add type-safe accessor methods to PocModel: public ValueModel<String> getStringValue(ModelProperties key) and public ValueModel<Boolean> getBooleanValue(ModelProperties key), each performing the cast with a descriptive IllegalStateException on type mismatch. Alternatively introduce typed subclasses StringValueModel and BooleanValueModel. This eliminates unchecked-cast warnings and makes type mismatches detectable at the correct layer.",
+      "estimated_time": 2
+    },
+    {
+      "id": "TEST-001",
+      "file": "pom.xml",
+      "line_number": 1,
+      "issue_type": "Testing",
+      "criticality": 3,
+      "message": "Zero test dependencies declared in pom.xml (no JUnit, no Mockito) — no automated test infrastructure whatsoever",
+      "solution": "Add JUnit 5 (junit-jupiter, scope test) and Mockito (mockito-core, scope test) to pom.xml. Add maven-surefire-plugin (version 3.x) configured for JUnit 5. Write minimum tests: (1) unit test for HttpBinService.post() using a mock HttpURLConnection; (2) unit test for PocModel.action() with a mocked IHttpService; (3) regression test for NPE-001 fix. This is the minimum to make the codebase objectively verifiable.",
+      "estimated_time": 4
+    },
+    {
+      "id": "DEAD-001",
+      "file": "ViewData.java",
+      "line_number": 1,
+      "issue_type": "Code Structure",
+      "criticality": 2,
+      "message": "ViewData is a completely empty class (no fields, no methods, no documentation) — dead code",
+      "solution": "Either implement ViewData as a View State DTO carrying the 9 text-field values and 3 radio-button states used for form reset (replacing the repetitive setText/setSelected calls in the presenter), or delete it entirely. A completed ViewData DTO would enable testing reset logic without a live UI and reduce the presenter lambda significantly.",
+      "estimated_time": 1
+    },
+    {
+      "id": "LOG-001",
+      "file": "PocModel.java, HttpBinService.java, PocPresenter.java",
+      "line_number": 35,
+      "issue_type": "Maintainability",
+      "criticality": 2,
+      "message": "System.out.println used for all logging across 3 files (9 call sites) — no log levels, no configurable output, sensitive response bodies printed to stdout",
+      "solution": "Add SLF4J API and Logback Classic to pom.xml. Replace all System.out.println calls with Logger.debug() / Logger.info() / Logger.error() using private static final Logger log. The HTTP response body log in HttpBinService (which may contain PII) must be debug-level and disabled by default in production logback.xml.",
+      "estimated_time": 2
+    },
+    {
+      "id": "ENC-002",
+      "file": "PocView.java",
+      "line_number": 8,
+      "issue_type": "Code Structure",
+      "criticality": 2,
+      "message": "All 16 UI component fields are declared protected instead of private — violates View encapsulation and the MVP boundary",
+      "solution": "Declare all fields private. Expose each component through named getters: getFirstNameField(), getSubmitButton(), etc. Update PocPresenter to call these getters. This enforces the MVP boundary, makes subclassing safe, and enables View interface extraction for testing.",
+      "estimated_time": 2
+    },
+    {
+      "id": "VIS-001",
+      "file": "PocView.java",
+      "line_number": 201,
+      "issue_type": "Code Structure",
+      "criticality": 2,
+      "message": "frame.setVisible(true) called inside PocView constructor — window becomes visible before PocPresenter attaches event listeners",
+      "solution": "Remove frame.setVisible(true) from initUI(). Add a public void show() method to PocView. Call view.show() at the end of the application entry point after new PocPresenter(view, model, emitter) completes. This guarantees the UI is only presented after all bindings are registered and eliminates the race condition.",
+      "estimated_time": 0.5
+    },
+    {
+      "id": "NAME-001",
+      "file": "EventListener.java",
+      "line_number": 1,
+      "issue_type": "Naming Conventions",
+      "criticality": 2,
+      "message": "Interface named EventListener in com.poc.model shadows java.util.EventListener — confusing for Java developers",
+      "solution": "Rename the interface to ModelEventListener or FormEventListener to avoid the naming collision. Update all implementing classes and EventEmitter accordingly. A distinctive name immediately communicates the domain-specific purpose rather than appearing to be a redefinition of a JDK marker interface.",
+      "estimated_time": 0.5
+    },
+    {
+      "id": "DUP-001",
+      "file": "PocPresenter.java",
+      "line_number": 72,
+      "issue_type": "Maintainability",
+      "criticality": 2,
+      "message": "removeUpdate re-fetches ValueModel from PocPresenter.this.model.model (line 72) redundantly — insertUpdate uses the closure variable from line 54, creating an inconsistent pattern",
+      "solution": "Remove the redundant local variable declaration on line 72 inside removeUpdate. Both insertUpdate and removeUpdate should use the single model variable captured in the outer bind() scope (line 54). The closure already holds the correct reference — the re-fetch is unnecessary, inconsistent, and slightly less efficient.",
+      "estimated_time": 0.5
+    },
+    {
+      "id": "DEAD-002",
+      "file": "HttpBinService.java",
+      "line_number": 28,
+      "issue_type": "Code Structure",
+      "criticality": 1,
+      "message": "responseCode variable is declared and printed to stdout but never used in any conditional logic",
+      "solution": "Use responseCode for HTTP error branching as described in HTTP-001. Until then, at minimum annotate the variable with a TODO or remove the unused assignment. The current state creates a misleading impression that HTTP status codes are being handled when they are not.",
+      "estimated_time": 0.5
+    }
+  ],
+  "enhancements": [
+    {
+      "title": "Introduce SwingWorker for Asynchronous HTTP Execution",
+      "description": "Refactor the button ActionListener in PocPresenter to dispatch the HTTP call via a SwingWorker<String, Void>. This offloads model.action() from the Event Dispatch Thread to a background thread, keeping the UI responsive during network I/O. The doInBackground() method performs the HTTP call; the done() method (which runs on the EDT) handles the response or error dialog. Disable the submit button before doInBackground() and re-enable it in done() to prevent double-submission. This is mandated by Swing's single-threaded model and directly resolves EDT-001 and ERR-001.",
+      "example": "// Before (blocks EDT):\nthis.view.button.addActionListener(_ -> {\n    try { model.action(); }\n    catch (IOException e) { throw new RuntimeException(e); }\n    catch (InterruptedException e) { throw new RuntimeException(e); }\n});\n\n// After (async, non-blocking):\nthis.view.getSubmitButton().addActionListener(_ -> {\n    view.getSubmitButton().setEnabled(false);\n    new SwingWorker<Void, Void>() {\n        @Override\n        protected Void doInBackground() throws Exception {\n            model.action();\n            return null;\n        }\n        @Override\n        protected void done() {\n            view.getSubmitButton().setEnabled(true);\n            try {\n                get();\n            } catch (ExecutionException ex) {\n                Throwable cause = ex.getCause();\n                if (cause instanceof InterruptedException) {\n                    Thread.currentThread().interrupt();\n                }\n                JOptionPane.showMessageDialog(view.getFrame(),\n                    \"Einreichung fehlgeschlagen: \" + cause.getMessage(),\n                    \"Fehler\", JOptionPane.ERROR_MESSAGE);\n            } catch (InterruptedException ex) {\n                Thread.currentThread().interrupt();\n            }\n        }\n    }.execute();\n});",
+      "priority": 5
+    },
+    {
+      "title": "Extract IHttpService Interface for Dependency Injection and Testability",
+      "description": "Define an IHttpService interface with a single method post(Map<String, String> data) throws IOException. Refactor HttpBinService to implement this interface. Inject the interface into PocModel via constructor. This decouples PocModel from the concrete HTTP implementation, enables mocking in unit tests, and makes future replacement (e.g., switching to java.net.http.HttpClient) transparent to the model. The endpoint URL should also be injected via the HttpBinService constructor rather than hardcoded.",
+      "example": "// New interface:\npublic interface IHttpService {\n    String post(Map<String, String> data) throws IOException;\n}\n\n// Updated HttpBinService:\npublic class HttpBinService implements IHttpService {\n    private final String baseUrl;\n    public HttpBinService(String baseUrl) {\n        this.baseUrl = Objects.requireNonNull(baseUrl, \"baseUrl must not be null\");\n    }\n    @Override\n    public String post(Map<String, String> data) throws IOException { ... }\n}\n\n// Updated PocModel constructor:\npublic PocModel(EventEmitter eventEmitter, IHttpService httpService) {\n    this.httpService = Objects.requireNonNull(httpService);\n    ...\n}\n\n// Unit test:\n@Test\nvoid action_emitsResponseBody_onSuccess() throws Exception {\n    IHttpService mockHttp = Mockito.mock(IHttpService.class);\n    Mockito.when(mockHttp.post(Mockito.anyMap())).thenReturn(\"{\\\"status\\\":\\\"ok\\\"}\");\n    EventEmitter emitter = new EventEmitter();\n    PocModel model = new PocModel(emitter, mockHttp);\n    // populate required fields...\n    model.action();\n    // assert emitter fired with response body\n}",
+      "priority": 4
+    },
+    {
+      "title": "Implement FormValidator Class with Per-Field Validation Rules",
+      "description": "Create a FormValidator class that encapsulates all validation rules for the personal data form. It exposes a validate(Map<ModelProperties, ValueModel<?>> model) method returning a List<ValidationError>. Rules should include: required field checks for FIRST_NAME, LAST_NAME, IBAN, BIC, DATE_OF_BIRTH; IBAN checksum validation; BIC structural validation (8 or 11 chars, uppercase); date format validation; ZIP numeric check; and exactly one gender selected. PocModel.action() calls this before building the HTTP payload and throws ValidationException(List<ValidationError>) if validation fails. The presenter displays a JOptionPane with the error list.",
+      "example": "public class FormValidator {\n    public static List<ValidationError> validate(\n            Map<ModelProperties, ValueModel<?>> model) {\n        var errors = new ArrayList<ValidationError>();\n        requireNonEmpty(model, ModelProperties.FIRST_NAME, \"Vorname\", errors);\n        requireNonEmpty(model, ModelProperties.LAST_NAME,  \"Name\",    errors);\n        requireNonEmpty(model, ModelProperties.IBAN,       \"IBAN\",    errors);\n        requireNonEmpty(model, ModelProperties.BIC,        \"BIC\",     errors);\n        validateIban(model, errors);\n        validateBic(model, errors);\n        validateDate(model, ModelProperties.DATE_OF_BIRTH, \"Geburtsdatum\", errors);\n        validateGender(model, errors);\n        return errors;\n    }\n\n    private static void requireNonEmpty(\n            Map<ModelProperties, ValueModel<?>> model,\n            ModelProperties key, String label,\n            List<ValidationError> errors) {\n        var vm = model.get(key);\n        if (vm == null || vm.getField() == null\n                || vm.getField().toString().isBlank()) {\n            errors.add(new ValidationError(key, label + \" ist erforderlich\"));\n        }\n    }\n\n    private static void validateIban(\n            Map<ModelProperties, ValueModel<?>> model,\n            List<ValidationError> errors) {\n        String iban = getString(model, ModelProperties.IBAN);\n        if (iban != null && !iban.isBlank() && !IbanValidator.isValid(iban)) {\n            errors.add(new ValidationError(ModelProperties.IBAN,\n                \"IBAN-Format ist ungültig\"));\n        }\n    }\n}",
+      "priority": 4
+    },
+    {
+      "title": "Extract IFormView Interface to Fully Enforce the MVP Boundary",
+      "description": "Define an IFormView interface that exposes the View's observable contract to the Presenter without exposing concrete Swing components. Methods include: setResponseText(String), clearAllFields(), setSubmitEnabled(boolean), addSubmitListener(ActionListener), addFieldListener(ModelProperties, Consumer<String>), showError(String, String), and show(). PocView implements IFormView; PocPresenter depends only on IFormView. This enables headless mock-view testing of the Presenter in isolation, enforces the MVP passive-view contract, and makes the Presenter reusable with alternative view implementations.",
+      "example": "// IFormView interface:\npublic interface IFormView {\n    void setResponseText(String text);\n    void clearAllFields();\n    void resetGenderToFemale();\n    void setSubmitEnabled(boolean enabled);\n    void addSubmitListener(ActionListener listener);\n    void addFieldChangeListener(ModelProperties field, Consumer<String> onChange);\n    void showError(String title, String message);\n    void showInfo(String title, String message);\n    void show();\n}\n\n// PocView implements IFormView:\npublic class PocView implements IFormView {\n    private final JTextField firstNameField = new JTextField();\n    private final JTextField ibanField = new JTextField();\n    // ...\n    @Override public void clearAllFields() {\n        firstNameField.setText(\"\");\n        ibanField.setText(\"\");\n        // ...\n    }\n    @Override public void showError(String title, String msg) {\n        JOptionPane.showMessageDialog(frame, msg, title,\n            JOptionPane.ERROR_MESSAGE);\n    }\n    @Override public void show() { frame.setVisible(true); }\n}\n\n// Test with mock view:\n@Test\nvoid presenter_clearsForm_onSuccessEvent() {\n    IFormView mockView = Mockito.mock(IFormView.class);\n    // ... wire up presenter, trigger event\n    Mockito.verify(mockView).clearAllFields();\n}",
+      "priority": 3
+    },
+    {
+      "title": "Adopt SLF4J + Logback and Remove All System.out.println Debug Statements",
+      "description": "Add SLF4J API and Logback Classic to pom.xml as dependencies. Replace all 9 System.out.println call sites across PocModel, HttpBinService, and PocPresenter with structured log statements at appropriate levels. Pay particular attention to HttpBinService lines 30-31, which print the full HTTP response body (potentially containing PII and financial data) to stdout — these must be debug-level only and disabled by default in the production logback.xml configuration. This eliminates personal-data leakage through console logs in production environments.",
+      "example": "<!-- pom.xml additions -->\n<dependency>\n    <groupId>org.slf4j</groupId>\n    <artifactId>slf4j-api</artifactId>\n    <version>2.0.13</version>\n</dependency>\n<dependency>\n    <groupId>ch.qos.logback</groupId>\n    <artifactId>logback-classic</artifactId>\n    <version>1.5.6</version>\n    <scope>runtime</scope>\n</dependency>\n\n// Before (HttpBinService.java - PII leak risk):\nSystem.out.println(\"Response code: \" + responseCode);\nSystem.out.println(\"Response body: \" + responseBody);\n\n// After:\nprivate static final Logger log =\n    LoggerFactory.getLogger(HttpBinService.class);\n// ...\nlog.info(\"HTTP POST to {} returned status {}\", baseUrl + PATH, responseCode);\nlog.debug(\"Response body length: {} chars\", responseBody.length());\n// NEVER log the actual body in production — it contains PII/financial data\n\n// src/main/resources/logback.xml (production defaults):\n// <root level=\"INFO\"> — suppresses all DEBUG output by default",
+      "priority": 3
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_type": "Test Debt",
+      "description": "Zero tests exist and zero test infrastructure is configured in pom.xml (no JUnit, no Mockito, no Surefire plugin). The two blocker-level defects have no regression protection. The HttpBinService tight coupling makes even manual testing slow. This is the highest-risk form of technical debt for a form processing application handling financial data.",
+      "impact": "HIGH",
+      "estimated_fix_time": 12
+    },
+    {
+      "debt_type": "Code Debt",
+      "description": "PocModel.model is a public field accessed directly as PocPresenter.this.model.model — a double-indirection that breaks encapsulation. All 9 presenter binding calls reach into the model's internal map without any accessor contract. Any rename or structural change to the map requires touching both classes simultaneously.",
+      "impact": "HIGH",
+      "estimated_fix_time": 2
+    },
+    {
+      "debt_type": "Design Debt",
+      "description": "TEXT_AREA is modelled as a form input property in both ModelProperties and PocModel, and is included in the JSON POST payload. It is architecturally an output display field, not an input. Its presence in the model conflates output state with input state and pollutes the HTTP payload with a spurious TEXT_AREA key on every submission.",
+      "impact": "MEDIUM",
+      "estimated_fix_time": 1
+    },
+    {
+      "debt_type": "Design Debt",
+      "description": "The Observer pattern (EventEmitter/EventListener) has no lifecycle management: no unsubscribe method, no weak references, and the ArrayList backing is not thread-safe. In the current single-use app this is manageable, but any future multi-window or long-lived presenter scenario will cause listener accumulation and ghost callbacks.",
+      "impact": "MEDIUM",
+      "estimated_fix_time": 1
+    },
+    {
+      "debt_type": "Design Debt",
+      "description": "HttpBinService is hardwired as a concrete dependency inside PocModel with new HttpBinService(). The service name 'HttpBinService' is a prototype artefact (httpbin.org is a request-inspection service) left in a production codebase. No interface, no injection point — complete test isolation of PocModel is impossible without byte-code manipulation.",
+      "impact": "MEDIUM",
+      "estimated_fix_time": 2
+    },
+    {
+      "debt_type": "Documentation Debt",
+      "description": "No Javadoc exists on any public class, method, or field across all 9 source files. The application uses German-language UI labels and German enum names (ORT, IBAN, BIC, VALID_FROM) without any English-language documentation of their meaning, purpose, or validation constraints.",
+      "impact": "MEDIUM",
+      "estimated_fix_time": 3
+    },
+    {
+      "debt_type": "Infrastructure Debt",
+      "description": "pom.xml declares WebSocket dependencies (Tyrus, websocket-api) that are not used by any class in the current codebase. The project artifactId is 'websocket_swing', suggesting an incomplete migration or prototype leftover. Unused dependencies increase build time, JAR size, and the dependency-vulnerability surface area.",
+      "impact": "LOW",
+      "estimated_fix_time": 1
+    }
+  ]
+}

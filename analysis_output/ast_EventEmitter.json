@@ -1,0 +1,96 @@
+{
+  "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+  "language": "java",
+  "ast_version": "1.0",
+  "packageName": "com.poc.model",
+  "imports": [
+    "java.util.ArrayList",
+    "java.util.List"
+  ],
+  "typeDeclarations": [
+    {
+      "type": "ClassDeclaration",
+      "name": "EventEmitter",
+      "modifiers": ["public"],
+      "typeParameters": [],
+      "extends": null,
+      "implements": [],
+      "annotations": [],
+      "fields": [
+        {
+          "name": "listeners",
+          "fieldType": "List<EventListener>",
+          "modifiers": ["private", "final"],
+          "annotations": [],
+          "initialValue": {
+            "type": "ObjectCreation",
+            "class": "ArrayList",
+            "typeArguments": ["EventListener"],
+            "arguments": []
+          }
+        }
+      ],
+      "constructors": [],
+      "methods": [
+        {
+          "name": "subscribe",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [
+            { "name": "listener", "type": "EventListener", "annotations": [] }
+          ],
+          "annotations": [],
+          "throws": [],
+          "body": [
+            {
+              "type": "MethodInvocation",
+              "target": "listeners",
+              "methodName": "add",
+              "arguments": [
+                { "type": "VariableReference", "name": "listener", "variableType": "EventListener" }
+              ]
+            }
+          ],
+          "complexity": 1
+        },
+        {
+          "name": "emit",
+          "modifiers": ["public"],
+          "returnType": "void",
+          "parameters": [
+            { "name": "eventData", "type": "String", "annotations": [] }
+          ],
+          "annotations": [],
+          "throws": [],
+          "body": [
+            {
+              "type": "ForEachStatement",
+              "variable": { "name": "listener", "type": "EventListener" },
+              "iterable": { "type": "VariableReference", "name": "listeners", "variableType": "List<EventListener>" },
+              "body": [
+                {
+                  "type": "MethodInvocation",
+                  "target": "listener",
+                  "methodName": "onEvent",
+                  "arguments": [
+                    { "type": "VariableReference", "name": "eventData", "variableType": "String" }
+                  ]
+                }
+              ]
+            }
+          ],
+          "complexity": 2
+        }
+      ],
+      "innerClasses": []
+    }
+  ],
+  "complexity_metrics": {
+    "totalMethods": 2,
+    "totalFields": 1,
+    "totalConstructors": 0,
+    "cyclomaticComplexity": 2,
+    "linesOfCode": 21
+  },
+  "design_patterns": ["Observer Pattern – Subject / Event Bus"]
+}
