@@ -1,10 +1,13 @@
 package com.poc.model;
 
-import javax.json.Json;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Map;
-import java.util.Scanner;
 
 public class HttpBinService {
 
@@ -12,27 +15,22 @@ public class HttpBinService {
     public static final String PATH = "/post";
     public static final String CONTENT_TYPE = "application/json";
 
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(CONNECT_TIMEOUT)
+            .build();
+
     public String post(Map<String, String> data) throws IOException, InterruptedException {
-        HttpURLConnection connection = (HttpURLConnection) new java.net.URL(URL + PATH).openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", CONTENT_TYPE);
-        connection.setDoOutput(true);
-        var jsonGeneratorFactory = Json.createGeneratorFactory(null);
-        var generator = jsonGeneratorFactory.createGenerator(connection.getOutputStream());
-        generator.writeStartObject();
-        for (var entry : data.entrySet()) {
-            generator.write(entry.getKey(), entry.getValue());
-        }
-        generator.writeEnd();
-        generator.close();
-        var responseCode = connection.getResponseCode();
-        var responseBody = new Scanner(connection.getInputStream()).useDelimiter("\\A").next();
-        System.out.println("Response code: " + responseCode);
-        System.out.println("Response body: " + responseBody);
-        connection.disconnect();
-
-
-
-        return responseBody;
+        var body = mapper.writeValueAsString(data);
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(URL + PATH))
+                .header("Content-Type", CONTENT_TYPE)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Response code: " + response.statusCode());
+        System.out.println("Response body: " + response.body());
+        return response.body();
     }
 }
