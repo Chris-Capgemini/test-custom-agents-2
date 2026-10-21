@@ -1,0 +1,1323 @@
+{
+  "analysis_timestamp": "2026-10-21T11:44:00Z",
+  "repository_name": "test-custom-agents-2",
+  "total_files_analyzed": 28,
+  "files": [
+    {
+      "file_path": "swing/src/main/java/com/Main.java",
+      "file_name": "Main.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Bootstraps the PocView, PocModel, EventEmitter, and PocPresenter for the Swing form proof of concept.",
+      "description": "This entry point constructs the view, event bus, model, and presenter, then blocks the main thread on a CountDownLatch. The latch is never decremented in this class, so the application remains running while the Swing UI is open. This launcher targets the com.poc MVC-style prototype, distinct from websocket.Main and the Eclipse launch configuration's websocket.Main target.",
+      "business_rules": [],
+      "technical_libraries": ["Java Swing application classes", "Java concurrency utilities"],
+      "business_capability": "Swing form application startup",
+      "sub_capability": "PoC component wiring",
+      "method_breakdown": [
+        {
+          "method_name": "main",
+          "summary": "Creates and wires the PoC view, model, event emitter, and presenter, then blocks.",
+          "parameters": ["args: String[] - Java command-line arguments"],
+          "returns": "void",
+          "dependencies": ["PocView", "PocModel", "PocPresenter", "EventEmitter", "CountDownLatch"],
+          "significance": "Composition root for the MVC-style Swing prototype."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Wires one view, model, presenter, and event emitter for the application lifetime."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": "InterruptedException propagates from main."
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/websocket/Main.java",
+      "file_name": "Main.java",
+      "language": "java",
+      "category": "Mixed",
+      "summary": "Builds a Swing form for Allegro-style person and payment details and connects it to a WebSocket endpoint. Incoming messages are routed to either the form fields or a text area.",
+      "description": "This standalone prototype combines a Swing user interface, a Tyrus WebSocket client endpoint, and JSON-P parsing in one class. It expects a server at localhost port 1337 and maps message targets to form updates. Its UI and data shape overlap conceptually with the Node/Vue mock but it is a separate implementation; the repository does not establish a complete integrated deployment.",
+      "business_rules": [
+        "Messages targeted at textarea populate the text area; messages targeted at textfield populate person and payment fields.",
+        "Gender options are mutually exclusive through a Swing ButtonGroup, with female selected by default.",
+        "The client expects person properties and payment properties such as IBAN, BIC, and validity start date in the received JSON."
+      ],
+      "technical_libraries": ["Java Swing", "Java WebSocket API", "Tyrus", "Java JSON Processing (JSON-P)"],
+      "business_capability": "Allegro form data transfer",
+      "sub_capability": "Desktop message-to-form mapping",
+      "method_breakdown": [
+        {
+          "method_name": "main",
+          "summary": "Creates the UI and opens the configured WebSocket endpoint.",
+          "parameters": ["args: String[] - Java command-line arguments"],
+          "returns": "void",
+          "dependencies": ["initUI", "WebsocketClientEndpoint", "Tyrus WebSocket container"],
+          "significance": "Application entry point for this desktop prototype."
+        },
+        {
+          "method_name": "initUI",
+          "summary": "Constructs and displays a Swing form for person, address, gender, payment, and text data.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["Swing components and layout managers"],
+          "significance": "Defines the user-facing desktop form."
+        },
+        {
+          "method_name": "WebsocketClientEndpoint",
+          "summary": "Connects the annotated endpoint to a WebSocket URI and waits on a latch.",
+          "parameters": ["endpointURI: URI - WebSocket server address"],
+          "returns": "WebsocketClientEndpoint",
+          "dependencies": ["WebSocketContainer", "CountDownLatch"],
+          "significance": "Establishes the bridge between the Swing application and the message server."
+        },
+        {
+          "method_name": "onOpen",
+          "summary": "Stores the active session when the WebSocket opens.",
+          "parameters": ["userSession: Session - Open connection session"],
+          "returns": "void",
+          "dependencies": ["Java WebSocket API"],
+          "significance": "Makes the connection available for outbound messages."
+        },
+        {
+          "method_name": "onClose",
+          "summary": "Clears the active session and releases the waiting latch.",
+          "parameters": ["userSession: Session - Closed session", "reason: CloseReason - Close status"],
+          "returns": "void",
+          "dependencies": ["Java WebSocket API", "CountDownLatch"],
+          "significance": "Allows the application thread to finish after disconnect."
+        },
+        {
+          "method_name": "onMessage",
+          "summary": "Parses an incoming envelope and updates either the text area or form fields.",
+          "parameters": ["json: String - Incoming message envelope"],
+          "returns": "void",
+          "dependencies": ["extract", "toSearchResult", "Swing components"],
+          "significance": "Implements the inbound message routing contract."
+        },
+        {
+          "method_name": "sendMessage",
+          "summary": "Sends text asynchronously through the current WebSocket session.",
+          "parameters": ["message: String - Outbound message text"],
+          "returns": "void",
+          "dependencies": ["Session.getAsyncRemote"],
+          "significance": "Provides the endpoint's outbound messaging capability."
+        },
+        {
+          "method_name": "extract",
+          "summary": "Scans JSON tokens for target and content and constructs a message envelope.",
+          "parameters": ["json: String - JSON message"],
+          "returns": "Message - Extracted target and content",
+          "dependencies": ["JSON-P streaming parser"],
+          "significance": "Determines how incoming data should be interpreted."
+        },
+        {
+          "method_name": "toSearchResult",
+          "summary": "Extracts person and payment fields from JSON into an internal result object.",
+          "parameters": ["json: String - JSON object to scan"],
+          "returns": "SearchResult - Parsed form values",
+          "dependencies": ["JSON-P streaming parser"],
+          "significance": "Maps the message payload to the desktop form's field model."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Private Message holds a target and string content; SearchResult holds person, address, and selected payment values.",
+        "table_mappings": null,
+        "field_constraints": "No explicit required-field, format, or length validation is implemented.",
+        "relationship_mappings": "The message target selects the destination UI area; person and payment fields are represented together in SearchResult."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "No JSON schema or malformed-message handling is defined.",
+        "business_validation_logic": "Only the two recognized target strings produce UI updates; other values have no switch action.",
+        "constraint_violation_handling": "Parser errors and Swing update issues are not caught in the message callback."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Connects to a local WebSocket service at localhost:1337.",
+        "api_consumption_patterns": "Uses an annotated Java WebSocket endpoint and JSON-P token scanning.",
+        "error_handling_for_integrations": "Connection setup wraps deployment, I/O, and interruption failures in RuntimeException; no reconnect or inbound error policy is shown."
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/ValueModel.java",
+      "file_name": "ValueModel.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "A generic mutable holder for a single model value.",
+      "description": "ValueModel<T> stores a value and exposes simple getter and setter operations. It is used by the Swing proof-of-concept model and presenter to hold typed field values. It contains no domain behavior or validation.",
+      "business_rules": [],
+      "technical_libraries": ["Java standard library"],
+      "business_capability": "Presentation state",
+      "sub_capability": "Typed value storage",
+      "method_breakdown": [
+        {
+          "method_name": "ValueModel",
+          "summary": "Initializes the holder with an initial value.",
+          "parameters": ["field: T - Initial value"],
+          "returns": "ValueModel<T>",
+          "dependencies": [],
+          "significance": "Creates reusable storage for presenter-bound field values."
+        },
+        {
+          "method_name": "getField",
+          "summary": "Returns the currently stored value.",
+          "parameters": [],
+          "returns": "T - Stored value",
+          "dependencies": [],
+          "significance": "Allows model consumers to read field state."
+        },
+        {
+          "method_name": "setField",
+          "summary": "Replaces the currently stored value.",
+          "parameters": ["field: T - New value"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Allows bound UI inputs to update model state."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Generic wrapper with one mutable field.",
+        "table_mappings": null,
+        "field_constraints": "No nullability or value constraints.",
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "file_name": "EventEmitter.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Maintains listeners and synchronously broadcasts string events to them.",
+      "description": "EventEmitter provides a minimal in-process observer mechanism backed by an ArrayList. Subscribers are appended and each emit call invokes all listeners in insertion order. There is no unsubscribe, thread-safety, or listener-failure isolation.",
+      "business_rules": [],
+      "technical_libraries": ["Java Collections Framework"],
+      "business_capability": "UI event propagation",
+      "sub_capability": "In-process observer utility",
+      "method_breakdown": [
+        {
+          "method_name": "subscribe",
+          "summary": "Registers a listener for subsequent events.",
+          "parameters": ["listener: EventListener - Callback to register"],
+          "returns": "void",
+          "dependencies": ["EventListener"],
+          "significance": "Connects event producers to the presenter."
+        },
+        {
+          "method_name": "emit",
+          "summary": "Calls each registered listener with the supplied string.",
+          "parameters": ["eventData: String - Event payload"],
+          "returns": "void",
+          "dependencies": ["EventListener"],
+          "significance": "Propagates model outcomes to interested UI code."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Stores a list of EventListener references.",
+        "table_mappings": null,
+        "field_constraints": "No duplicate subscription or null checks.",
+        "relationship_mappings": "One emitter can notify multiple listeners."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "No validation of listener or event payload.",
+        "business_validation_logic": null,
+        "constraint_violation_handling": "Listener exceptions propagate and can prevent later listeners from receiving the event."
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": "Synchronous callback dispatch.",
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/EventListener.java",
+      "file_name": "EventListener.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Defines the callback contract used by EventEmitter.",
+      "description": "EventListener is a one-method interface receiving a string event payload. It provides the callback type for the proof-of-concept observer mechanism and contains no implementation or domain rules.",
+      "business_rules": [],
+      "technical_libraries": ["Java language features"],
+      "business_capability": "UI event propagation",
+      "sub_capability": "Event callback contract",
+      "method_breakdown": [
+        {
+          "method_name": "onEvent",
+          "summary": "Consumes an event payload.",
+          "parameters": ["eventData: String - Event content"],
+          "returns": "void",
+          "dependencies": [],
+          "significance": "Defines the contract implemented by event subscribers."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Implemented by event consumers and invoked by EventEmitter."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "file_name": "HttpBinService.java",
+      "language": "java",
+      "category": "Mixed",
+      "summary": "Posts a map of string fields as JSON to a local HTTPBin endpoint and returns the response body.",
+      "description": "The service serializes input map entries with JSON-P, sends an HTTP POST to localhost:8080/post, prints the response code and body, disconnects, and returns the body. It is a technical adapter used by the PoC to demonstrate sending form data rather than a production business API. The response is read without checking HTTP status or handling an error stream.",
+      "business_rules": ["The request uses the application/json content type and the POST method."],
+      "technical_libraries": ["Java HttpURLConnection", "Java JSON Processing (JSON-P)"],
+      "business_capability": "Form submission demonstration",
+      "sub_capability": "HTTP JSON POST",
+      "method_breakdown": [
+        {
+          "method_name": "post",
+          "summary": "Serializes a string map, posts it to HTTPBin, logs and returns the response body.",
+          "parameters": ["data: Map<String, String> - Fields to serialize into the JSON request"],
+          "returns": "String - Response body",
+          "dependencies": ["HttpURLConnection", "JSON-P", "Scanner"],
+          "significance": "Provides the model's outbound HTTP integration."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Accepts a generic map of string keys and string values; no persistent entity is defined.",
+        "table_mappings": null,
+        "field_constraints": "No request-field validation; values must be strings.",
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": "No validation of map keys, values, or endpoint response.",
+        "business_validation_logic": null,
+        "constraint_violation_handling": "I/O errors are declared to callers; non-success HTTP status handling is absent."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Local HTTPBin-compatible endpoint at localhost:8080/post.",
+        "api_consumption_patterns": "Synchronous HTTP POST containing a JSON object.",
+        "error_handling_for_integrations": "Propagates IOException and InterruptedException; reads getInputStream regardless of status and does not guarantee disconnect in a finally block."
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "file_name": "ModelProperties.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Enumerates the person, address, payment, gender, and text properties used by the PoC model.",
+      "description": "ModelProperties centralizes string-like form field identifiers and three gender flags as enum constants. PocModel uses the enum as keys in an EnumMap, and the same names are serialized into its outbound payload. The enum itself has no behavior or validation.",
+      "business_rules": ["The enum constants define the set of fields iterated during model submission."],
+      "technical_libraries": ["Java enum"],
+      "business_capability": "Form data representation",
+      "sub_capability": "Field identifier catalog",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": "Enum of textarea, person, address, payment, and gender property identifiers.",
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Used as keys in PocModel.model and converted to names for request keys."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/PocModel.java",
+      "file_name": "PocModel.java",
+      "language": "java",
+      "category": "Business",
+      "summary": "Initializes the Swing PoC's field model and submits all values to the HTTPBin adapter when an action is requested.",
+      "description": "PocModel initializes an EnumMap of ValueModel wrappers for every ModelProperties value, using Boolean wrappers for gender flags and String wrappers for other fields. Its action method logs values, assembles a string map, calls HttpBinService, and emits either the returned body or a failure message. Several values start null, but action calls toString without a null guard, so an untouched field can fail before the request.",
+      "business_rules": [
+        "All enum-defined fields are included in the submission map.",
+        "A non-empty response body is emitted as the result; an empty body emits the literal failure message.",
+        "Gender values are represented as Boolean model fields, while all submitted values are converted to strings."
+      ],
+      "technical_libraries": ["Java Collections Framework", "Java JSON Processing via HttpBinService"],
+      "business_capability": "Form submission",
+      "sub_capability": "Capture and submit form state",
+      "method_breakdown": [
+        {
+          "method_name": "PocModel",
+          "summary": "Creates a typed model wrapper for every enum property and stores the event emitter.",
+          "parameters": ["eventEmitter: EventEmitter - Receives request outcome events"],
+          "returns": "PocModel",
+          "dependencies": ["ModelProperties", "ValueModel", "HttpBinService", "EventEmitter"],
+          "significance": "Defines the state that the presenter binds to the UI."
+        },
+        {
+          "method_name": "action",
+          "summary": "Logs current state, converts it to a string map, posts it, and emits the result.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["HttpBinService.post", "EventEmitter.emit"],
+          "significance": "Coordinates the PoC's form-submission workflow."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "EnumMap<ModelProperties, ValueModel<?>> representing form state.",
+        "table_mappings": null,
+        "field_constraints": "Values are initialized to null; gender values are Boolean and other values are String.",
+        "relationship_mappings": "Each enum property maps to a ValueModel; the model delegates HTTP work and publishes outcomes."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "No required-field, date, address, or payment validation.",
+        "business_validation_logic": "Only response-body emptiness determines success versus the emitted failure message.",
+        "constraint_violation_handling": "Null field values cause NullPointerException during conversion; no local handling."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Delegates to the local HTTPBin service.",
+        "api_consumption_patterns": "Submits all enum values as a JSON object through HttpBinService.",
+        "error_handling_for_integrations": "Declares IOException and InterruptedException; presentation layer handles these by wrapping them in RuntimeException."
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/model/ViewData.java",
+      "file_name": "ViewData.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "An empty placeholder class in the PoC model package.",
+      "description": "ViewData has no fields, methods, or behavior. It currently contributes no data-transfer or presentation functionality.",
+      "business_rules": [],
+      "technical_libraries": [],
+      "business_capability": "None implemented",
+      "sub_capability": "Placeholder",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": "Empty class.",
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "file_name": "PocPresenter.java",
+      "language": "java",
+      "category": "Mixed",
+      "summary": "Binds Swing controls to PocModel and connects the submit button and model events to UI behavior.",
+      "description": "The presenter registers an event listener that displays a response and resets form controls, attaches the submit action to PocModel.action, and initializes text and radio-button bindings. Document listeners update the model on text edits; radio change listeners update Boolean values. UI updates occur directly in callbacks and exceptions are converted to RuntimeException, with no explicit Swing thread or interruption management.",
+      "business_rules": [
+        "Clicking the submit button invokes the model action.",
+        "After an event, the presenter clears person, address, and payment controls and selects the female radio option.",
+        "Text components map to string-valued enum fields and gender radio buttons map to Boolean fields."
+      ],
+      "technical_libraries": ["Java Swing", "Swing document and change listeners"],
+      "business_capability": "Form interaction orchestration",
+      "sub_capability": "UI-model binding and submit workflow",
+      "method_breakdown": [
+        {
+          "method_name": "PocPresenter",
+          "summary": "Registers outcome handling, submit-button behavior, and field bindings.",
+          "parameters": ["view: PocView - Swing form", "model: PocModel - Form state and action", "eventEmitter: EventEmitter - Model result events"],
+          "returns": "PocPresenter",
+          "dependencies": ["PocView", "PocModel", "EventEmitter"],
+          "significance": "Connects the view, model, and submission workflow."
+        },
+        {
+          "method_name": "bind (text component)",
+          "summary": "Initializes a string model value and tracks document insertions and removals.",
+          "parameters": ["source: JTextComponent - Bound control", "prop: ModelProperties - Model key"],
+          "returns": "void",
+          "dependencies": ["ValueModel", "DocumentListener"],
+          "significance": "Keeps text input changes reflected in model state."
+        },
+        {
+          "method_name": "bind (radio button)",
+          "summary": "Initializes a Boolean model value and tracks selection changes.",
+          "parameters": ["source: JRadioButton - Bound control", "prop: ModelProperties - Model key"],
+          "returns": "void",
+          "dependencies": ["ValueModel", "Swing ChangeListener"],
+          "significance": "Captures gender selection in model state."
+        },
+        {
+          "method_name": "initializeBindings",
+          "summary": "Binds every form text field, text area, and gender option to its model property.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["bind", "PocView", "ModelProperties"],
+          "significance": "Ensures submitted model state corresponds to visible controls."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "No separate entities; binds Swing components to ValueModel entries keyed by ModelProperties.",
+        "table_mappings": null,
+        "field_constraints": "No input constraints or validation are attached.",
+        "relationship_mappings": "One presenter coordinates one view and model, while the event emitter supplies submission outcomes."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Document events copy raw text without format checks.",
+        "business_validation_logic": "No domain validation; event handling resets controls to defaults.",
+        "constraint_violation_handling": "BadLocationException and model action errors are wrapped in RuntimeException; InterruptedException is not restored."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Indirectly invokes HttpBinService through PocModel.",
+        "api_consumption_patterns": "Button-driven model action and in-process EventEmitter callback.",
+        "error_handling_for_integrations": "I/O and interruption are rethrown as unchecked exceptions from the button callback."
+      }
+    },
+    {
+      "file_path": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "file_name": "PocView.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Creates the Swing form controls used by the PoC presenter.",
+      "description": "PocView owns a JFrame, text inputs, a text area, three gender radio buttons, and a submit button. Its constructor builds a GridBagLayout form and displays the window. It is presentation infrastructure; no business rules or input validation are included.",
+      "business_rules": [],
+      "technical_libraries": ["Java Swing", "AWT layout classes"],
+      "business_capability": "Form user interface",
+      "sub_capability": "Desktop form rendering",
+      "method_breakdown": [
+        {
+          "method_name": "PocView",
+          "summary": "Creates the form and initializes its UI.",
+          "parameters": [],
+          "returns": "PocView",
+          "dependencies": ["initUI"],
+          "significance": "Provides the view instance consumed by PocPresenter."
+        },
+        {
+          "method_name": "initUI",
+          "summary": "Lays out and displays the form controls in a JFrame.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["Swing components", "GridBagLayout"],
+          "significance": "Defines the desktop interaction surface."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "UI controls represent person, address, payment, gender, and response text values.",
+        "table_mappings": null,
+        "field_constraints": "Controls have no field-level constraints.",
+        "relationship_mappings": "PocPresenter accesses the view controls and binds them to model properties."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-server/src/WebsocketServer.js",
+      "file_name": "WebsocketServer.js",
+      "language": "javascript",
+      "category": "Technical",
+      "summary": "Runs a WebSocket server on port 1337 and relays received UTF-8 messages to all currently connected clients.",
+      "description": "The Node process creates an otherwise empty HTTP server and attaches the websocket package's WebSocket server. Accepted connections are kept in an array; each UTF-8 message is broadcast unchanged to every array entry, including its sender. On close, the stored client index is removed. Message history and a separate messages array are unused.",
+      "business_rules": ["Only UTF-8 message frames are broadcast.", "Every connected client receives each broadcast message."],
+      "technical_libraries": ["Node.js http", "websocket npm package"],
+      "business_capability": "Client message relay",
+      "sub_capability": "WebSocket broadcast",
+      "method_breakdown": [
+        {
+          "method_name": "HTTP server request callback",
+          "summary": "Handles HTTP requests with an empty response body implementation.",
+          "parameters": ["request: IncomingMessage - HTTP request", "response: ServerResponse - HTTP response"],
+          "returns": "void",
+          "dependencies": ["Node.js http"],
+          "significance": "Provides the underlying HTTP server required by the WebSocket service."
+        },
+        {
+          "method_name": "WebSocket request handler",
+          "summary": "Accepts a connection, registers message and close handlers, and broadcasts text frames.",
+          "parameters": ["request: WebSocketRequest - Incoming upgrade request"],
+          "returns": "void",
+          "dependencies": ["websocket server", "clients array"],
+          "significance": "Implements all server-side message relay behavior."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "In-memory arrays hold connection references; messages are not persisted.",
+        "table_mappings": null,
+        "field_constraints": "No message size, schema, origin, or client-count constraints are applied in this code.",
+        "relationship_mappings": "One incoming message is fanned out to all active client connections."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Checks the frame type is UTF-8 but does not parse or validate its content.",
+        "business_validation_logic": null,
+        "constraint_violation_handling": "No explicit send failure or malformed payload handling."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Uses the npm websocket package.",
+        "api_consumption_patterns": "Listens for WebSocket upgrade requests on an HTTP server at port 1337.",
+        "error_handling_for_integrations": "No server error, send failure, or connection recovery policy is defined."
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/App.vue",
+      "file_name": "App.vue",
+      "language": "vue",
+      "category": "Technical",
+      "summary": "Provides the Vue application's header and renders the Search component.",
+      "description": "The root single-file component displays a static Search Mock header, reserves a logo element, and supplies initial text to Search. Its styles define the basic page and header appearance. It contains no domain state or search logic.",
+      "business_rules": [],
+      "technical_libraries": ["Vue 2"],
+      "business_capability": "Search mock interface",
+      "sub_capability": "Application shell",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Imports and renders Search as its child component."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/main.js",
+      "file_name": "main.js",
+      "language": "javascript",
+      "category": "Technical",
+      "summary": "Bootstraps the Vue application and mounts the root component at the app element.",
+      "description": "The entry point imports Vue and App.vue, disables the production-tip message, and instantiates a Vue root with a render function. It contains only application initialization.",
+      "business_rules": [],
+      "technical_libraries": ["Vue 2"],
+      "business_capability": "Client application startup",
+      "sub_capability": "Vue bootstrap",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Mounts App.vue on the DOM element with id app."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/src/components/Search.vue",
+      "file_name": "Search.vue",
+      "language": "vue",
+      "category": "Business",
+      "summary": "Implements a mock person search form, result and payment selection tables, and WebSocket transfer of selected values or text.",
+      "description": "Search presents German-labeled person/address inputs, a result list, payment-recipient choices, a transfer button, and a text area. Search data is a hard-coded in-memory sample set rather than a remote search API; the form matches results when any supported populated criterion matches, using case-insensitive partial comparisons for names, city, street, and house number and equality for postal code. It sends selected-result and text-area messages to localhost:1337 using a target/content JSON envelope, and the component's WebSocket connection is initiated on mount.",
+      "business_rules": [
+        "A result is included when any populated supported criterion matches (OR semantics), not only when every entered criterion matches.",
+        "Names, city, street, and house number use case-insensitive substring matching; postal code uses equality.",
+        "The selected payment recipient replaces the result's payment-recipient list in the outgoing textfield payload.",
+        "Changes to the internal text area are sent with the textarea target."
+      ],
+      "technical_libraries": ["Vue 2", "Browser WebSocket API"],
+      "business_capability": "Person lookup and data handoff",
+      "sub_capability": "Mock search, payment selection, and transfer",
+      "method_breakdown": [
+        {
+          "method_name": "connect",
+          "summary": "Opens a WebSocket connection to localhost port 1337 and records a connected status on open.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["Browser WebSocket API"],
+          "significance": "Connects the browser UI to the relay server."
+        },
+        {
+          "method_name": "disconnect",
+          "summary": "Closes the socket and resets status and logs.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["WebSocket instance"],
+          "significance": "Provides an explicit connection shutdown path."
+        },
+        {
+          "method_name": "searchPerson",
+          "summary": "Filters the in-memory sample records against populated search fields and replaces the result list.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["formdata", "search_space"],
+          "significance": "Implements the prototype's core lookup behavior."
+        },
+        {
+          "method_name": "sendMessage",
+          "summary": "Clones content, optionally replaces payment details, and sends a target/content JSON envelope.",
+          "parameters": ["e: Object or string - Data to transfer", "target: String - Destination type"],
+          "returns": "void",
+          "dependencies": ["JSON serialization", "WebSocket instance"],
+          "significance": "Defines the front-end transfer contract consumed by the server and desktop client."
+        },
+        {
+          "method_name": "selectResult",
+          "summary": "Marks a person result as selected.",
+          "parameters": ["item: Object - Selected person result"],
+          "returns": "void",
+          "dependencies": ["Vue component state"],
+          "significance": "Determines which result can be transferred."
+        },
+        {
+          "method_name": "zahlungsempfaengerSelected",
+          "summary": "Stores the selected payment-recipient entry.",
+          "parameters": ["zahlungsempfaenger: Object - Selected payment data"],
+          "returns": "void",
+          "dependencies": ["Vue component state"],
+          "significance": "Chooses the payment details included in the transfer."
+        },
+        {
+          "method_name": "internal_content_textarea watcher",
+          "summary": "Sends text-area changes to the peer with the textarea target.",
+          "parameters": ["val: String - Updated text"],
+          "returns": "void",
+          "dependencies": ["sendMessage"],
+          "significance": "Keeps text content synchronized through the relay."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Component state holds search criteria, hard-coded person records, selected person, and nested payment-recipient records.",
+        "table_mappings": null,
+        "field_constraints": "Several displayed fields are disabled; no other type, format, or required-field constraints are enforced.",
+        "relationship_mappings": "A person result has a list of payment recipients; selection of one recipient affects the outgoing person transfer."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Search fields are compared directly; no sanitization or schema validation is present.",
+        "business_validation_logic": "Any one matching populated criterion is sufficient to return a record.",
+        "constraint_violation_handling": "No empty-selection guard, WebSocket readiness check, error callback, or reconnect behavior is implemented."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "No remote search service is called; records are embedded in component state.",
+        "api_consumption_patterns": "Sends JSON text over browser WebSocket to ws://localhost:1337/.",
+        "error_handling_for_integrations": "Only onopen is handled; close, error, inbound messages, and send-before-open failures have no explicit handling."
+      }
+    },
+    {
+      "file_path": "pom.xml",
+      "file_name": "pom.xml",
+      "language": "xml",
+      "category": "Technical",
+      "summary": "Defines the Maven project and dependencies for Java WebSocket, Tyrus, JSON-P, and Java 22 compilation.",
+      "description": "The root Maven descriptor identifies the websocket_swing artifact, declares WebSocket/Tyrus and JSON-P dependencies, and configures compiler source and target 22. It contains build and dependency configuration only, not business behavior.",
+      "business_rules": [],
+      "technical_libraries": ["Maven", "Java WebSocket API", "Tyrus", "JSON-P"],
+      "business_capability": "Java application build",
+      "sub_capability": "Dependency and compiler configuration",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Declares Maven dependencies required by Java WebSocket and JSON processing code."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "api.yml",
+      "file_name": "api.yml",
+      "language": "yaml",
+      "category": "Technical",
+      "summary": "Documents an OpenAPI 3.0.1 POST /post contract with a person/payment-oriented request schema and HTTPBin-like response fields.",
+      "description": "The API document describes a localhost:8080 endpoint, a JSON request containing a user object, and an example person-oriented PostObject schema. The defined response shape and schema references are not shown implemented by the Node WebSocket server, which instead listens on port 1337; treat this as a separate or illustrative API contract.",
+      "business_rules": ["The documented POST operation requires a JSON request body."],
+      "technical_libraries": ["OpenAPI 3.0.1"],
+      "business_capability": "API contract documentation",
+      "sub_capability": "Person data POST schema",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": "PostObject lists string properties for person, address, gender, payment, and text fields.",
+        "table_mappings": null,
+        "field_constraints": "Properties are strings; no required property list or format constraints are specified within the object schema.",
+        "relationship_mappings": "Request wraps PostObject under user; documented response schema exposes a postObject property."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "OpenAPI marks the request body required but does not mark individual object properties required.",
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": "Describes POST /post on localhost:8080.",
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-server/package.json",
+      "file_name": "package.json",
+      "language": "json",
+      "category": "Technical",
+      "summary": "Declares the Node server's websocket package dependency.",
+      "description": "The server manifest contains only the websocket package dependency and does not define npm scripts, runtime metadata, or a test command.",
+      "business_rules": [],
+      "technical_libraries": ["websocket"],
+      "business_capability": "Node WebSocket server runtime",
+      "sub_capability": "Dependency declaration",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/package.json",
+      "file_name": "package.json",
+      "language": "json",
+      "category": "Technical",
+      "summary": "Defines the Vue 2 client package, Vue CLI scripts, dependencies, lint configuration, and browser targets.",
+      "description": "The manifest configures serve, build, and lint scripts; declares Vue 2 and core-js runtime dependencies; and lists Vue CLI/Babel/ESLint development tools. It contains project setup rather than application behavior.",
+      "business_rules": [],
+      "technical_libraries": ["Vue 2", "Vue CLI 4", "Babel", "ESLint", "core-js"],
+      "business_capability": "Browser client build",
+      "sub_capability": "Frontend tooling configuration",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "node-vue-client/babel.config.js",
+      "file_name": "babel.config.js",
+      "language": "javascript",
+      "category": "Technical",
+      "summary": "Configures Babel to use the Vue CLI Babel preset.",
+      "description": "This small build configuration exports the preset used to transpile the Vue client. It contains no runtime application logic.",
+      "business_rules": [],
+      "technical_libraries": ["Babel", "@vue/cli-plugin-babel"],
+      "business_capability": "Browser client build",
+      "sub_capability": "JavaScript transpilation configuration",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": null
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/java/com/poc/api/runner/CucumberTestRunner.java",
+      "file_name": "CucumberTestRunner.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Configures the JUnit Platform suite to discover and run Cucumber feature scenarios.",
+      "description": "The suite selects the features classpath resource, enables the Cucumber engine, sets step-definition glue, excludes @ignored scenarios, and configures pretty, HTML, and JSON reports. It is test infrastructure rather than application runtime code.",
+      "business_rules": [],
+      "technical_libraries": ["JUnit Platform Suite", "Cucumber"],
+      "business_capability": "API test execution",
+      "sub_capability": "BDD test runner",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Discovers feature scenarios and binds them to the configured step-definition package."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": "Test failures are reported through JUnit/Cucumber and generated reports."
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+      "file_name": "PostStepDefinitions.java",
+      "language": "java",
+      "category": "Mixed",
+      "summary": "Implements Cucumber steps for preparing requests to and asserting responses from the documented POST endpoint.",
+      "description": "Step definitions build request state from data tables or named sample personas, send either an empty or populated POST through ApiClient, and assert status, response content, field values, and content type. These are integration-test expectations, not proof that a production API implements persistence or field updates; the named prior-submission step only seeds a local map.",
+      "business_rules": [
+        "Unknown named test personas are rejected with IllegalArgumentException.",
+        "The suite expects HTTP 200 for its listed submission scenarios.",
+        "Submitted values should appear in the response body; field checks use JSONPath where available and fall back to searching the body."
+      ],
+      "technical_libraries": ["Cucumber", "RestAssured", "AssertJ", "SLF4J"],
+      "business_capability": "POST endpoint verification",
+      "sub_capability": "Request setup and response assertions",
+      "method_breakdown": [
+        {
+          "method_name": "setUp",
+          "summary": "Clears request state before each scenario.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["TestContext"],
+          "significance": "Prevents request data from leaking between scenarios."
+        },
+        {
+          "method_name": "theApiBaseUrlIs",
+          "summary": "Sets scenario base URL and creates the API client.",
+          "parameters": ["baseUrl: String - API root URI"],
+          "returns": "void",
+          "dependencies": ["TestContext", "ApiClient"],
+          "significance": "Configures the endpoint used by each scenario."
+        },
+        {
+          "method_name": "iHaveTheFollowingUserData",
+          "summary": "Copies field/value rows from a Cucumber data table into request state.",
+          "parameters": ["dataTable: List<Map<String, String>> - Request fields"],
+          "returns": "void",
+          "dependencies": ["TestContext"],
+          "significance": "Builds payloads from readable feature specifications."
+        },
+        {
+          "method_name": "iHavePreviouslySubmittedUserDataFor",
+          "summary": "Loads a named fixture into local request state; it does not perform a prior HTTP submission.",
+          "parameters": ["userName: String - Fixture persona label"],
+          "returns": "void",
+          "dependencies": ["resolveUserData", "TestContext", "TestDataBuilder"],
+          "significance": "Supports update-shaped test cases using fixture data."
+        },
+        {
+          "method_name": "iSendAPostRequestTo",
+          "summary": "Posts the current body, choosing the empty-body request when no fields exist, and stores the response.",
+          "parameters": ["path: String - Relative endpoint path"],
+          "returns": "void",
+          "dependencies": ["ApiClient", "TestContext"],
+          "significance": "Executes the API interaction for a scenario."
+        },
+        {
+          "method_name": "theResponseStatusCodeShouldBe",
+          "summary": "Asserts the response status against the expected code.",
+          "parameters": ["expectedStatusCode: int - Expected HTTP status"],
+          "returns": "void",
+          "dependencies": ["TestContext", "AssertJ"],
+          "significance": "Checks the primary HTTP outcome."
+        },
+        {
+          "method_name": "theResponseBodyShouldContainTheSubmittedData",
+          "summary": "Checks that every submitted value occurs in the response body.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["TestContext", "AssertJ"],
+          "significance": "Verifies echo-like response behavior."
+        },
+        {
+          "method_name": "theResponseFieldShouldEqual",
+          "summary": "Compares a JSONPath value or falls back to checking for the expected value in the body.",
+          "parameters": ["fieldName: String - Response JSONPath", "expectedValue: String - Expected value"],
+          "returns": "void",
+          "dependencies": ["RestAssured JSONPath", "AssertJ"],
+          "significance": "Tests field-level response expectations."
+        },
+        {
+          "method_name": "theResponseContentTypeShouldBe",
+          "summary": "Asserts that the response content type includes the expected media type.",
+          "parameters": ["expectedContentType: String - Expected response media type"],
+          "returns": "void",
+          "dependencies": ["TestContext", "AssertJ"],
+          "significance": "Checks response format expectations."
+        },
+        {
+          "method_name": "resolveUserData",
+          "summary": "Maps one of three known persona labels to a fixture map.",
+          "parameters": ["userName: String - Fixture persona label"],
+          "returns": "Map<String, String> - Fixture request values",
+          "dependencies": ["TestDataBuilder"],
+          "significance": "Centralizes named fixture selection."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Scenario request state is a map of string field names to string values; response state is a RestAssured Response.",
+        "table_mappings": null,
+        "field_constraints": "No schema validation is performed in the step definitions.",
+        "relationship_mappings": "Step methods use TestContext, ApiClient, and TestDataBuilder to execute Cucumber scenarios."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Data tables supply raw strings; persona labels are matched against a fixed set.",
+        "business_validation_logic": "Asserts the expectations declared by feature scenarios; this does not implement API business validation.",
+        "constraint_violation_handling": "AssertJ assertion failures fail the scenario; unknown personas throw IllegalArgumentException."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Calls the configured local/remote HTTP API through ApiClient.",
+        "api_consumption_patterns": "Scenario-driven JSON POST requests and response assertions.",
+        "error_handling_for_integrations": "RestAssured exceptions and assertion failures propagate to Cucumber."
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java",
+      "file_name": "ApiClient.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Wraps RestAssured POST calls with a reusable JSON request specification.",
+      "description": "ApiClient binds a supplied base URI and JSON content/accept headers into a RequestSpecification. It exposes methods for posting a map body or an empty JSON object and returns the raw RestAssured response.",
+      "business_rules": [],
+      "technical_libraries": ["RestAssured"],
+      "business_capability": "API test execution",
+      "sub_capability": "HTTP test client",
+      "method_breakdown": [
+        {
+          "method_name": "ApiClient",
+          "summary": "Builds a JSON-oriented request specification for the base URL.",
+          "parameters": ["baseUrl: String - API root URI"],
+          "returns": "ApiClient",
+          "dependencies": ["RequestSpecBuilder", "ContentType"],
+          "significance": "Centralizes HTTP test defaults."
+        },
+        {
+          "method_name": "post",
+          "summary": "Sends a JSON POST with the supplied map and returns the response.",
+          "parameters": ["path: String - Endpoint path", "requestBody: Map<String, String> - JSON body fields"],
+          "returns": "Response - HTTP response",
+          "dependencies": ["RestAssured"],
+          "significance": "Provides the common populated-request operation."
+        },
+        {
+          "method_name": "postEmpty",
+          "summary": "Sends a POST with an empty JSON object and returns the response.",
+          "parameters": ["path: String - Endpoint path"],
+          "returns": "Response - HTTP response",
+          "dependencies": ["RestAssured"],
+          "significance": "Supports empty-body test scenarios."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Request payload is a generic string-to-string map.",
+        "table_mappings": null,
+        "field_constraints": "No payload validation; content type and accept type are JSON.",
+        "relationship_mappings": "Uses a shared request specification for POST operations."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": "HTTP and parsing exceptions propagate from RestAssured."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Sends HTTP calls to the configured API base URL.",
+        "api_consumption_patterns": "JSON POST requests to relative endpoint paths.",
+        "error_handling_for_integrations": "Returns response without asserting a status; callers perform assertions."
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestContext.java",
+      "file_name": "TestContext.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Stores per-scenario API base URL, request fields, and response.",
+      "description": "TestContext is mutable Cucumber scenario state. It allows request fields to be added or replaced, clears the request map by creating a new HashMap, and stores a RestAssured response. It performs no validation or copying of assigned maps.",
+      "business_rules": [],
+      "technical_libraries": ["Java Collections Framework", "RestAssured"],
+      "business_capability": "API test execution",
+      "sub_capability": "Scenario state management",
+      "method_breakdown": [
+        {
+          "method_name": "getBaseUrl / setBaseUrl",
+          "summary": "Reads and writes the scenario API base URL.",
+          "parameters": ["baseUrl: String - API root URI (setter)"],
+          "returns": "String or void",
+          "dependencies": [],
+          "significance": "Shares endpoint configuration across steps."
+        },
+        {
+          "method_name": "getRequestBody / setRequestBody",
+          "summary": "Reads or replaces the request field map.",
+          "parameters": ["requestBody: Map<String, String> - Replacement fields (setter)"],
+          "returns": "Map<String, String> or void",
+          "dependencies": ["Java Map"],
+          "significance": "Holds the scenario's current payload."
+        },
+        {
+          "method_name": "addRequestField",
+          "summary": "Adds or replaces one request field.",
+          "parameters": ["field: String - Field name", "value: String - Field value"],
+          "returns": "void",
+          "dependencies": ["Java Map"],
+          "significance": "Supports incremental request construction."
+        },
+        {
+          "method_name": "clearRequestBody",
+          "summary": "Replaces request state with an empty map.",
+          "parameters": [],
+          "returns": "void",
+          "dependencies": ["HashMap"],
+          "significance": "Resets payload state between scenarios."
+        },
+        {
+          "method_name": "getResponse / setResponse",
+          "summary": "Reads and writes the latest RestAssured response.",
+          "parameters": ["response: Response - Captured API response (setter)"],
+          "returns": "Response or void",
+          "dependencies": ["RestAssured Response"],
+          "significance": "Passes the HTTP result from the When step to Then assertions."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Scenario context contains base URL, mutable request map, and response reference.",
+        "table_mappings": null,
+        "field_constraints": "No null checks or defensive copies.",
+        "relationship_mappings": "Shared by step definitions within a Cucumber scenario."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestDataBuilder.java",
+      "file_name": "TestDataBuilder.java",
+      "language": "java",
+      "category": "Technical",
+      "summary": "Creates sample person/payment request maps and supports overriding fixture fields.",
+      "description": "TestDataBuilder contains static fixture factories for sample personas, an empty map helper, and a fluent Builder that clones a starting map and allows field replacement. It is test data support and does not validate formats or implement domain behavior.",
+      "business_rules": [],
+      "technical_libraries": ["Java Collections Framework"],
+      "business_capability": "API test execution",
+      "sub_capability": "Fixture generation",
+      "method_breakdown": [
+        {
+          "method_name": "hansMueller / mariaSchmidt / alexWeber",
+          "summary": "Returns a complete sample field map for a predefined test persona.",
+          "parameters": [],
+          "returns": "Map<String, String> - Sample fields",
+          "dependencies": ["HashMap"],
+          "significance": "Provides repeatable scenario fixtures."
+        },
+        {
+          "method_name": "empty",
+          "summary": "Returns an empty mutable map.",
+          "parameters": [],
+          "returns": "Map<String, String>",
+          "dependencies": ["HashMap"],
+          "significance": "Provides minimal request fixture state."
+        },
+        {
+          "method_name": "from",
+          "summary": "Copies a base map into a new fluent builder.",
+          "parameters": ["baseData: Map<String, String> - Initial field values"],
+          "returns": "Builder",
+          "dependencies": ["HashMap"],
+          "significance": "Supports update-shaped fixture composition without mutating the base map."
+        },
+        {
+          "method_name": "Builder.with",
+          "summary": "Adds or replaces a field and returns the builder.",
+          "parameters": ["field: String - Field name", "value: String - Field value"],
+          "returns": "Builder",
+          "dependencies": ["Builder data map"],
+          "significance": "Enables concise fixture overrides."
+        },
+        {
+          "method_name": "Builder.build",
+          "summary": "Returns the builder's mutable data map.",
+          "parameters": [],
+          "returns": "Map<String, String>",
+          "dependencies": [],
+          "significance": "Provides the composed fixture payload."
+        }
+      ],
+      "data_model_analysis": {
+        "entity_definitions": "Sample maps contain person, address, payment, gender flag, and text fields.",
+        "table_mappings": null,
+        "field_constraints": "All fixture values are strings; no format checks are performed.",
+        "relationship_mappings": "Builder starts from a copied map and returns an overridable fixture map."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "No field or value validation.",
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/resources/features/java_update.feature",
+      "file_name": "java_update.feature",
+      "language": "gherkin",
+      "category": "Business",
+      "summary": "Specifies BDD scenarios for POST submissions, field updates, partial and empty requests, content type, and multiple sample users.",
+      "description": "The feature defines a localhost API base URL and scenarios that expect successful POST responses, echoed field values, and JSON content type. Its update scenarios seed a fixture map and submit it; they do not demonstrate persisted state across calls. Scenarios document test expectations rather than providing the endpoint implementation.",
+      "business_rules": [
+        "The scenarios expect HTTP 200 for full, partial, and empty POST cases.",
+        "Selected update scenarios expect changed name, address, or payment values to be present in the response.",
+        "The content-type scenario expects an application/json response.",
+        "The feature includes several gender representations and data combinations in sample test cases."
+      ],
+      "technical_libraries": ["Gherkin", "Cucumber"],
+      "business_capability": "POST API behavior specification",
+      "sub_capability": "Submission and update scenario coverage",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": "Scenario tables describe string-valued person, address, payment, gender, and free-text fields.",
+        "table_mappings": null,
+        "field_constraints": "The feature includes partial and empty bodies; no field-level format contract is enforced by these scenarios.",
+        "relationship_mappings": "Background configures the API base URL; Given/When/Then steps operate on scenario request and response state."
+      },
+      "validation_rules": {
+        "input_validation_patterns": "Contains scenarios for sparse and empty requests but asserts successful status rather than rejection.",
+        "business_validation_logic": "Test expectations cover returned field values and HTTP metadata.",
+        "constraint_violation_handling": "Failures are recorded by the Cucumber/JUnit test runner."
+      },
+      "external_integrations": {
+        "third_party_service_calls": "Targets the API configured at localhost:8080.",
+        "api_consumption_patterns": "POST /post with JSON data.",
+        "error_handling_for_integrations": "Response expectations are asserted by PostStepDefinitions."
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/src/test/resources/cucumber.properties",
+      "file_name": "cucumber.properties",
+      "language": "properties",
+      "category": "Technical",
+      "summary": "Configures Cucumber feature discovery, step glue, reporting plugins, and default tag filtering.",
+      "description": "The properties select the feature resource directory and step package, enable pretty/HTML/JSON reports, quiet publishing, and exclude @ignored scenarios. This is test-runner configuration only.",
+      "business_rules": [],
+      "technical_libraries": ["Cucumber"],
+      "business_capability": "API test execution",
+      "sub_capability": "Cucumber runtime configuration",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Configures the runner to discover features and matching step definitions."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    },
+    {
+      "file_path": "analysis_output/api-test-generator/pom.xml",
+      "file_name": "pom.xml",
+      "language": "xml",
+      "category": "Technical",
+      "summary": "Defines a separate Java 17 Maven test project using Cucumber, JUnit 5, RestAssured, AssertJ, and logging.",
+      "description": "The test-project descriptor configures the API test suite dependencies, Java 17 compilation, and Surefire runner selection. The project is isolated under analysis_output/api-test-generator and targets a localhost POST service; its location and project documentation identify it as an API test generator/output artifact, but its test sources and runner are present and were included in the analysis.",
+      "business_rules": [],
+      "technical_libraries": ["Maven", "Cucumber 7", "JUnit 5", "RestAssured", "AssertJ", "SLF4J", "Logback"],
+      "business_capability": "API test execution",
+      "sub_capability": "Test project build configuration",
+      "method_breakdown": [],
+      "data_model_analysis": {
+        "entity_definitions": null,
+        "table_mappings": null,
+        "field_constraints": null,
+        "relationship_mappings": "Declares dependencies and test-runner configuration for test sources in the project."
+      },
+      "validation_rules": {
+        "input_validation_patterns": null,
+        "business_validation_logic": null,
+        "constraint_violation_handling": null
+      },
+      "external_integrations": {
+        "third_party_service_calls": null,
+        "api_consumption_patterns": null,
+        "error_handling_for_integrations": null
+      }
+    }
+  ],
+  "summary": {
+    "business_files": 3,
+    "technical_files": 21,
+    "mixed_files": 4,
+    "languages_detected": ["java", "javascript", "vue", "xml", "yaml", "json", "gherkin", "properties"],
+    "primary_frameworks": ["Java Swing", "Java WebSocket API/Tyrus", "Java JSON-P", "Vue 2", "Node.js websocket package", "Maven", "Cucumber", "JUnit 5", "RestAssured", "AssertJ"]
+  }
+}

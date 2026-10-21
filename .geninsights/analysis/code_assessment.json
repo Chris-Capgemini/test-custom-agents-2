@@ -1,0 +1,249 @@
+{
+  "assessment_timestamp": "2026-10-21T11:52:50Z",
+  "files_reviewed": 28,
+  "overall_health_score": 65,
+  "summary": {
+    "total_issues": 11,
+    "critical_issues": 0,
+    "technical_debt_items": 5,
+    "enhancement_suggestions": 4,
+    "avg_code_complexity": 2.86,
+    "avg_logic_complexity": 1.5
+  },
+  "file_assessments": [
+    {"file": "swing/src/main/java/com/Main.java", "code_complexity": 2, "logic_complexity": 2, "issues_count": 0, "debt_count": 0},
+    {"file": "swing/src/main/java/websocket/Main.java", "code_complexity": 7, "logic_complexity": 5, "issues_count": 1, "debt_count": 2},
+    {"file": "swing/src/main/java/com/poc/ValueModel.java", "code_complexity": 1, "logic_complexity": 1, "issues_count": 0, "debt_count": 0},
+    {"file": "swing/src/main/java/com/poc/model/EventEmitter.java", "code_complexity": 2, "logic_complexity": 1, "issues_count": 0, "debt_count": 0},
+    {"file": "swing/src/main/java/com/poc/model/EventListener.java", "code_complexity": 1, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "swing/src/main/java/com/poc/model/ModelProperties.java", "code_complexity": 1, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "swing/src/main/java/com/poc/model/ViewData.java", "code_complexity": 0, "logic_complexity": 0, "issues_count": 0, "debt_count": 1},
+    {"file": "swing/src/main/java/com/poc/presentation/PocView.java", "code_complexity": 5, "logic_complexity": 1, "issues_count": 0, "debt_count": 0},
+    {"file": "swing/src/main/java/com/poc/presentation/PocPresenter.java", "code_complexity": 6, "logic_complexity": 4, "issues_count": 1, "debt_count": 0},
+    {"file": "swing/src/main/java/com/poc/model/PocModel.java", "code_complexity": 4, "logic_complexity": 3, "issues_count": 1, "debt_count": 1},
+    {"file": "swing/src/main/java/com/poc/model/HttpBinService.java", "code_complexity": 5, "logic_complexity": 3, "issues_count": 1, "debt_count": 0},
+    {"file": "node-server/src/WebsocketServer.js", "code_complexity": 4, "logic_complexity": 2, "issues_count": 1, "debt_count": 0},
+    {"file": "node-vue-client/src/App.vue", "code_complexity": 1, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "node-vue-client/src/main.js", "code_complexity": 1, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "node-vue-client/src/components/Search.vue", "code_complexity": 7, "logic_complexity": 5, "issues_count": 2, "debt_count": 0},
+    {"file": "pom.xml", "code_complexity": 2, "logic_complexity": 0, "issues_count": 0, "debt_count": 1},
+    {"file": "api.yml", "code_complexity": 3, "logic_complexity": 2, "issues_count": 1, "debt_count": 0},
+    {"file": "node-server/package.json", "code_complexity": 1, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "node-vue-client/package.json", "code_complexity": 2, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "node-vue-client/babel.config.js", "code_complexity": 1, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/java/com/poc/api/runner/CucumberTestRunner.java", "code_complexity": 2, "logic_complexity": 1, "issues_count": 0, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java", "code_complexity": 5, "logic_complexity": 4, "issues_count": 2, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java", "code_complexity": 3, "logic_complexity": 1, "issues_count": 1, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestContext.java", "code_complexity": 2, "logic_complexity": 1, "issues_count": 0, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestDataBuilder.java", "code_complexity": 3, "logic_complexity": 2, "issues_count": 0, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/resources/features/java_update.feature", "code_complexity": 4, "logic_complexity": 3, "issues_count": 0, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/src/test/resources/cucumber.properties", "code_complexity": 2, "logic_complexity": 0, "issues_count": 0, "debt_count": 0},
+    {"file": "analysis_output/api-test-generator/pom.xml", "code_complexity": 3, "logic_complexity": 0, "issues_count": 0, "debt_count": 0}
+  ],
+  "issues": [
+    {
+      "issue_id": "ISS-001",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "line": 39,
+      "type": "error_handling",
+      "message": "Submission dereferences every model value without a null check. The constructor seeds values with null, so calling action before the presenter has initialized every property (or after external mutation of the public map) throws NullPointerException before the HTTP request.",
+      "criticality": 2,
+      "solution": "Define explicit defaults for every field in the model, using empty strings and false values where those are valid. Avoid exposing the mutable map publicly and provide typed accessors or a serialization method that handles optional fields deliberately. Validate required fields before submission and return a user-visible validation result instead of allowing a NullPointerException. Add a unit test that submits a newly constructed model and one with missing optional values.",
+      "estimated_time_hours": 1.5
+    },
+    {
+      "issue_id": "ISS-002",
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "line": 16,
+      "type": "error_handling",
+      "message": "The HTTP call has no connect/read timeout, reads only the success stream, and does not guarantee disconnect or Scanner closure if an exception occurs. A slow or failing endpoint can hang the UI flow or replace the useful server error with an IOException.",
+      "criticality": 3,
+      "solution": "Set explicit connection and read timeouts before sending the request. Use try-with-resources for the request output and response input streams, select the error stream for non-2xx responses, and retain the status code in a typed response result. Put disconnect in a finally block if retaining HttpURLConnection, or migrate to Java's HttpClient with a bounded request timeout. Cover timeout, non-2xx, and successful response cases with a local test server.",
+      "estimated_time_hours": 3
+    },
+    {
+      "issue_id": "ISS-003",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "line": 40,
+      "type": "performance",
+      "message": "The button listener invokes model.action synchronously, and action performs the HTTP request. Swing action listeners run on the Event Dispatch Thread, so a slow endpoint freezes painting and input; caught exceptions are rethrown unchecked rather than displayed as an operation result.",
+      "criticality": 3,
+      "solution": "Keep UI mutations on the Event Dispatch Thread but move network work to SwingWorker or another bounded executor. Disable the submit button while a request is active and restore it in the completion callback. Represent success and failure as results the presenter can render in the status area, preserving the underlying cause for logs. Test that the UI remains responsive while a deliberately delayed server responds.",
+      "estimated_time_hours": 3
+    },
+    {
+      "issue_id": "ISS-004",
+      "file": "node-server/src/WebsocketServer.js",
+      "line": 27,
+      "type": "security",
+      "message": "The relay accepts connection origins without an allowlist and broadcasts each received message to every connected client. Since messages contain person and payment details, any browser/client that can reach this service can receive data intended for another session; this is acceptable only as a tightly isolated demo, not a shared deployment.",
+      "criticality": 4,
+      "solution": "For any environment beyond a local throwaway demo, enforce an explicit origin allowlist and authenticate clients. Route messages to an intended session or room instead of broadcasting indiscriminately, and validate the message envelope and payload size before forwarding. Avoid logging full payloads, especially personal or banking fields, and document that the current local relay is not production-safe. Add tests for rejected origins and cross-client isolation.",
+      "estimated_time_hours": 5
+    },
+    {
+      "issue_id": "ISS-005",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "line": 286,
+      "type": "maintainability",
+      "message": "The WebSocket callback directly calls Swing component setters from the WebSocket client thread. Swing components are not generally thread-safe, so incoming updates can race with painting and other UI events.",
+      "criticality": 3,
+      "solution": "Parse and validate the incoming envelope on the callback thread, then enqueue all component updates with SwingUtilities.invokeLater. Keep parsing separate from rendering so malformed data can be rejected without partially updating the form. Add a small testable message-to-view model and verify updates are dispatched on the EDT. Apply the same EDT discipline to connection-state indicators and error messages.",
+      "estimated_time_hours": 2
+    },
+    {
+      "issue_id": "ISS-006",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 131,
+      "type": "error_handling",
+      "message": "The client creates a WebSocket but handles only onopen. It does not report connection errors/closure, retry or guard send operations by readyState, and disconnect() can call close on an absent socket. User actions during startup or after a disconnect can therefore throw or silently fail.",
+      "criticality": 3,
+      "solution": "Track an explicit connection state and handle onerror and onclose in addition to onopen. Check that the socket is OPEN before sending and show a clear failure status or queue policy rather than calling send on a closed socket. Close the socket safely in the component's beforeDestroy hook and make disconnect idempotent. Keep reconnection bounded and avoid sending stale queued personal data after reconnect.",
+      "estimated_time_hours": 2.5
+    },
+    {
+      "issue_id": "ISS-007",
+      "file": "api.yml",
+      "line": 91,
+      "type": "maintainability",
+      "message": "The OpenAPI request schema requires a top-level user object containing PostObject, while the Cucumber scenarios send flat field maps. The described response schema also wraps PostObject differently from the response paths asserted in the tests. These competing shapes make it unclear which contract the PoC is meant to demonstrate.",
+      "criticality": 4,
+      "solution": "Choose and document one wire format, then align the OpenAPI request/response schemas, Swing serializer, and API test fixtures to it. If the API intentionally expects a user wrapper, update test requests to use that wrapper and assert the matching nested response; otherwise flatten the schema. Include required fields and concrete examples in the contract. Add a contract validation test so future changes cannot silently diverge.",
+      "estimated_time_hours": 4
+    },
+    {
+      "issue_id": "ISS-008",
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java",
+      "line": 54,
+      "type": "business_logic",
+      "message": "postEmpty is named and used as an empty-body request, but it explicitly sends the JSON object string \"{}\". The feature therefore does not test the behavior of a request with no body despite describing an empty request body.",
+      "criticality": 2,
+      "solution": "Decide whether the scenario is testing an empty JSON object or a zero-byte body and name it accordingly. For a zero-byte body, omit body() in RestAssured and avoid claiming JSON content if the server contract requires it. For an empty object, keep \"{}\" but change the scenario wording and assert the endpoint's intended behavior for that object. Add separate scenarios only if both cases are meaningful.",
+      "estimated_time_hours": 1
+    },
+    {
+      "issue_id": "ISS-009",
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+      "line": 65,
+      "type": "business_logic",
+      "message": "The step \"I have previously submitted user data\" only copies a persona fixture into the current request body; it never submits an earlier request or checks persisted state. Update scenarios based on this step do not verify update behavior or persistence as their wording implies.",
+      "criticality": 3,
+      "solution": "Either rename the step and scenarios to state that they start from a fixture, or implement a real create-then-update workflow against an explicitly provisioned test service. If persistence is part of the intended contract, assert the resulting resource through a read endpoint rather than assuming POST echo behavior proves storage. Keep external-service setup deterministic and isolated per scenario. Clarify in the feature that this suite tests an external endpoint and is not server implementation.",
+      "estimated_time_hours": 2
+    },
+    {
+      "issue_id": "ISS-010",
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+      "line": 131,
+      "type": "maintainability",
+      "message": "The response-field assertion first looks for a top-level JSON path and then falls back to checking whether the expected value appears anywhere in the body. That fallback can pass when the value belongs to a different field, so it does not establish field equality; it also obscures the nested response shape described by the API artifact.",
+      "criticality": 2,
+      "solution": "Align the expected JSON path with the agreed response schema and assert the value at that exact path. Remove the substring fallback, which turns a structural assertion into a body-wide coincidence check. When a path is absent, report the response body and fail with an explicit schema/path message. Add a negative test where the expected value appears under the wrong field to ensure the assertion rejects it.",
+      "estimated_time_hours": 1.5
+    },
+    {
+      "issue_id": "ISS-011",
+      "file": "node-vue-client/src/components/Search.vue",
+      "line": 81,
+      "type": "business_logic",
+      "message": "The Allegro handoff button is enabled even when no person result or payment recipient has been selected. sendMessage then serializes an empty object or an incomplete record and sends it without feedback, making accidental blank or partial handoffs easy.",
+      "criticality": 2,
+      "solution": "Define the minimum data required for a handoff and represent selection state explicitly. Disable the action until a result and, where required, a payment recipient are selected; validate again in the send handler rather than relying only on button state. Show a concise error/status message when required data is absent. Test first-click, person-only, and complete person-plus-payment selection cases.",
+      "estimated_time_hours": 1.5
+    }
+  ],
+  "technical_debt": [
+    {
+      "debt_id": "TD-001",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "debt_type": "Design Debt",
+      "description": "The repository contains two independent Swing entry points and overlapping form/data-transfer behavior, alongside a Vue mock and separate Node relay. There is no clearly established canonical application flow, increasing the risk that fixes and behavior drift between prototypes.",
+      "impact": "HIGH",
+      "estimated_fix_time_hours": 8,
+      "priority": 5,
+      "suggested_fix": "Decide which Swing prototype is retained and define the intended integration boundary between it, the Vue mock, the WebSocket relay, and the HTTP contract. Consolidate duplicate form behavior or explicitly label archival/demo variants. Document the canonical launch command and add a small end-to-end smoke test for that path."
+    },
+    {
+      "debt_id": "TD-002",
+      "file": "swing/src/main/java/websocket/Main.java",
+      "debt_type": "Code Debt",
+      "description": "The WebSocket desktop class combines UI layout, connection lifecycle, JSON token scanning, message routing, and form state in one static-heavy class. This makes the message protocol difficult to unit-test and increases coupling between transport and presentation.",
+      "impact": "MEDIUM",
+      "estimated_fix_time_hours": 6,
+      "priority": 3,
+      "suggested_fix": "Extract a typed message DTO/parser and a WebSocket client service from the Swing frame. Keep UI construction and EDT updates in a view/controller layer, with endpoint configuration injected rather than hard-coded. Add parser tests for known targets, unknown targets, missing fields, and malformed JSON."
+    },
+    {
+      "debt_id": "TD-003",
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "debt_type": "Test Debt",
+      "description": "The desktop business/model and network integration code has no corresponding automated application tests in the analyzed source set. The separate Cucumber suite targets an external HTTP endpoint and cannot substitute for unit tests of model serialization, UI binding, or WebSocket mapping.",
+      "impact": "MEDIUM",
+      "estimated_fix_time_hours": 8,
+      "priority": 4,
+      "suggested_fix": "Add unit tests for model defaults and request mapping, parser tests for the WebSocket message envelope, and focused tests for HTTP success and failure handling using a local test server. Keep the Swing UI tests limited to behavior that can be exercised headlessly or through extracted presenter logic."
+    },
+    {
+      "debt_id": "TD-004",
+      "file": "pom.xml",
+      "debt_type": "Infrastructure Debt",
+      "description": "The root application targets Java 22 while the independent API-test project targets Java 17 and has a separate dependency/build lifecycle. The repository does not present one documented or integrated build/test entry point, so CI and developer environments can exercise only part of the PoC.",
+      "impact": "MEDIUM",
+      "estimated_fix_time_hours": 5,
+      "priority": 3,
+      "suggested_fix": "Document supported JDK versions and reproducible build commands for each project, or introduce a parent/aggregator build if the modules are intended to ship together. Pin compiler plugin versions and use release configuration consistently. Add CI checks for the relevant Maven and Vue builds without treating the API test suite as an endpoint implementation."
+    },
+    {
+      "debt_id": "TD-005",
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "debt_type": "Code Debt",
+      "description": "ViewData is an empty placeholder with no current behavior or consumers, adding an unexplained type to the maintained source tree.",
+      "impact": "LOW",
+      "estimated_fix_time_hours": 0.5,
+      "priority": 1,
+      "suggested_fix": "Remove the placeholder if it is obsolete, or add a concise purpose and actual usage if it is part of a planned view-model boundary. Avoid retaining empty types solely as speculative future structure."
+    }
+  ],
+  "enhancements": [
+    {
+      "enhancement_id": "ENH-001",
+      "file": "api.yml",
+      "title": "Establish one executable JSON contract",
+      "description": "Make the OpenAPI artifact, Swing form serialization, and Cucumber request/response expectations agree on field names, nesting, nullability, and required values. The current artifact is useful documentation but is not enforced by the application or tests.",
+      "category": "Module Standardization",
+      "example": "components:\n  schemas:\n    AllegroForm:\n      type: object\n      required: [FIRST_NAME, LAST_NAME]\n      properties:\n        FIRST_NAME: { type: string }\n        LAST_NAME: { type: string }\n    PostRequest:\n      type: object\n      required: [user]\n      properties:\n        user: { $ref: '#/components/schemas/AllegroForm' }",
+      "priority": 5,
+      "benefits": "Reduces integration ambiguity, makes test failures meaningful, and prevents separate prototypes from silently adopting incompatible payload shapes."
+    },
+    {
+      "enhancement_id": "ENH-002",
+      "file": "node-server/src/WebsocketServer.js",
+      "title": "Add explicit connection and message policy",
+      "description": "Centralize endpoint configuration and define origin, client routing, envelope validation, payload-size, logging, and shutdown behavior for the WebSocket relay. Keep any permissive local-only mode visibly isolated from shared deployments.",
+      "category": "Refactoring",
+      "example": "const allowedOrigins = new Set(process.env.ALLOWED_ORIGINS?.split(',') ?? []);\n// On request: reject unknown origins before accept; validate envelope, then route only to its intended client/room.",
+      "priority": 4,
+      "benefits": "Improves resilience and protects the demo's personal/payment-like data from unintended cross-client disclosure."
+    },
+    {
+      "enhancement_id": "ENH-003",
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "title": "Separate asynchronous submission from Swing presentation",
+      "description": "Use a typed submission result and run the HTTP request away from the EDT. Make validation, pending state, success display, and failure display explicit so that network conditions do not freeze or crash the form.",
+      "category": "Refactoring",
+      "example": "new SwingWorker<SubmissionResult, Void>() {\n  protected SubmissionResult doInBackground() throws Exception { return service.submit(model.toRequest()); }\n  protected void done() { renderResult(get()); }\n}.execute();",
+      "priority": 4,
+      "benefits": "Keeps the form responsive and creates a testable boundary between presentation and transport."
+    },
+    {
+      "enhancement_id": "ENH-004",
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+      "title": "Make API scenarios deterministic and structurally assertive",
+      "description": "Treat the Cucumber suite as tests of a separately provisioned external service: configure its base URL outside feature text, distinguish empty JSON from no body, and assert exact response paths and behavior. Rename fixture-only steps so they do not imply persisted setup.",
+      "category": "Code Standardization",
+      "example": "String baseUrl = System.getProperty(\"api.baseUrl\", \"http://localhost:8080\");\nassertThat(response.jsonPath().getString(\"json.user.FIRST_NAME\")).isEqualTo(expectedName);",
+      "priority": 3,
+      "benefits": "Makes tests portable across environments and avoids false positives or claims about persistence that the scenarios do not establish."
+    }
+  ]
+}

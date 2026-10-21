@@ -1,0 +1,432 @@
+{
+  "mapping_timestamp": "2026-10-21T12:07:30Z",
+  "scope": {
+    "repository_context": "A small Allegro-oriented form/search and WebSocket proof of concept, with a separate Swing HTTP client and API test artifacts.",
+    "source_basis": [
+      ".geninsights/analysis/analysis_results.json",
+      ".geninsights/analysis/business_rules.json",
+      ".geninsights/analysis/architecture_analysis.json",
+      ".geninsights/analysis/bpmn_workflows.json"
+    ],
+    "limitations": [
+      "No HR application behavior is evidenced.",
+      "Vue search uses embedded fixtures, not a backend or persistent data source.",
+      "The Node service is a WebSocket broadcast relay; it does not implement the HTTP POST endpoint referenced by the separate Swing client and API artifacts.",
+      "API test scenarios and OpenAPI descriptions are expectations/specification, not proof of server functionality or persistence."
+    ]
+  },
+  "domains": [
+    {
+      "name": "Allegro Form Interaction",
+      "capabilities": [
+        {
+          "id": "CAP-001",
+          "name": "Person Search and Payment Selection",
+          "description": "Find and select person/payment sample records in the browser mock.",
+          "implementation_status": "Implemented as a client-side prototype over hard-coded fixtures; not a production search service.",
+          "coverage": "medium",
+          "sub_capabilities": [
+            {
+              "id": "CAP-001-01",
+              "name": "Fixture-Based Person Search and Selection",
+              "description": "Search sample people by supported name and address criteria, display matches, and select a person and payment beneficiary.",
+              "files": ["node-vue-client/src/components/Search.vue"],
+              "coverage": "medium"
+            }
+          ]
+        },
+        {
+          "id": "CAP-002",
+          "name": "Allegro Form Data Handoff",
+          "description": "Transfer selected person/payment data or free text from the Vue mock through WebSocket to a separate Swing receiver.",
+          "implementation_status": "Prototype client/relay/receiver path is implemented; selection guards, durable delivery, and production integration are absent.",
+          "coverage": "medium",
+          "sub_capabilities": [
+            {
+              "id": "CAP-002-01",
+              "name": "Publish Selected Data and Text",
+              "description": "Send target/content WebSocket messages for selected form values and textarea changes.",
+              "files": ["node-vue-client/src/components/Search.vue"],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-002-02",
+              "name": "Populate Desktop Form from Messages",
+              "description": "Parse recognized message targets and map selected person/payment fields or text into the standalone Swing UI.",
+              "files": ["swing/src/main/java/websocket/Main.java"],
+              "coverage": "medium"
+            }
+          ]
+        },
+        {
+          "id": "CAP-003",
+          "name": "Desktop Form Capture and Submission Demonstration",
+          "description": "Capture person, address, payment, gender, and text values in a separate Swing form and demonstrate an outbound JSON POST.",
+          "implementation_status": "Form/model/client behavior exists, but the referenced HTTP endpoint is not implemented in this repository; end-to-end submission is unverified.",
+          "coverage": "low",
+          "sub_capabilities": [
+            {
+              "id": "CAP-003-01",
+              "name": "Form Entry and Model Binding",
+              "description": "Render desktop form controls and synchronize text and gender input with model state.",
+              "files": [
+                "swing/src/main/java/com/poc/presentation/PocView.java",
+                "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+                "swing/src/main/java/com/poc/model/ModelProperties.java",
+                "swing/src/main/java/com/poc/ValueModel.java"
+              ],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-003-02",
+              "name": "HTTP JSON Submission Client",
+              "description": "Serialize the model field map and POST it to the referenced localhost /post endpoint.",
+              "files": [
+                "swing/src/main/java/com/poc/model/PocModel.java",
+                "swing/src/main/java/com/poc/model/HttpBinService.java"
+              ],
+              "coverage": "low"
+            },
+            {
+              "id": "CAP-003-03",
+              "name": "Submission Feedback and Form Reset",
+              "description": "Propagate response-derived text to the presenter and clear/reset visible controls after a normal response event.",
+              "files": [
+                "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+                "swing/src/main/java/com/poc/model/EventEmitter.java",
+                "swing/src/main/java/com/poc/model/EventListener.java"
+              ],
+              "coverage": "medium"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Prototype Technical Enablement",
+      "capabilities": [
+        {
+          "id": "CAP-004",
+          "name": "WebSocket Message Relay",
+          "description": "Accept WebSocket connections and broadcast received UTF-8 text frames to connected clients.",
+          "implementation_status": "Implemented as a small in-memory relay on port 1337; it does not interpret or validate business payloads.",
+          "coverage": "medium",
+          "sub_capabilities": [
+            {
+              "id": "CAP-004-01",
+              "name": "Connection and Broadcast Handling",
+              "description": "Maintain connected clients and fan out incoming text messages.",
+              "files": ["node-server/src/WebsocketServer.js"],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-004-02",
+              "name": "Relay Runtime Dependency Setup",
+              "description": "Declare the Node WebSocket package required by the relay.",
+              "files": ["node-server/package.json"],
+              "coverage": "low"
+            }
+          ]
+        },
+        {
+          "id": "CAP-005",
+          "name": "Prototype Application Startup and Build Support",
+          "description": "Provide entry points, client shell, and build/dependency configuration for the separate prototype applications.",
+          "implementation_status": "Partially represented by source launch/configuration artifacts; configurations do not establish one integrated production deployment.",
+          "coverage": "low",
+          "sub_capabilities": [
+            {
+              "id": "CAP-005-01",
+              "name": "Client Application Bootstrap and Shell",
+              "description": "Start the separate Swing MVC-style prototype and bootstrap/render the Vue client shell.",
+              "files": [
+                "swing/src/main/java/com/Main.java",
+                "node-vue-client/src/main.js",
+                "node-vue-client/src/App.vue"
+              ],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-005-02",
+              "name": "Build and Dependency Configuration",
+              "description": "Declare Java/Vue dependencies, compiler settings, and frontend transpilation configuration.",
+              "files": [
+                "pom.xml",
+                "node-vue-client/package.json",
+                "node-vue-client/babel.config.js"
+              ],
+              "coverage": "low"
+            },
+            {
+              "id": "CAP-005-03",
+              "name": "Placeholder Scaffolding",
+              "description": "Empty placeholder type; no business or technical behavior is implemented by this file.",
+              "files": ["swing/src/main/java/com/poc/model/ViewData.java"],
+              "coverage": "low"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "API Contract Verification (Test-Only)",
+      "capabilities": [
+        {
+          "id": "CAP-006",
+          "name": "POST API Contract and Test Verification",
+          "description": "Describe a POST contract and provide a Cucumber/RestAssured harness that expresses and checks response expectations against a separately configured endpoint.",
+          "implementation_status": "Specification and test client are present. Successful POST, echo/update behavior, and persistence are expectations only; no API server is implemented here.",
+          "coverage": "medium",
+          "sub_capabilities": [
+            {
+              "id": "CAP-006-01",
+              "name": "POST Contract Specification",
+              "description": "Describe the request and response shape for POST /post.",
+              "files": ["api.yml"],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-006-02",
+              "name": "Scenario Expectations",
+              "description": "Specify full, partial, empty, and update-shaped test cases and their expected responses; does not implement endpoint rules.",
+              "files": ["analysis_output/api-test-generator/src/test/resources/features/java_update.feature"],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-006-03",
+              "name": "Scenario Execution and HTTP Assertions",
+              "description": "Prepare requests, call the configured endpoint, and assert the returned status/body/content type.",
+              "files": [
+                "analysis_output/api-test-generator/src/test/java/com/poc/api/runner/CucumberTestRunner.java",
+                "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+                "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java"
+              ],
+              "coverage": "medium"
+            },
+            {
+              "id": "CAP-006-04",
+              "name": "Scenario State, Test Fixtures, and Runner Setup",
+              "description": "Maintain per-scenario request/response context, sample data, Cucumber settings, and isolated test-project dependencies.",
+              "files": [
+                "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestContext.java",
+                "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestDataBuilder.java",
+                "analysis_output/api-test-generator/src/test/resources/cucumber.properties",
+                "analysis_output/api-test-generator/pom.xml"
+              ],
+              "coverage": "medium"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "file_mappings": [
+    {
+      "file": "swing/src/main/java/com/Main.java",
+      "capability_id": "CAP-005-01",
+      "capability_name": "Client Application Bootstrap and Shell",
+      "rationale": "Composition root for the independent com.poc Swing form, model, presenter, and event emitter.",
+      "confidence": "low"
+    },
+    {
+      "file": "swing/src/main/java/websocket/Main.java",
+      "capability_id": "CAP-002-02",
+      "capability_name": "Populate Desktop Form from Messages",
+      "rationale": "Standalone Swing WebSocket receiver parses target/content messages and maps recognized values into form controls.",
+      "confidence": "high"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/ValueModel.java",
+      "capability_id": "CAP-003-01",
+      "capability_name": "Form Entry and Model Binding",
+      "rationale": "Generic typed holder used to keep the form's field state in the model; contains no independent business rules.",
+      "confidence": "medium"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/EventEmitter.java",
+      "capability_id": "CAP-003-03",
+      "capability_name": "Submission Feedback and Form Reset",
+      "rationale": "Synchronous in-process event dispatch carries the model's response text to the presenter; it is not a distributed event broker.",
+      "confidence": "medium"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/EventListener.java",
+      "capability_id": "CAP-003-03",
+      "capability_name": "Submission Feedback and Form Reset",
+      "rationale": "Defines the callback interface used by the model/presenter feedback event flow.",
+      "confidence": "medium"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/HttpBinService.java",
+      "capability_id": "CAP-003-02",
+      "capability_name": "HTTP JSON Submission Client",
+      "rationale": "Serializes a string-valued map and sends HTTP POST JSON to localhost:8080/post; server implementation is absent.",
+      "confidence": "high"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/ModelProperties.java",
+      "capability_id": "CAP-003-01",
+      "capability_name": "Form Entry and Model Binding",
+      "rationale": "Enumerates the person, address, payment, gender, and text fields bound by the form and included in the model submission.",
+      "confidence": "medium"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/PocModel.java",
+      "capability_id": "CAP-003-02",
+      "capability_name": "HTTP JSON Submission Client",
+      "rationale": "Collects the enum-keyed model values, converts them to strings, invokes the HTTP adapter, and emits response-derived feedback.",
+      "confidence": "high"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/model/ViewData.java",
+      "capability_id": "CAP-005-03",
+      "capability_name": "Placeholder Scaffolding",
+      "rationale": "The class is empty; mapping records its presence without attributing an implemented capability.",
+      "confidence": "low"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+      "capability_id": "CAP-003-01",
+      "capability_name": "Form Entry and Model Binding",
+      "rationale": "Binds Swing text/radio controls to model state and invokes the submit action; also handles response display/reset.",
+      "confidence": "high"
+    },
+    {
+      "file": "swing/src/main/java/com/poc/presentation/PocView.java",
+      "capability_id": "CAP-003-01",
+      "capability_name": "Form Entry and Model Binding",
+      "rationale": "Renders the separate desktop form's personal, address, payment, gender, text, and submit controls.",
+      "confidence": "high"
+    },
+    {
+      "file": "node-server/src/WebsocketServer.js",
+      "capability_id": "CAP-004-01",
+      "capability_name": "Connection and Broadcast Handling",
+      "rationale": "Hosts the WebSocket server on port 1337, tracks active peers, and broadcasts UTF-8 frames without interpreting business content.",
+      "confidence": "high"
+    },
+    {
+      "file": "node-vue-client/src/App.vue",
+      "capability_id": "CAP-005-01",
+      "capability_name": "Client Application Bootstrap and Shell",
+      "rationale": "Provides the Vue shell/header and renders the Search component; no search logic is implemented in this file.",
+      "confidence": "medium"
+    },
+    {
+      "file": "node-vue-client/src/main.js",
+      "capability_id": "CAP-005-01",
+      "capability_name": "Client Application Bootstrap and Shell",
+      "rationale": "Bootstraps the Vue root component and mounts the browser application.",
+      "confidence": "medium"
+    },
+    {
+      "file": "node-vue-client/src/components/Search.vue",
+      "capability_id": "CAP-001-01",
+      "capability_name": "Fixture-Based Person Search and Selection",
+      "rationale": "Implements local OR-based search over hard-coded records, person/payment selection, and initiation of the WebSocket handoff; no backend search is present.",
+      "confidence": "high"
+    },
+    {
+      "file": "pom.xml",
+      "capability_id": "CAP-005-02",
+      "capability_name": "Build and Dependency Configuration",
+      "rationale": "Declares root Java compiler settings and WebSocket/Tyrus/JSON-P dependencies; it is build configuration, not business behavior.",
+      "confidence": "low"
+    },
+    {
+      "file": "api.yml",
+      "capability_id": "CAP-006-01",
+      "capability_name": "POST Contract Specification",
+      "rationale": "Documents a POST /post request/response contract but does not implement or host the endpoint.",
+      "confidence": "high"
+    },
+    {
+      "file": "node-server/package.json",
+      "capability_id": "CAP-004-02",
+      "capability_name": "Relay Runtime Dependency Setup",
+      "rationale": "Declares the WebSocket package dependency used by the Node relay; contains no relay behavior itself.",
+      "confidence": "low"
+    },
+    {
+      "file": "node-vue-client/package.json",
+      "capability_id": "CAP-005-02",
+      "capability_name": "Build and Dependency Configuration",
+      "rationale": "Declares Vue client packages and build/lint scripts, supporting the browser prototype rather than a business service.",
+      "confidence": "low"
+    },
+    {
+      "file": "node-vue-client/babel.config.js",
+      "capability_id": "CAP-005-02",
+      "capability_name": "Build and Dependency Configuration",
+      "rationale": "Configures Vue CLI's Babel preset for the browser client.",
+      "confidence": "low"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/runner/CucumberTestRunner.java",
+      "capability_id": "CAP-006-03",
+      "capability_name": "Scenario Execution and HTTP Assertions",
+      "rationale": "Configures JUnit/Cucumber feature discovery and test report execution; it does not run an API server.",
+      "confidence": "medium"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+      "capability_id": "CAP-006-03",
+      "capability_name": "Scenario Execution and HTTP Assertions",
+      "rationale": "Builds scenario requests and asserts endpoint responses; its assertions describe external endpoint expectations, not server implementation.",
+      "confidence": "high"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java",
+      "capability_id": "CAP-006-03",
+      "capability_name": "Scenario Execution and HTTP Assertions",
+      "rationale": "Wraps RestAssured JSON POST calls for test scenarios against a configured endpoint.",
+      "confidence": "high"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestContext.java",
+      "capability_id": "CAP-006-04",
+      "capability_name": "Scenario State, Test Fixtures, and Runner Setup",
+      "rationale": "Stores mutable per-scenario URL, request fields, and response state for Cucumber steps.",
+      "confidence": "medium"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestDataBuilder.java",
+      "capability_id": "CAP-006-04",
+      "capability_name": "Scenario State, Test Fixtures, and Runner Setup",
+      "rationale": "Creates sample request maps for test scenarios; the fixtures are not application data persistence.",
+      "confidence": "medium"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/resources/features/java_update.feature",
+      "capability_id": "CAP-006-02",
+      "capability_name": "Scenario Expectations",
+      "rationale": "Specifies expected POST responses including partial and empty requests; does not prove the endpoint exists or that updates persist.",
+      "confidence": "high"
+    },
+    {
+      "file": "analysis_output/api-test-generator/src/test/resources/cucumber.properties",
+      "capability_id": "CAP-006-04",
+      "capability_name": "Scenario State, Test Fixtures, and Runner Setup",
+      "rationale": "Configures feature discovery, step glue, report plugins, and ignored-tag filtering for the test harness.",
+      "confidence": "medium"
+    },
+    {
+      "file": "analysis_output/api-test-generator/pom.xml",
+      "capability_id": "CAP-006-04",
+      "capability_name": "Scenario State, Test Fixtures, and Runner Setup",
+      "rationale": "Defines the isolated test project's Java 17, Cucumber, JUnit, RestAssured, and reporting dependencies.",
+      "confidence": "low"
+    }
+  ],
+  "summary": {
+    "total_capabilities": 21,
+    "total_files_mapped": 28,
+    "coverage": {
+      "high": 11,
+      "medium": 10,
+      "low": 7,
+      "unmapped": 0
+    },
+    "coverage_note": "The summary counts file-to-capability mapping confidence, not implementation completeness. Capability maturity is separately described in each capability's coverage and implementation_status. All 28 analyzed source/test/configuration files are assigned, including technical setup and an empty placeholder."
+  }
+}
