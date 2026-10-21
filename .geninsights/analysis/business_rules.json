@@ -1,0 +1,266 @@
+{
+  "extraction_timestamp": "2026-10-21T11:50:33Z",
+  "total_rules_extracted": 10,
+  "rules_by_type": {
+    "validation": 2,
+    "calculation": 0,
+    "decision": 4,
+    "process": 4,
+    "authorization": 0,
+    "temporal": 0
+  },
+  "rules": [
+    {
+      "rule_id": "BR-001",
+      "rule_name": "Search criteria use OR matching",
+      "rule_type": "Decision",
+      "description": "The browser search scans the component's in-memory person list and includes a person when any populated supported criterion matches: last name, first name, postal code, city, street, or house number. Criteria are not combined as an AND query.",
+      "business_domain": "Search & Payment Selection",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson"],
+      "conditions": "The user clicks Suchen; at least one supported criterion must match a fixture record.",
+      "actions": "Matching records are appended to search_result and rendered in the result table.",
+      "exceptions": "With no supported criterion populated, the predicate is false for every record and the result list remains empty. Search is local to hard-coded sample data, not a backend.",
+      "priority": "Medium",
+      "stakeholders": ["Allegro PoC users", "Product team"],
+      "code_example": "if (this.formdata.last && ...) || (this.formdata.first && ...) || (this.formdata.zip && ...) || (...) this.search_result.push(element);"
+    },
+    {
+      "rule_id": "BR-002",
+      "rule_name": "Text search is case-insensitive substring; postal code is exact",
+      "rule_type": "Decision",
+      "description": "Name, first name, city, street, and house-number criteria are compared as case-insensitive substring searches. Postal code is compared using equality rather than substring matching.",
+      "business_domain": "Search & Payment Selection",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["searchPerson"],
+      "conditions": "A corresponding form field is populated.",
+      "actions": "The record satisfies that criterion if the lower-cased text contains the lower-cased input, or if its postal code equals the input.",
+      "exceptions": "No trimming, normalization of accents, postal-code prefix matching, or date-of-birth matching is implemented.",
+      "priority": "Medium",
+      "stakeholders": ["Allegro PoC users", "Product team"],
+      "code_example": "element.name.toLowerCase().indexOf(this.formdata.last.toLowerCase()) >= 0; element.zip == this.formdata.zip"
+    },
+    {
+      "rule_id": "BR-003",
+      "rule_name": "Person transfer uses the selected result and selected payment record",
+      "rule_type": "Process",
+      "description": "Clicking Nach ALLEGRO übernehmen deep-copies the current selected person result, replaces its zahlungsempfaenger list with the currently selected payment record, and sends it as a textfield-target message.",
+      "business_domain": "Allegro Form Handoff",
+      "source_files": ["node-vue-client/src/components/Search.vue", "node-server/src/WebsocketServer.js", "swing/src/main/java/websocket/Main.java"],
+      "source_methods": ["sendMessage", "zahlungsempfaengerSelected", "onMessage", "toSearchResult"],
+      "conditions": "The user clicks the transfer button. Selection is not required by code before sending.",
+      "actions": "The Vue client emits JSON; the Node relay broadcasts the message; the Java receiver parses mapped fields and populates the Swing form.",
+      "exceptions": "No guard rejects an empty selected_result or an unselected payment beneficiary. The Java mapping only populates name, first, date of birth, postal code, city, street, house number, IBAN, BIC, and valid-from.",
+      "priority": "High",
+      "stakeholders": ["Allegro PoC users", "Integration team"],
+      "code_example": "if (target == \"textfield\") obj_to_send.zahlungsempfaenger = this.zahlungsempfaenger_selected; this.socket.send(JSON.stringify({ target: target, content: obj_to_send }));"
+    },
+    {
+      "rule_id": "BR-004",
+      "rule_name": "Payment beneficiary selection is explicit and has no effective-date filtering",
+      "rule_type": "Decision",
+      "description": "A payment beneficiary is chosen by clicking a row in the selected person's payment table. The chosen object is the one transferred; its valid_from value is displayed and passed through but is not evaluated against the current date.",
+      "business_domain": "Payment Details",
+      "source_files": ["node-vue-client/src/components/Search.vue"],
+      "source_methods": ["zahlungsempfaengerSelected", "sendMessage"],
+      "conditions": "A person has one or more zahlungsempfaenger entries and a user clicks one.",
+      "actions": "The clicked entry becomes zahlungsempfaenger_selected and replaces the person's payment list in the transfer payload.",
+      "exceptions": "The code does not default to the first entry, enforce that one is selected, filter by valid_from/valid_until, or validate bank details.",
+      "priority": "High",
+      "stakeholders": ["Allegro PoC users", "Payment operations", "Product team"],
+      "code_example": "zahlungsempfaengerSelected(zahlungsempfaenger){ this.zahlungsempfaenger_selected = zahlungsempfaenger; }"
+    },
+    {
+      "rule_id": "BR-005",
+      "rule_name": "Textarea edits are sent immediately",
+      "rule_type": "Process",
+      "description": "Every change to the Vue textarea model triggers a textarea-target WebSocket message. The relay broadcasts it and the Java client puts the content into its text area.",
+      "business_domain": "Allegro Form Handoff",
+      "source_files": ["node-vue-client/src/components/Search.vue", "node-server/src/WebsocketServer.js", "swing/src/main/java/websocket/Main.java"],
+      "source_methods": ["watch.internal_content_textarea", "sendMessage", "onMessage", "extract"],
+      "conditions": "The Vue textarea value changes while the client is connected.",
+      "actions": "The current value is serialized and broadcast; Java handles target textarea by setting its textArea content.",
+      "exceptions": "There is no debounce, persistence, or offline queue. The Vue client handles onopen only; send failures are not given business-level feedback.",
+      "priority": "Medium",
+      "stakeholders": ["Allegro PoC users", "Integration team"],
+      "code_example": "internal_content_textarea: function(val) { this.sendMessage(val, \"textarea\"); }"
+    },
+    {
+      "rule_id": "BR-006",
+      "rule_name": "Gender controls are mutually exclusive and default to female",
+      "rule_type": "Validation",
+      "description": "The Swing form groups female, male, and diverse radio buttons so at most one can be selected. The initial selection is female, and the PoC submission reset also selects female and clears the other two.",
+      "business_domain": "Allegro Form Data",
+      "source_files": ["swing/src/main/java/com/poc/presentation/PocView.java", "swing/src/main/java/com/poc/presentation/PocPresenter.java", "swing/src/main/java/websocket/Main.java"],
+      "source_methods": ["initUI", "PocPresenter", "initializeBindings"],
+      "conditions": "The Swing form is initialized or the submission feedback event resets it.",
+      "actions": "The selected radio state is reflected in the model's FEMALE, MALE, and DIVERSE boolean values; reset returns the visible selection to female.",
+      "exceptions": "This is a UI constraint/default, not server-side validation. The POST payload contains three separate string-valued flags and no backend enforcement is present here.",
+      "priority": "Medium",
+      "stakeholders": ["Allegro PoC users", "Product team"],
+      "code_example": "gender.add(female); gender.add(male); gender.add(diverse); female.setSelected(true);"
+    },
+    {
+      "rule_id": "BR-007",
+      "rule_name": "Form submission serializes every model property as a string",
+      "rule_type": "Validation",
+      "description": "The Swing model iterates all ModelProperties and calls toString() on every stored value while constructing the POST map. Consequently, every property must have a non-null value for submission to reach the HTTP call; this is an implicit technical completeness precondition, not a deliberate field validation policy.",
+      "business_domain": "Allegro Form Submission",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java", "swing/src/main/java/com/poc/model/ModelProperties.java", "swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "source_methods": ["PocModel", "action", "initializeBindings", "bind"],
+      "conditions": "The user invokes the form action.",
+      "actions": "Each model property is converted to a string and submitted as a map entry; null values cause a failure before the request.",
+      "exceptions": "Text fields and radio states are initialized through presenter bindings, but there is no user-facing required-field validation and no null-safe conversion.",
+      "priority": "High",
+      "stakeholders": ["Allegro PoC users", "Development team"],
+      "code_example": "data.put(val.toString(), model.get(val).getField().toString());"
+    },
+    {
+      "rule_id": "BR-008",
+      "rule_name": "Non-empty POST response is treated as success",
+      "rule_type": "Decision",
+      "description": "After the form POST returns a response body, the model emits that body when non-empty and emits the literal Failed operation when empty. The presenter displays the emitted event and resets visible fields and gender selections.",
+      "business_domain": "Allegro Form Submission",
+      "source_files": ["swing/src/main/java/com/poc/model/PocModel.java", "swing/src/main/java/com/poc/model/HttpBinService.java", "swing/src/main/java/com/poc/presentation/PocPresenter.java"],
+      "source_methods": ["action", "post", "PocPresenter"],
+      "conditions": "The HTTP request returns normally and a response body is read.",
+      "actions": "Non-empty response becomes the event text; empty response becomes Failed operation; the presenter writes the event and clears form controls, setting female selected.",
+      "exceptions": "No explicit success-status validation exists in the model. HttpBinService reads getInputStream(), so transport or HTTP error paths can throw before either outcome is emitted.",
+      "priority": "Medium",
+      "stakeholders": ["Allegro PoC users", "Development team"],
+      "code_example": "if(!responseBody.isEmpty()) eventEmitter.emit(responseBody); else eventEmitter.emit(\"Failed operation\");"
+    },
+    {
+      "rule_id": "BR-009",
+      "rule_name": "POST payload contains the form's named fields",
+      "rule_type": "Process",
+      "description": "The Java PoC posts JSON to localhost:8080/post with Content-Type application/json. Its keys come from ModelProperties, including personal, address, banking, gender, and textarea fields. The OpenAPI artifact describes the same path and does not mark individual PostObject properties as required.",
+      "business_domain": "Allegro Form Submission",
+      "source_files": ["swing/src/main/java/com/poc/model/HttpBinService.java", "swing/src/main/java/com/poc/model/ModelProperties.java", "api.yml"],
+      "source_methods": ["post", "action"],
+      "conditions": "The model has completed construction of its data map.",
+      "actions": "The map is encoded as a JSON object and sent by HTTP POST to /post.",
+      "exceptions": "The OpenAPI request body is marked required, but the schema has no required property list. This repository does not include the server implementation for port 8080.",
+      "priority": "Medium",
+      "stakeholders": ["Integration team", "Development team"],
+      "code_example": "connection.setRequestMethod(\"POST\"); connection.setRequestProperty(\"Content-Type\", CONTENT_TYPE);"
+    },
+    {
+      "rule_id": "BR-010",
+      "rule_name": "API tests expect successful echo-style POSTs, including partial and empty objects",
+      "rule_type": "Process",
+      "description": "The Cucumber suite specifies HTTP 200 for complete, partial (first and last name only), and empty JSON-object POST requests; other scenarios expect submitted values to appear in the response and JSON content type. These are test expectations for an external/local endpoint, not rules implemented by an API server in this repository.",
+      "business_domain": "API Test Contract",
+      "source_files": ["analysis_output/api-test-generator/src/test/resources/features/java_update.feature", "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java", "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java", "api.yml"],
+      "source_methods": ["iSendAPostRequestTo", "theResponseStatusCodeShouldBe", "theResponseBodyShouldContainTheSubmittedData", "theResponseContentTypeShouldBe", "post", "postEmpty"],
+      "conditions": "The Cucumber feature sends a POST to /post at the configured base URL.",
+      "actions": "Tests assert status, response values, or content type according to each scenario; postEmpty sends the JSON object {}.",
+      "exceptions": "The API-test project contains no server implementation. The 'previously submitted' step loads a fixture into the current scenario's request map; it does not prove persistence or a prior network submission. The response-body assertion for submitted data checks values as substrings.",
+      "priority": "Low",
+      "stakeholders": ["QA", "API implementation team", "Product team"],
+      "code_example": "if (context.getRequestBody().isEmpty()) response = apiClient.postEmpty(path); else response = apiClient.post(path, context.getRequestBody());"
+    }
+  ],
+  "workflows": [
+    {
+      "workflow_id": "WF-001",
+      "workflow_name": "Search and transfer an Allegro person/payment record",
+      "description": "A user searches the Vue fixture list, selects a person and optionally a payment beneficiary, then transfers that data through the WebSocket relay to populate the Swing Allegro form.",
+      "trigger": "User enters criteria and clicks Suchen.",
+      "steps": [
+        {
+          "step_number": 1,
+          "name": "Search local records",
+          "description": "Clear prior results and add each fixture matching any supported populated criterion.",
+          "rules_applied": ["BR-001", "BR-002"],
+          "next_steps": [2],
+          "decision_point": true
+        },
+        {
+          "step_number": 2,
+          "name": "Select a person",
+          "description": "Click a result row to make it the selected_result and show its payment beneficiary rows.",
+          "rules_applied": ["BR-003"],
+          "next_steps": [3],
+          "decision_point": false
+        },
+        {
+          "step_number": 3,
+          "name": "Select payment beneficiary (optional in code)",
+          "description": "Click a payment row to set the selected beneficiary; no required-selection guard or effective-date filter runs.",
+          "rules_applied": ["BR-004"],
+          "next_steps": [4],
+          "decision_point": true
+        },
+        {
+          "step_number": 4,
+          "name": "Send to Allegro",
+          "description": "Click the transfer button; Vue emits the person and selected beneficiary in a textfield-target JSON message.",
+          "rules_applied": ["BR-003"],
+          "next_steps": [5],
+          "decision_point": false
+        },
+        {
+          "step_number": 5,
+          "name": "Relay and populate Swing fields",
+          "description": "Node broadcasts the message to connected clients; the Java client maps recognized fields into the Swing inputs.",
+          "rules_applied": ["BR-003"],
+          "next_steps": [],
+          "decision_point": false
+        }
+      ],
+      "end_states": ["Swing form populated with mapped selected-person/payment values", "Message sent with empty or incomplete selection because no guard prevents it"],
+      "participants": ["Allegro PoC user", "Vue client", "Node WebSocket relay", "Java Swing client"]
+    },
+    {
+      "workflow_id": "WF-002",
+      "workflow_name": "Submit and reset the Swing Allegro form",
+      "description": "Swing controls update the model, the action serializes the complete model to JSON and posts it to the local endpoint, and the response event is displayed before the UI is reset.",
+      "trigger": "User clicks Anordnen in the com.poc Swing form.",
+      "steps": [
+        {
+          "step_number": 1,
+          "name": "Bind form inputs",
+          "description": "Text document and radio-button listeners keep the model fields synchronized with UI values.",
+          "rules_applied": ["BR-006", "BR-007"],
+          "next_steps": [2],
+          "decision_point": false
+        },
+        {
+          "step_number": 2,
+          "name": "Build the request map",
+          "description": "Iterate every ModelProperties entry and convert its value to a string.",
+          "rules_applied": ["BR-007", "BR-009"],
+          "next_steps": [3],
+          "decision_point": true
+        },
+        {
+          "step_number": 3,
+          "name": "POST JSON to local endpoint",
+          "description": "Send application/json to localhost:8080/post and read the response body.",
+          "rules_applied": ["BR-009"],
+          "next_steps": [4],
+          "decision_point": false
+        },
+        {
+          "step_number": 4,
+          "name": "Choose response message",
+          "description": "Emit response body if non-empty, otherwise emit Failed operation.",
+          "rules_applied": ["BR-008"],
+          "next_steps": [5],
+          "decision_point": true
+        },
+        {
+          "step_number": 5,
+          "name": "Display feedback and reset controls",
+          "description": "Presenter displays the emitted text, clears text inputs, and restores female as the selected gender.",
+          "rules_applied": ["BR-006", "BR-008"],
+          "next_steps": [],
+          "decision_point": false
+        }
+      ],
+      "end_states": ["Response body displayed and form reset", "Failed operation displayed for an empty response", "Runtime/request failure before a response event (not converted into user-facing business feedback)"],
+      "participants": ["Allegro PoC user", "Swing presenter", "PocModel", "HttpBinService", "POST endpoint"]
+    }
+  ]
+}

@@ -1,0 +1,352 @@
+{
+  "analysis_timestamp": "2026-10-21T12:04:00Z",
+  "repository_name": "test-custom-agents-2",
+  "architecture_style": "loosely coupled prototype components: a Vue/Node/WebSocket client-relay path plus an independent Swing MVC-style HTTP client and separate API test artifacts; not one layered production application",
+  "scope_notes": [
+    "Based on .geninsights/analysis/analysis_results.json and cross-checks of the Java, Vue, Node, API contract, test, and launch/build sources.",
+    "The visible domain is an Allegro-oriented person/address/payment form prototype; no HR application is evidenced.",
+    "There are two separate Swing entry points: websocket.Main is a WebSocket receiver; com.Main launches the com.poc MVC-style HTTP submission client.",
+    "The Vue client searches in-memory fixtures and sends WebSocket messages to the Node relay at ws://localhost:1337/.",
+    "The Node service is a WebSocket broadcast relay; it is not the localhost:8080 HTTP POST endpoint.",
+    "The repository does not implement the /post HTTP server. api.yml is a contract artifact and the Cucumber/RestAssured project is test code.",
+    "No database, durable persistence, backend search service, or complete integrated deployment is shown."
+  ],
+  "layers": [
+    {
+      "name": "Browser Client",
+      "components": [
+        "Vue Search client (Search.vue; fixtures embedded)"
+      ],
+      "technologies": [
+        "Vue 2",
+        "JavaScript",
+        "Browser WebSocket API"
+      ],
+      "description": "Presentation, local fixture search and selection, and WebSocket message production; no server-side search."
+    },
+    {
+      "name": "WebSocket Relay",
+      "components": [
+        "Node WebSocket relay (WebsocketServer.js)"
+      ],
+      "technologies": [
+        "Node.js",
+        "websocket npm package",
+        "HTTP upgrade host"
+      ],
+      "description": "Accepts WebSocket connections on port 1337 and broadcasts received UTF-8 text frames to connected clients."
+    },
+    {
+      "name": "Standalone Swing WebSocket Client",
+      "components": [
+        "websocket.Main Swing receiver"
+      ],
+      "technologies": [
+        "Java Swing",
+        "Java WebSocket API",
+        "Tyrus",
+        "JSON-P"
+      ],
+      "description": "Independent desktop UI and WebSocket endpoint; routes recognized message targets into its own form."
+    },
+    {
+      "name": "Separate Swing MVC Client",
+      "components": [
+        "com.Main composition root",
+        "PocView",
+        "PocPresenter",
+        "PocModel",
+        "EventEmitter"
+      ],
+      "technologies": [
+        "Java",
+        "Java Swing",
+        "In-process observer callbacks"
+      ],
+      "description": "Independent form application with view/presenter/model responsibilities and local event notification."
+    },
+    {
+      "name": "HTTP Integration and Verification Artifacts",
+      "components": [
+        "HttpBinService",
+        "api.yml OpenAPI contract",
+        "Cucumber / RestAssured API test project"
+      ],
+      "technologies": [
+        "HTTP POST",
+        "JSON",
+        "OpenAPI 3.0.1",
+        "Cucumber",
+        "RestAssured"
+      ],
+      "description": "Java HTTP client and separate API contract/test artifacts. The HTTP server is not implemented in this repository; this zone is not an application layer shared by all components."
+    }
+  ],
+  "components": [
+    {
+      "name": "Vue Search client (Search.vue; fixtures embedded)",
+      "layer": "Browser Client",
+      "type": "Browser UI / client",
+      "responsibilities": [
+        "Render a person/address/payment mock form and search results.",
+        "Search a hard-coded in-memory fixture list.",
+        "Send target/content JSON text over WebSocket for selected form data and textarea changes."
+      ],
+      "dependencies": [
+        "Browser WebSocket API",
+        "Node WebSocket relay at ws://localhost:1337/"
+      ],
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "node-vue-client/src/main.js",
+        "node-vue-client/package.json"
+      ]
+    },
+    {
+      "name": "Node WebSocket relay (WebsocketServer.js)",
+      "layer": "WebSocket Relay",
+      "type": "WebSocket server / broadcast relay",
+      "responsibilities": [
+        "Host a WebSocket server on an HTTP server listening at port 1337.",
+        "Track active client connections.",
+        "Broadcast incoming UTF-8 message text to every connected client, including the sender."
+      ],
+      "dependencies": [
+        "Node.js http module",
+        "websocket npm package"
+      ],
+      "source_files": [
+        "node-server/src/WebsocketServer.js",
+        "node-server/package.json"
+      ]
+    },
+    {
+      "name": "websocket.Main Swing receiver",
+      "layer": "Standalone Swing WebSocket Client",
+      "type": "Desktop UI / WebSocket client",
+      "responsibilities": [
+        "Construct an independent Swing form.",
+        "Connect to ws://localhost:1337/ using the Java WebSocket client.",
+        "Parse JSON-P messages and route recognized textarea/textfield targets into form controls."
+      ],
+      "dependencies": [
+        "Node WebSocket relay at localhost:1337",
+        "Java WebSocket API and Tyrus",
+        "JSON-P"
+      ],
+      "source_files": [
+        "swing/src/main/java/websocket/Main.java",
+        "pom.xml",
+        "WebsocketSwingClient.launch"
+      ]
+    },
+    {
+      "name": "com.Main composition root",
+      "layer": "Separate Swing MVC Client",
+      "type": "Application bootstrap",
+      "responsibilities": [
+        "Construct PocView, EventEmitter, PocModel, and PocPresenter for the separate com.poc application."
+      ],
+      "dependencies": [
+        "PocView",
+        "PocPresenter",
+        "PocModel",
+        "EventEmitter"
+      ],
+      "source_files": [
+        "swing/src/main/java/com/Main.java"
+      ]
+    },
+    {
+      "name": "PocView",
+      "layer": "Separate Swing MVC Client",
+      "type": "Swing presentation",
+      "responsibilities": [
+        "Build the form controls and expose inputs, text area, gender controls, and submit button to the presenter."
+      ],
+      "dependencies": [
+        "Java Swing/AWT",
+        "PocPresenter"
+      ],
+      "source_files": [
+        "swing/src/main/java/com/poc/presentation/PocView.java"
+      ]
+    },
+    {
+      "name": "PocPresenter",
+      "layer": "Separate Swing MVC Client",
+      "type": "Presentation coordinator",
+      "responsibilities": [
+        "Bind view controls to model values.",
+        "Invoke model submission when the com.poc form button is clicked.",
+        "Receive in-process response events and update/reset visible controls."
+      ],
+      "dependencies": [
+        "PocView",
+        "PocModel",
+        "EventEmitter",
+        "ValueModel",
+        "ModelProperties"
+      ],
+      "source_files": [
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "swing/src/main/java/com/poc/ValueModel.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java"
+      ]
+    },
+    {
+      "name": "PocModel",
+      "layer": "Separate Swing MVC Client",
+      "type": "Application/model logic",
+      "responsibilities": [
+        "Hold enum-keyed mutable form values.",
+        "Convert values to strings and orchestrate HTTP submission.",
+        "Emit response-derived text through the local EventEmitter."
+      ],
+      "dependencies": [
+        "ValueModel",
+        "ModelProperties",
+        "HttpBinService",
+        "EventEmitter"
+      ],
+      "source_files": [
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/ValueModel.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java"
+      ]
+    },
+    {
+      "name": "EventEmitter",
+      "layer": "Separate Swing MVC Client",
+      "type": "In-process event utility",
+      "responsibilities": [
+        "Store listeners and synchronously notify them with emitted string data."
+      ],
+      "dependencies": [
+        "EventListener"
+      ],
+      "source_files": [
+        "swing/src/main/java/com/poc/model/EventEmitter.java",
+        "swing/src/main/java/com/poc/model/EventListener.java"
+      ]
+    },
+    {
+      "name": "HttpBinService",
+      "layer": "HTTP Integration and Verification Artifacts",
+      "type": "HTTP client adapter",
+      "responsibilities": [
+        "Serialize a string-valued map as JSON and POST it to http://localhost:8080/post.",
+        "Read and return the HTTP response body."
+      ],
+      "dependencies": [
+        "Java HttpURLConnection",
+        "JSON-P",
+        "Referenced /post endpoint (server absent)"
+      ],
+      "source_files": [
+        "swing/src/main/java/com/poc/model/HttpBinService.java",
+        "swing/src/main/java/com/poc/model/PocModel.java"
+      ]
+    },
+    {
+      "name": "api.yml OpenAPI contract",
+      "layer": "HTTP Integration and Verification Artifacts",
+      "type": "API contract artifact",
+      "responsibilities": [
+        "Describe a POST /post operation and request/response schema."
+      ],
+      "dependencies": [
+        "No runtime dependency; specification only"
+      ],
+      "source_files": [
+        "api.yml"
+      ]
+    },
+    {
+      "name": "Cucumber / RestAssured API test project",
+      "layer": "HTTP Integration and Verification Artifacts",
+      "type": "Test client / verification",
+      "responsibilities": [
+        "Prepare scenario request data and submit POST requests.",
+        "Assert configured API response expectations; does not implement the API server."
+      ],
+      "dependencies": [
+        "Cucumber",
+        "JUnit 5",
+        "RestAssured",
+        "AssertJ",
+        "Configured API target outside the test client"
+      ],
+      "source_files": [
+        "analysis_output/api-test-generator/pom.xml",
+        "analysis_output/api-test-generator/src/test/resources/features/java_update.feature",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/runner/CucumberTestRunner.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestContext.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestDataBuilder.java"
+      ]
+    }
+  ],
+  "patterns_identified": [
+    {
+      "pattern": "MVC-style presentation coordination (partial)",
+      "location": "swing/src/main/java/com/Main.java; swing/src/main/java/com/poc/presentation/; swing/src/main/java/com/poc/model/",
+      "description": "The com.poc Swing application separates view construction, presenter bindings, and model/submission behavior. This applies only to that Swing entry point, not the WebSocket Swing UI or the whole repository."
+    },
+    {
+      "pattern": "Observer / in-process event dispatch",
+      "location": "swing/src/main/java/com/poc/model/EventEmitter.java; swing/src/main/java/com/poc/model/EventListener.java",
+      "description": "EventEmitter stores listeners and invokes them synchronously; PocPresenter subscribes to response text from PocModel. This is not a distributed event broker."
+    },
+    {
+      "pattern": "WebSocket broadcast relay",
+      "location": "node-server/src/WebsocketServer.js",
+      "description": "The Node process relays each received UTF-8 frame to all connected clients without interpreting its payload."
+    },
+    {
+      "pattern": "Fixture-driven client search",
+      "location": "node-vue-client/src/components/Search.vue",
+      "description": "Search is performed over a hard-coded in-memory array in the Vue component; there is no search API or persistence layer."
+    },
+    {
+      "pattern": "Separate API test client",
+      "location": "analysis_output/api-test-generator/src/test/",
+      "description": "Cucumber and RestAssured construct requests and assert responses against a configured target. Test code and api.yml do not implement a server."
+    }
+  ],
+  "external_dependencies": [
+    {
+      "name": "Referenced HTTP POST endpoint at localhost:8080/post",
+      "type": "http_api",
+      "purpose": "Target used by HttpBinService and described by api.yml; API tests also express expectations for a configured POST target.",
+      "implementation_status": "Not implemented in this repository; the Node service implements only the separate WebSocket relay."
+    }
+  ],
+  "protocols": [
+    {
+      "name": "WebSocket",
+      "address": "ws://localhost:1337/",
+      "participants": [
+        "Vue Search client",
+        "Node WebSocket relay",
+        "websocket.Main Swing receiver"
+      ],
+      "payload": "UTF-8 text; Vue sends JSON with target and content fields; relay broadcasts to all connected peers."
+    },
+    {
+      "name": "HTTP",
+      "address": "http://localhost:8080/post",
+      "participants": [
+        "HttpBinService",
+        "API contract/test artifacts"
+      ],
+      "payload": "application/json POST; endpoint server is absent from this repository."
+    }
+  ],
+  "metrics": {
+    "total_components": 11,
+    "total_layers": 5,
+    "external_integrations": 1
+  }
+}

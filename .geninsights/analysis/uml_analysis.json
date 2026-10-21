@@ -1,0 +1,161 @@
+{
+  "generation_timestamp": "2026-10-21T11:58:00Z",
+  "scope_notes": [
+    "Diagrams are derived from .geninsights/analysis/analysis_results.json, business_rules.json, file-analysis-summary.md, and source verification.",
+    "This is an Allegro-oriented Swing/Vue/Node WebSocket prototype, not an HR system.",
+    "The two Swing entry points are separate implementations: websocket.Main receives WebSocket messages; com.Main launches the MVC-style com.poc HTTP submission flow.",
+    "The repository contains no implementation of the localhost:8080 /post endpoint. OpenAPI and Cucumber/RestAssured artifacts are a contract and test expectations, not server behavior.",
+    "Class summary counts Java class declarations, including nested classes, across application and test sources; interface and enum declarations are reported separately. Vue components and the Node relay script are documented as components, not Java classes."
+  ],
+  "diagrams": {
+    "class_diagrams": [
+      {
+        "name": "com.poc Swing MVC and submission classes",
+        "scope": "Java application package",
+        "classes_included": [
+          "Main",
+          "PocView",
+          "PocPresenter",
+          "PocModel",
+          "ValueModel",
+          "ModelProperties",
+          "HttpBinService",
+          "EventEmitter",
+          "EventListener"
+        ],
+        "relationships": [
+          "Main constructs and wires PocView, EventEmitter, PocModel, and PocPresenter",
+          "PocPresenter associates with PocView, PocModel, and EventEmitter",
+          "PocModel composes its enum-keyed ValueModel wrappers",
+          "PocModel associates with ModelProperties and EventEmitter and depends on HttpBinService",
+          "EventEmitter aggregates EventListener references"
+        ]
+      },
+      {
+        "name": "WebSocket Swing receiver",
+        "scope": "Java desktop WebSocket client",
+        "classes_included": [
+          "websocket.Main",
+          "websocket.Main.WebsocketClientEndpoint",
+          "websocket.Main.Message",
+          "websocket.Main.SearchResult"
+        ],
+        "relationships": [
+          "websocket.Main depends on WebsocketClientEndpoint to connect to localhost:1337",
+          "WebsocketClientEndpoint depends on Message to extract the target/content envelope",
+          "WebsocketClientEndpoint depends on SearchResult to parse textfield message data"
+        ]
+      },
+      {
+        "name": "API test support classes",
+        "scope": "Cucumber/RestAssured test project",
+        "classes_included": [
+          "PostStepDefinitions",
+          "ApiClient",
+          "TestContext",
+          "TestDataBuilder",
+          "TestDataBuilder.Builder"
+        ],
+        "relationships": [
+          "PostStepDefinitions uses TestContext for scenario state",
+          "PostStepDefinitions uses ApiClient for HTTP requests",
+          "PostStepDefinitions depends on TestDataBuilder for named fixtures",
+          "TestDataBuilder creates its nested fluent Builder"
+        ]
+      }
+    ],
+    "sequence_diagrams": [
+      {
+        "name": "Search and transfer through the WebSocket relay",
+        "workflow": "Search local fixtures with OR criteria, select person and optional payment recipient, send a target/content envelope, relay to connected clients, and map recognized fields into the Swing form.",
+        "participants": [
+          "Allegro PoC user",
+          "Vue Search component",
+          "Node WebSocket relay",
+          "Java WebSocket endpoint",
+          "Swing form"
+        ]
+      },
+      {
+        "name": "Submit and reset the com.poc Swing form",
+        "workflow": "Bound controls update PocModel; action serializes all ModelProperties to strings, posts JSON, emits response-derived text, and presenter displays feedback and resets controls when the request returns normally.",
+        "participants": [
+          "Allegro PoC user",
+          "PocView",
+          "PocPresenter",
+          "PocModel",
+          "HttpBinService",
+          "External /post endpoint",
+          "EventEmitter"
+        ]
+      },
+      {
+        "name": "Cucumber API test request and assertions",
+        "workflow": "Scenario step definitions prepare fixture/data-table state, choose populated or empty JSON POST, call configured API through ApiClient, and assert response expectations; this does not represent a server implementation.",
+        "participants": [
+          "Cucumber runner",
+          "PostStepDefinitions",
+          "TestContext",
+          "TestDataBuilder",
+          "ApiClient",
+          "Configured external API"
+        ]
+      }
+    ],
+    "component_diagrams": [
+      {
+        "name": "Prototype components and actual boundaries",
+        "components": [
+          "Vue 2 Search.vue",
+          "In-memory person/payment fixture data",
+          "Node WebSocket relay on port 1337",
+          "Standalone websocket.Main Swing receiver",
+          "Separate com.poc Swing MVC application",
+          "HttpBinService HTTP adapter",
+          "External or absent /post endpoint",
+          "OpenAPI contract and API test project"
+        ],
+        "relationships": [
+          "Vue component searches in-memory fixtures and sends WebSocket JSON to Node relay",
+          "Node relay broadcasts received UTF-8 text to connected clients including sender",
+          "Java WebSocket Swing receiver maps recognized targets to its own form",
+          "com.poc model submits JSON to localhost:8080/post through HttpBinService",
+          "OpenAPI and API tests describe/assert an external endpoint; they do not implement it"
+        ]
+      }
+    ],
+    "use_case_diagrams": [
+      {
+        "name": "Prototype user goals and test-only endpoint interaction",
+        "actors": [
+          "Allegro PoC user",
+          "QA / API test runner",
+          "External configured /post endpoint"
+        ],
+        "use_cases": [
+          "Search in local fixtures",
+          "Select person and payment record",
+          "Transfer data to connected Swing form",
+          "Synchronize textarea edits",
+          "Submit separate com.poc Swing form",
+          "Display response and reset form",
+          "Verify configured POST response expectations (test only)"
+        ]
+      }
+    ]
+  },
+  "class_summary": {
+    "total_classes": 18,
+    "interfaces": 1,
+    "abstract_classes": 0,
+    "enums": 1
+  },
+  "relationship_summary": {
+    "inheritance": 0,
+    "implementation": 0,
+    "association": 11,
+    "composition": 1,
+    "aggregation": 1,
+    "dependency": 6
+  }
+}

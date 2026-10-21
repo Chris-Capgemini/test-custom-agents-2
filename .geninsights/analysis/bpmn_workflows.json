@@ -1,0 +1,533 @@
+{
+  "generation_timestamp": "2026-10-21T12:03:00Z",
+  "total_workflows": 4,
+  "workflows": [
+    {
+      "workflow_id": "PROC-001",
+      "name": "Search and transfer Allegro person/payment data",
+      "description": "The Vue client searches hard-coded records, retains a clicked person and optionally clicked beneficiary, and sends a textfield-target WebSocket message through the Node broadcast relay to the separate Java Swing receiver.",
+      "trigger": "The user enters any search criteria and clicks Suchen.",
+      "evidence_classification": "source_proven",
+      "participants": [
+        "Allegro PoC user",
+        "Vue Search client",
+        "Node WebSocket relay",
+        "Java Swing WebSocket receiver"
+      ],
+      "steps": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "Start search",
+          "description": "The user initiates a search from the Vue form.",
+          "performer": "Allegro PoC user",
+          "next": ["enter-criteria"]
+        },
+        {
+          "id": "enter-criteria",
+          "type": "userTask",
+          "name": "Enter criteria and click Suchen",
+          "description": "The form supports last name, first name, postal code, city, street, and house number.",
+          "performer": "Allegro PoC user",
+          "next": ["search-local"]
+        },
+        {
+          "id": "search-local",
+          "type": "serviceTask",
+          "name": "Search local fixtures",
+          "description": "Clear prior search results and scan the in-memory sample list. Populated criteria use OR matching; text checks are case-insensitive substrings and postal code uses equality.",
+          "performer": "Vue Search client",
+          "next": ["matches"]
+        },
+        {
+          "id": "matches",
+          "type": "gateway",
+          "name": "Any fixture records match?",
+          "description": "A match exists if any record satisfies any populated supported criterion; empty criteria match nothing.",
+          "performer": "Vue Search client",
+          "next": ["show-results", "show-empty"],
+          "outgoing_conditions": [
+            {"target": "show-results", "condition": "At least one fixture matches"},
+            {"target": "show-empty", "condition": "No fixture matches"}
+          ]
+        },
+        {
+          "id": "show-results",
+          "type": "task",
+          "name": "Display matching records",
+          "description": "Render matching fixture rows for user selection.",
+          "performer": "Vue Search client",
+          "next": ["select-person"]
+        },
+        {
+          "id": "show-empty",
+          "type": "task",
+          "name": "Display empty result list",
+          "description": "No rows are added when no fixture matches. The transfer button remains available.",
+          "performer": "Vue Search client",
+          "next": ["skip-person-selection"]
+        },
+        {
+          "id": "select-person",
+          "type": "gateway",
+          "name": "Does the user click a result row?",
+          "description": "Clicking a row updates selected_result. The code does not require a fresh selection before transfer; a prior selection can remain, or the initial value can be empty.",
+          "performer": "Allegro PoC user",
+          "next": ["person-selected", "skip-person-selection"],
+          "outgoing_conditions": [
+            {"target": "person-selected", "condition": "User clicks a displayed result"},
+            {"target": "skip-person-selection", "condition": "User does not click a result"}
+          ]
+        },
+        {
+          "id": "person-selected",
+          "type": "userTask",
+          "name": "Select person result",
+          "description": "Store the clicked record as selected_result and show its payment rows.",
+          "performer": "Allegro PoC user",
+          "next": ["select-beneficiary"]
+        },
+        {
+          "id": "select-beneficiary",
+          "type": "gateway",
+          "name": "Does the user click a payment row?",
+          "description": "Payment selection is optional in the implementation. No effective-date or bank-detail validation is performed.",
+          "performer": "Allegro PoC user",
+          "next": ["beneficiary-selected", "beneficiary-not-selected"],
+          "outgoing_conditions": [
+            {"target": "beneficiary-selected", "condition": "User clicks a beneficiary row"},
+            {"target": "beneficiary-not-selected", "condition": "User does not click a beneficiary row"}
+          ]
+        },
+        {
+          "id": "beneficiary-selected",
+          "type": "userTask",
+          "name": "Select payment beneficiary",
+          "description": "Store the clicked beneficiary object; its valid_from date is displayed and passed through but not evaluated.",
+          "performer": "Allegro PoC user",
+          "next": ["transfer"]
+        },
+        {
+          "id": "beneficiary-not-selected",
+          "type": "task",
+          "name": "Keep current beneficiary state",
+          "description": "No default beneficiary or selection guard runs. The transfer uses the current selected-beneficiary value, which may be empty or left from an earlier selection.",
+          "performer": "Vue Search client",
+          "next": ["transfer"]
+        },
+        {
+          "id": "skip-person-selection",
+          "type": "task",
+          "name": "Continue without a fresh person selection",
+          "description": "The transfer button does not check that a result was selected; selected_result may be empty or retain an earlier value.",
+          "performer": "Vue Search client",
+          "next": ["transfer"]
+        },
+        {
+          "id": "transfer",
+          "type": "userTask",
+          "name": "Click Nach ALLEGRO übernehmen",
+          "description": "Initiate transfer from the current selection state.",
+          "performer": "Allegro PoC user",
+          "next": ["send-payload"]
+        },
+        {
+          "id": "send-payload",
+          "type": "serviceTask",
+          "name": "Build and send textfield message",
+          "description": "Deep-copy selected_result, replace its payment list with the current selected beneficiary, and send JSON over the WebSocket.",
+          "performer": "Vue Search client",
+          "next": ["broadcast"]
+        },
+        {
+          "id": "broadcast",
+          "type": "serviceTask",
+          "name": "Broadcast message",
+          "description": "Relay the received UTF-8 message to every connected WebSocket client.",
+          "performer": "Node WebSocket relay",
+          "next": ["map-form"]
+        },
+        {
+          "id": "map-form",
+          "type": "serviceTask",
+          "name": "Map recognized values into Swing fields",
+          "description": "For target textfield, parse name, first name, date of birth, ZIP, city, street, house number, IBAN, BIC, and valid-from into the receiver form.",
+          "performer": "Java Swing WebSocket receiver",
+          "next": ["end"]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "name": "Transfer handled",
+          "description": "The receiving Swing fields are populated with recognized message values; absent values are not validated as business errors.",
+          "performer": "Java Swing WebSocket receiver",
+          "next": []
+        }
+      ],
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "node-server/src/WebsocketServer.js",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "business_rules_applied": ["BR-001", "BR-002", "BR-003", "BR-004"],
+      "scope_notes": [
+        "Search is local to embedded sample records; no search API or persistence is implemented.",
+        "The Vue component does not clear selected_result or the selected beneficiary when a new search is run or a different person is clicked.",
+        "Transfer can be attempted without a person or beneficiary selection.",
+        "The Java receiver maps only the listed subset of fields."
+      ]
+    },
+    {
+      "workflow_id": "PROC-002",
+      "name": "Relay Vue textarea edits to Swing",
+      "description": "Each Vue textarea model change sends a textarea-target WebSocket message; the Node relay broadcasts it and the Java receiver writes the content into its text area.",
+      "trigger": "The user changes the Vue textarea while the WebSocket is usable.",
+      "evidence_classification": "source_proven",
+      "participants": [
+        "Allegro PoC user",
+        "Vue Search client",
+        "Node WebSocket relay",
+        "Java Swing WebSocket receiver"
+      ],
+      "steps": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "Textarea edit begins",
+          "description": "The user edits the Vue textarea bound to internal_content_textarea.",
+          "performer": "Allegro PoC user",
+          "next": ["watch-change"]
+        },
+        {
+          "id": "watch-change",
+          "type": "serviceTask",
+          "name": "Observe model change",
+          "description": "The Vue watcher calls sendMessage with the new value and target textarea.",
+          "performer": "Vue Search client",
+          "next": ["send"]
+        },
+        {
+          "id": "send",
+          "type": "serviceTask",
+          "name": "Send WebSocket message",
+          "description": "Serialize a target/content JSON object and send it on the current socket.",
+          "performer": "Vue Search client",
+          "next": ["relay"]
+        },
+        {
+          "id": "relay",
+          "type": "serviceTask",
+          "name": "Broadcast UTF-8 message",
+          "description": "The Node server forwards the message to all connected clients.",
+          "performer": "Node WebSocket relay",
+          "next": ["receive"]
+        },
+        {
+          "id": "receive",
+          "type": "serviceTask",
+          "name": "Update Swing text area",
+          "description": "The Java receiver recognizes target textarea and sets the text area content.",
+          "performer": "Java Swing WebSocket receiver",
+          "next": ["end"]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "name": "Textarea content relayed",
+          "description": "The receiver text area reflects the message content.",
+          "performer": "Java Swing WebSocket receiver",
+          "next": []
+        }
+      ],
+      "source_files": [
+        "node-vue-client/src/components/Search.vue",
+        "node-server/src/WebsocketServer.js",
+        "swing/src/main/java/websocket/Main.java"
+      ],
+      "business_rules_applied": ["BR-005"],
+      "scope_notes": [
+        "There is no debounce, persistence, offline queue, or business-level send-error feedback.",
+        "The Vue client defines an onopen handler but no user-facing recovery for send failure."
+      ]
+    },
+    {
+      "workflow_id": "PROC-003",
+      "name": "Submit and reset the com.poc Swing form",
+      "description": "The com.poc presenter binds Swing fields to a model, serializes all model properties as strings, posts JSON to localhost:8080/post, then displays a response event and resets visible inputs when the request returns normally.",
+      "trigger": "The user clicks Anordnen in the com.poc Swing form.",
+      "evidence_classification": "source_proven_client_flow_external_endpoint",
+      "participants": [
+        "Allegro PoC user",
+        "PocView",
+        "PocPresenter",
+        "PocModel",
+        "HttpBinService",
+        "External or locally supplied POST endpoint (implementation absent)"
+      ],
+      "steps": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "Form submission starts",
+          "description": "The com.poc view's submit button invokes its presenter listener.",
+          "performer": "Allegro PoC user",
+          "next": ["bind-values"]
+        },
+        {
+          "id": "bind-values",
+          "type": "task",
+          "name": "Keep model synchronized with controls",
+          "description": "Document and radio-button listeners update model values; the gender controls are mutually exclusive and the view initially selects female.",
+          "performer": "PocPresenter",
+          "next": ["serialize"]
+        },
+        {
+          "id": "serialize",
+          "type": "serviceTask",
+          "name": "Attempt to serialize every model property",
+          "description": "Iterate ModelProperties and call toString on each stored field while constructing a string-valued map. A null value throws during this operation; the following gateway represents whether conversion completes.",
+          "performer": "PocModel",
+          "next": ["nonnull"]
+        },
+        {
+          "id": "nonnull",
+          "type": "gateway",
+          "name": "Did serialization complete without a null value?",
+          "description": "This is an implicit technical precondition caused by toString, not user-facing required-field validation.",
+          "performer": "PocModel",
+          "next": ["post", "conversion-failure"],
+          "outgoing_conditions": [
+            {"target": "post", "condition": "Every property was converted successfully"},
+            {"target": "conversion-failure", "condition": "A null value caused conversion to throw"}
+          ]
+        },
+        {
+          "id": "conversion-failure",
+          "type": "end",
+          "name": "Serialization fails before request",
+          "description": "Null conversion throws during serialization before HttpBinService is called; no validation message is emitted.",
+          "performer": "PocModel",
+          "next": []
+        },
+        {
+          "id": "post",
+          "type": "serviceTask",
+          "name": "POST JSON to /post",
+          "description": "HttpBinService sends application/json to http://localhost:8080/post and reads the response input stream.",
+          "performer": "HttpBinService",
+          "next": ["response"]
+        },
+        {
+          "id": "response",
+          "type": "gateway",
+          "name": "Did the request return a response body normally?",
+          "description": "Transport/HTTP errors may throw before the model emits an event; response status is not used to determine success.",
+          "performer": "HttpBinService",
+          "next": ["body-check", "request-error"],
+          "outgoing_conditions": [
+            {"target": "body-check", "condition": "Request returns normally with a readable body"},
+            {"target": "request-error", "condition": "Request or response reading throws"}
+          ]
+        },
+        {
+          "id": "request-error",
+          "type": "end",
+          "name": "Request failure propagates",
+          "description": "The model does not convert the thrown request error into its normal response event; presenter catches and rethrows checked failures.",
+          "performer": "PocPresenter / HttpBinService",
+          "next": []
+        },
+        {
+          "id": "body-check",
+          "type": "gateway",
+          "name": "Is the returned response body non-empty?",
+          "description": "The model chooses event text based on body emptiness, without checking HTTP success status.",
+          "performer": "PocModel",
+          "next": ["emit-body", "emit-empty"],
+          "outgoing_conditions": [
+            {"target": "emit-body", "condition": "Response body is non-empty"},
+            {"target": "emit-empty", "condition": "Response body is empty"}
+          ]
+        },
+        {
+          "id": "emit-body",
+          "type": "task",
+          "name": "Emit response body",
+          "description": "Emit the body string to the in-process event emitter.",
+          "performer": "PocModel",
+          "next": ["display-reset"]
+        },
+        {
+          "id": "emit-empty",
+          "type": "task",
+          "name": "Emit Failed operation",
+          "description": "Emit the literal Failed operation for an empty body returned normally by the service.",
+          "performer": "PocModel",
+          "next": ["display-reset"]
+        },
+        {
+          "id": "display-reset",
+          "type": "task",
+          "name": "Display event and reset form",
+          "description": "The presenter writes event text into the text area, clears text fields, and restores female selection.",
+          "performer": "PocPresenter",
+          "next": ["end"]
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "name": "Feedback displayed",
+          "description": "Normal return path has displayed the event and reset the controls.",
+          "performer": "PocPresenter",
+          "next": []
+        }
+      ],
+      "source_files": [
+        "swing/src/main/java/com/Main.java",
+        "swing/src/main/java/com/poc/presentation/PocView.java",
+        "swing/src/main/java/com/poc/presentation/PocPresenter.java",
+        "swing/src/main/java/com/poc/model/PocModel.java",
+        "swing/src/main/java/com/poc/model/HttpBinService.java",
+        "swing/src/main/java/com/poc/model/ModelProperties.java",
+        "api.yml"
+      ],
+      "business_rules_applied": ["BR-006", "BR-007", "BR-008", "BR-009"],
+      "scope_notes": [
+        "The Swing client flow and POST request construction are implemented, but this repository does not contain the localhost:8080 endpoint implementation.",
+        "HttpBinService uses getInputStream and Scanner.next; an HTTP error or empty stream can fail before the model's empty-body branch.",
+        "A distinct websocket.Main prototype has an Anordnen button whose handler only prints a message; it does not submit this form."
+      ]
+    },
+    {
+      "workflow_id": "PROC-004",
+      "name": "Cucumber POST API contract test",
+      "description": "The Cucumber/RestAssured test client prepares complete, partial, empty, or fixture-based update data, sends a POST to an external endpoint, and asserts expected status/content/body behavior. These are test expectations, not endpoint behavior implemented in this repository.",
+      "trigger": "A Cucumber scenario for the Allegro PoC POST API is executed.",
+      "evidence_classification": "test_expectation_only_external_endpoint",
+      "participants": [
+        "QA / Cucumber runner",
+        "PostStepDefinitions",
+        "ApiClient (RestAssured)",
+        "External POST endpoint (implementation absent)"
+      ],
+      "steps": [
+        {
+          "id": "start",
+          "type": "start",
+          "name": "Run API scenario",
+          "description": "Cucumber creates scenario state and clears its in-memory request map.",
+          "performer": "Cucumber runner",
+          "next": ["prepare"]
+        },
+        {
+          "id": "prepare",
+          "type": "userTask",
+          "name": "Prepare scenario request data",
+          "description": "Populate fields from a data table, choose an empty object, or load a named local fixture and apply updates.",
+          "performer": "QA / PostStepDefinitions",
+          "next": ["empty-check"]
+        },
+        {
+          "id": "empty-check",
+          "type": "gateway",
+          "name": "Is the request map empty?",
+          "description": "The test client chooses between its explicit {} request helper and the map-based JSON POST helper.",
+          "performer": "PostStepDefinitions",
+          "next": ["post-empty", "post-data"],
+          "outgoing_conditions": [
+            {"target": "post-empty", "condition": "Request map has no fields"},
+            {"target": "post-data", "condition": "Request map contains fields"}
+          ]
+        },
+        {
+          "id": "post-empty",
+          "type": "serviceTask",
+          "name": "POST empty JSON object",
+          "description": "ApiClient sends the literal {} to the configured /post path.",
+          "performer": "ApiClient",
+          "next": ["response-received"]
+        },
+        {
+          "id": "post-data",
+          "type": "serviceTask",
+          "name": "POST scenario JSON fields",
+          "description": "ApiClient sends the populated request map as JSON to /post.",
+          "performer": "ApiClient",
+          "next": ["response-received"]
+        },
+        {
+          "id": "response-received",
+          "type": "gateway",
+          "name": "Did the request return a response?",
+          "description": "An exception during the RestAssured call aborts the scenario before response assertions.",
+          "performer": "ApiClient / Cucumber runner",
+          "next": ["assert", "fail"],
+          "outgoing_conditions": [
+            {"target": "assert", "condition": "HTTP response returned"},
+            {"target": "fail", "condition": "Request failed before a response was available"}
+          ]
+        },
+        {
+          "id": "assert",
+          "type": "task",
+          "name": "Assert response expectations",
+          "description": "Depending on the scenario, assert HTTP 200, response values/body substrings, or JSON content type. Scenarios include complete, first/last-name-only, and empty-object requests.",
+          "performer": "PostStepDefinitions",
+          "next": ["assertion-result"]
+        },
+        {
+          "id": "assertion-result",
+          "type": "gateway",
+          "name": "Did the external response satisfy assertions?",
+          "description": "This outcome depends on the external endpoint response; endpoint behavior is not implemented by this repository.",
+          "performer": "Cucumber runner",
+          "next": ["pass", "fail"],
+          "outgoing_conditions": [
+            {"target": "pass", "condition": "External response meets scenario assertions"},
+            {"target": "fail", "condition": "External response does not meet scenario assertions or request fails"}
+          ]
+        },
+        {
+          "id": "pass",
+          "type": "end",
+          "name": "Scenario passes",
+          "description": "The configured external service satisfied this scenario's assertions.",
+          "performer": "Cucumber runner",
+          "next": []
+        },
+        {
+          "id": "fail",
+          "type": "end",
+          "name": "Scenario fails",
+          "description": "The endpoint response did not meet the test's expectations or the request could not complete.",
+          "performer": "Cucumber runner",
+          "next": []
+        }
+      ],
+      "source_files": [
+        "analysis_output/api-test-generator/src/test/resources/features/java_update.feature",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/steps/PostStepDefinitions.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/support/ApiClient.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestContext.java",
+        "analysis_output/api-test-generator/src/test/java/com/poc/api/support/TestDataBuilder.java",
+        "api.yml"
+      ],
+      "business_rules_applied": ["BR-010"],
+      "scope_notes": [
+        "The Cucumber project contains test client and assertions, not an API server; no successful endpoint response is source-proven.",
+        "The step named previously submitted loads a local fixture into the current scenario map; it does not submit a prior request or prove persistence.",
+        "The response-body assertion checks submitted values as substrings.",
+        "api.yml describes a request body with a nested user property, while the Java client sends a top-level map (or {}); the artifact and test payload expectations are not demonstrated as a single implemented contract."
+      ]
+    }
+  ],
+  "summary": {
+    "workflows_by_complexity": {
+      "simple": 0,
+      "moderate": 1,
+      "complex": 3
+    },
+    "total_decision_points": 9,
+    "total_parallel_flows": 0
+  }
+}
